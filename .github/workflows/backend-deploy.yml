@@ -8,9 +8,9 @@ on:
       - 'backend/**'
 
 env:
-  PROJECT_ID: your-gcp-project-id
+  PROJECT_ID: travel2go-495007
   SERVICE_NAME: travel2go-backend
-  REGION: us-central1
+  REGION: asia-south2
 
 jobs:
   build-and-deploy:
