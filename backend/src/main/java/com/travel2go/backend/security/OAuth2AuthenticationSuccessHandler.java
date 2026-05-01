@@ -14,7 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.Set;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -45,7 +45,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .email(email)
                     .provider(provider)
                     .providerId(providerId)
-                    .roles(Set.of("USER")) // default role
+                    .roles(List.of("USER")) // default role
                     .enabled(true)
                     .build();
             user = userRepository.save(user).block();

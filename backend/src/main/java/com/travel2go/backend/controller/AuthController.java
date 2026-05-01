@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
-import java.util.Set;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -63,7 +63,7 @@ public class AuthController {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .provider("LOCAL")
-                .roles(Set.of("USER")) // Or "ADMIN" depending on business logic
+                .roles(List.of("USER")) // Or "ADMIN" depending on business logic
                 .enabled(true)
                 .build();
 

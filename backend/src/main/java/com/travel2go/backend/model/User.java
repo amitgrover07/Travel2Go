@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import com.google.cloud.firestore.annotation.DocumentId;
 import com.google.cloud.spring.data.firestore.Document;
 
-import java.util.Set;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -25,6 +25,6 @@ public class User {
     private String provider;
     private String providerId;
     
-    private Set<String> roles;
+    private List<String> roles;
     private boolean enabled;
 }
