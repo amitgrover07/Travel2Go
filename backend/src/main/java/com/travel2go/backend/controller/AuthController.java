@@ -55,7 +55,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(request.getEmail()).block() != null) {
             return ResponseEntity.badRequest().body("Email already exists");
         }
 
@@ -67,14 +67,14 @@ public class AuthController {
                 .enabled(true)
                 .build();
 
-        userRepository.save(user);
+        userRepository.save(user).block();
         return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
-        if (userOptional.isEmpty() || !"LOCAL".equals(userOptional.get().getProvider())) {
+        User user = userRepository.findByEmail(request.getEmail()).block();
+        if (user == null || !"LOCAL".equals(user.getProvider())) {
             return ResponseEntity.badRequest().body("User not found or is using social login");
         }
 
@@ -82,13 +82,13 @@ public class AuthController {
         String code = String.format("%06d", new Random().nextInt(999999));
         
         // Save or update code
-        verificationCodeRepository.deleteByEmail(request.getEmail()); // Delete old codes
+        verificationCodeRepository.deleteByEmail(request.getEmail()).block(); // Delete old codes
         VerificationCode verificationCode = VerificationCode.builder()
                 .email(request.getEmail())
                 .code(code)
                 .expiryDate(LocalDateTime.now().plusMinutes(15))
                 .build();
-        verificationCodeRepository.save(verificationCode);
+        verificationCodeRepository.save(verificationCode).block();
 
         // Send email
         emailService.sendVerificationCode(request.getEmail(), code);
@@ -98,17 +98,21 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        Optional<VerificationCode> codeOptional = verificationCodeRepository.findByEmailAndCode(request.getEmail(), request.getCode());
+        VerificationCode code = verificationCodeRepository.findByEmailAndCode(request.getEmail(), request.getCode()).block();
         
-        if (codeOptional.isEmpty() || codeOptional.get().isExpired()) {
+        if (code == null || code.isExpired()) {
             return ResponseEntity.badRequest().body("Invalid or expired verification code");
         }
 
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        User user = userRepository.findByEmail(request.getEmail()).block();
+        if (user == null) {
+            return ResponseEntity.badRequest().body("User not found");
+        }
         
-        verificationCodeRepository.deleteByEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user).block();
+        
+        verificationCodeRepository.deleteByEmail(request.getEmail()).block();
 
         return ResponseEntity.ok("Password reset successfully");
     }

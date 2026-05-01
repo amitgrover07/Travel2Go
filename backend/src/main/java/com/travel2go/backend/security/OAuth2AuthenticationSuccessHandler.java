@@ -35,10 +35,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String provider = oAuth2User.getAttributes().containsKey("sub") ? "GOOGLE" : "FACEBOOK";
         String providerId = oAuth2User.getAttributes().containsKey("sub") ? oAuth2User.getAttribute("sub") : oAuth2User.getAttribute("id");
 
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        User user;
-        if (userOptional.isPresent()) {
-            user = userOptional.get();
+        User user = userRepository.findByEmail(email).block();
+        if (user != null) {
             if (!provider.equals(user.getProvider()) && "LOCAL".equals(user.getProvider())) {
                 // Optionally handle linking accounts
             }
@@ -50,7 +48,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .roles(Set.of("USER")) // default role
                     .enabled(true)
                     .build();
-            user = userRepository.save(user);
+            user = userRepository.save(user).block();
         }
 
         String role = user.getRoles().iterator().next();

@@ -1,13 +1,12 @@
 package com.travel2go.backend.repository;
 
+import com.google.cloud.spring.data.firestore.FirestoreReactiveRepository;
 import com.travel2go.backend.model.VerificationCode;
-import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.Optional;
+import reactor.core.publisher.Mono;
 
 @Repository
-public interface VerificationCodeRepository extends MongoRepository<VerificationCode, String> {
-    Optional<VerificationCode> findByEmailAndCode(String email, String code);
-    void deleteByEmail(String email);
+public interface VerificationCodeRepository extends FirestoreReactiveRepository<VerificationCode> {
+    Mono<VerificationCode> findByEmailAndCode(String email, String code);
+    Mono<Void> deleteByEmail(String email);
 }

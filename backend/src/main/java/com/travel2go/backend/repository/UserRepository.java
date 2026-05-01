@@ -1,12 +1,11 @@
 package com.travel2go.backend.repository;
 
 import com.travel2go.backend.model.User;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import com.google.cloud.spring.data.firestore.FirestoreReactiveRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.Optional;
+import reactor.core.publisher.Mono;
 
 @Repository
-public interface UserRepository extends MongoRepository<User, String> {
-    Optional<User> findByEmail(String email);
+public interface UserRepository extends FirestoreReactiveRepository<User> {
+    Mono<User> findByEmail(String email);
 }

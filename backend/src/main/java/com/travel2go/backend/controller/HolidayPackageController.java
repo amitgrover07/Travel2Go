@@ -3,14 +3,15 @@ package com.travel2go.backend.controller;
 import com.travel2go.backend.model.HolidayPackage;
 import com.travel2go.backend.repository.HolidayPackageRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/packages")
@@ -19,35 +20,56 @@ public class HolidayPackageController {
 
     private final HolidayPackageRepository repository;
 
+    private String getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
+            return "system";
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else if (principal instanceof String) {
+            return (String) principal;
+        }
+        return principal.toString();
+    }
+
     @GetMapping
-    public List<HolidayPackage> getActivePackages() {
+    public Flux<HolidayPackage> getActivePackages() {
         return repository.findByStatus("ACTIVE");
     }
 
     @GetMapping("/all")
-    public List<HolidayPackage> getAllPackages() {
+    public Flux<HolidayPackage> getAllPackages() {
         return repository.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<HolidayPackage> getPackageById(@PathVariable String id) {
+    public Mono<ResponseEntity<HolidayPackage>> getPackageById(@PathVariable String id) {
         return repository.findById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public HolidayPackage createPackage(@RequestBody HolidayPackage holidayPackage) {
+    public Mono<HolidayPackage> createPackage(@RequestBody HolidayPackage holidayPackage) {
+        String currentUser = getCurrentUser();
+        HolidayPackage.Audit audit = HolidayPackage.Audit.builder()
+                .createdBy(currentUser)
+                .createdAt(Instant.now())
+                .updatedBy(currentUser)
+                .updatedAt(Instant.now())
+                .build();
+        holidayPackage.setAudit(audit);
         return repository.save(holidayPackage);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<HolidayPackage> updatePackage(@PathVariable String id, @RequestBody HolidayPackage holidayPackageDetails) {
+    public Mono<ResponseEntity<HolidayPackage>> updatePackage(@PathVariable String id, @RequestBody HolidayPackage holidayPackageDetails) {
+        String currentUser = getCurrentUser();
+        
         return repository.findById(id)
-                .map(existingPackage -> {
-                    // Update version so MongoDB can perform optimistic locking check
-                    existingPackage.setVersion(holidayPackageDetails.getVersion());
-
+                .flatMap(existingPackage -> {
                     existingPackage.setPackageCode(holidayPackageDetails.getPackageCode());
                     existingPackage.setTitle(holidayPackageDetails.getTitle());
                     existingPackage.setDestination(holidayPackageDetails.getDestination());
@@ -62,25 +84,22 @@ public class HolidayPackageController {
                     existingPackage.setExclusions(holidayPackageDetails.getExclusions());
                     existingPackage.setItinerary(holidayPackageDetails.getItinerary());
 
-                    return ResponseEntity.ok(repository.save(existingPackage));
+                    if (existingPackage.getAudit() == null) {
+                        existingPackage.setAudit(new HolidayPackage.Audit());
+                    }
+                    existingPackage.getAudit().setUpdatedBy(currentUser);
+                    existingPackage.getAudit().setUpdatedAt(Instant.now());
+
+                    return repository.save(existingPackage);
                 })
-                .orElse(ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePackage(@PathVariable String id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    @ExceptionHandler(OptimisticLockingFailureException.class)
-    public ResponseEntity<Map<String, String>> handleOptimisticLockingFailureException(OptimisticLockingFailureException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "Conflict");
-        response.put("message", "The document was updated by another user. Please refresh and try again.");
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    public Mono<ResponseEntity<Void>> deletePackage(@PathVariable String id) {
+        return repository.findById(id)
+                .flatMap(existingPackage -> repository.delete(existingPackage).then(Mono.just(ResponseEntity.noContent().<Void>build())))
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }

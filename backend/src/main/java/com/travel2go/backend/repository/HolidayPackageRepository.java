@@ -1,12 +1,11 @@
 package com.travel2go.backend.repository;
 
+import com.google.cloud.spring.data.firestore.FirestoreReactiveRepository;
 import com.travel2go.backend.model.HolidayPackage;
-import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
 
 @Repository
-public interface HolidayPackageRepository extends MongoRepository<HolidayPackage, String> {
-    List<HolidayPackage> findByStatus(String status);
+public interface HolidayPackageRepository extends FirestoreReactiveRepository<HolidayPackage> {
+    Flux<HolidayPackage> findByStatus(String status);
 }
