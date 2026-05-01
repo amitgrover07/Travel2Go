@@ -38,5 +38,5 @@ jobs:
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          projectId: your-gcp-project-id
+          projectId: travel2go-495007
           channelId: live
