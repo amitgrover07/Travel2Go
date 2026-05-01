@@ -20,7 +20,10 @@ const Login = () => {
   };
 
   const handleOAuth2Login = (provider) => {
-    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+    // Remove the /api from the end of the URL to get the base backend URL
+    const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+    window.location.href = `${baseUrl}/oauth2/authorization/${provider}`;
   };
 
   return (
