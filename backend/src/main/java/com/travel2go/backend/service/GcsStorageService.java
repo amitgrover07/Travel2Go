@@ -35,7 +35,18 @@ public class GcsStorageService {
                 .setContentType(file.getContentType());
                 
         if (context != null && !context.trim().isEmpty()) {
-            blobInfoBuilder.setMetadata(java.util.Map.of("context", context));
+            java.util.Map<String, String> metadataMap = new java.util.HashMap<>();
+            String[] pairs = context.split(",");
+            for (String pair : pairs) {
+                String[] kv = pair.split("[:=]", 2);
+                if (kv.length == 2) {
+                    metadataMap.put(kv[0].trim(), kv[1].trim());
+                } else {
+                    // Fallback if no key=value format is used, we use a generic key
+                    metadataMap.put("context_" + java.util.UUID.randomUUID().toString().substring(0, 4), kv[0].trim());
+                }
+            }
+            blobInfoBuilder.setMetadata(metadataMap);
         }
         
         BlobInfo blobInfo = blobInfoBuilder.build();

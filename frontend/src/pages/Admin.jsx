@@ -376,7 +376,7 @@ const Admin = () => {
                   <label className="block text-sm text-gray-600">Thumbnail URL</label>
                   <div className="flex gap-2">
                     <input type="text" value={formData.media.thumbnailUrl} onChange={(e) => handleNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white" placeholder="https://..." />
-                    <input type="text" value={mediaContexts.thumbnail} onChange={(e) => setMediaContexts({ ...mediaContexts, thumbnail: e.target.value })} className="w-32 rounded border p-2 bg-white text-sm" placeholder="Context" />
+                    <input type="text" value={mediaContexts.thumbnail} onChange={(e) => setMediaContexts({ ...mediaContexts, thumbnail: e.target.value })} className="w-48 rounded border p-2 bg-white text-sm" placeholder="e.g. theme=beach, category=hero" />
                     <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
                       <Upload size={18} />
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'thumbnail', null, mediaContexts.thumbnail)} disabled={uploading} />
@@ -392,7 +392,7 @@ const Admin = () => {
                   {formData.media.galleryUrls.map((url, index) => (
                     <div key={index} className="flex gap-2 mb-2">
                       <input type="text" value={url} onChange={(e) => handleArrayStringChange('galleryUrls', index, e.target.value)} className="flex-1 rounded border p-2 bg-white text-sm" placeholder="https://..." />
-                      <input type="text" value={mediaContexts.gallery[index] || ''} onChange={(e) => setMediaContexts({ ...mediaContexts, gallery: { ...mediaContexts.gallery, [index]: e.target.value } })} className="w-32 rounded border p-2 bg-white text-sm" placeholder="Context" />
+                      <input type="text" value={mediaContexts.gallery[index] || ''} onChange={(e) => setMediaContexts({ ...mediaContexts, gallery: { ...mediaContexts.gallery, [index]: e.target.value } })} className="w-48 rounded border p-2 bg-white text-sm" placeholder="e.g. key=value, key2=value2" />
                       <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
                         <Upload size={16} />
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'gallery', index, mediaContexts.gallery[index])} disabled={uploading} />
