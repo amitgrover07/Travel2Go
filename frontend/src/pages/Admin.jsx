@@ -150,11 +150,24 @@ const Admin = () => {
       alert("Please wait for image upload to finish.");
       return;
     }
+
+    const payload = { ...formData };
+    payload.duration = {
+      days: formData.duration.days ? Number(formData.duration.days) : 0,
+      nights: formData.duration.nights ? Number(formData.duration.nights) : 0
+    };
+    payload.pricing = {
+      ...formData.pricing,
+      basePrice: formData.pricing.basePrice ? Number(formData.pricing.basePrice) : 0,
+      discountPercentage: formData.pricing.discountPercentage ? Number(formData.pricing.discountPercentage) : 0,
+      finalPrice: formData.pricing.finalPrice ? Number(formData.pricing.finalPrice) : 0
+    };
+
     try {
       if (editingId) {
-        await api.put(`/packages/${editingId}`, formData);
+        await api.put(`/packages/${editingId}`, payload);
       } else {
-        await api.post('/packages', formData);
+        await api.post('/packages', payload);
       }
       setFormData(defaultForm);
       setEditingId(null);
@@ -165,6 +178,9 @@ const Admin = () => {
         alert(error.response.data.message || 'This package was modified by another user. Please refresh the page and try again.');
       } else if (error.response && error.response.status === 403) {
         handleLogout();
+      } else {
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to save package';
+        alert(`Failed to save package: ${errorMessage}`);
       }
     }
   };
@@ -225,7 +241,7 @@ const Admin = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Package Code</label>
-                    <input required type="text" name="packageCode" value={formData.packageCode} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" placeholder="e.g. PKG-001" />
+                    <input type="text" name="packageCode" value={formData.packageCode} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" placeholder="e.g. PKG-001" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Status</label>
@@ -237,15 +253,15 @@ const Admin = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Title</label>
-                  <input required type="text" name="title" value={formData.title} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                  <input type="text" name="title" value={formData.title} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Destination</label>
-                  <input required type="text" name="destination" value={formData.destination} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                  <input type="text" name="destination" value={formData.destination} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Overview</label>
-                  <textarea required name="overview" value={formData.overview} onChange={handleTopLevelChange} rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                  <textarea name="overview" value={formData.overview} onChange={handleTopLevelChange} rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
                 </div>
               </div>
 
@@ -255,11 +271,11 @@ const Admin = () => {
                   <h3 className="font-semibold text-gray-700">Duration</h3>
                   <div>
                     <label className="block text-sm text-gray-600">Days</label>
-                    <input required type="number" value={formData.duration.days} onChange={(e) => handleNestedChange('duration', 'days', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                    <input type="number" value={formData.duration.days} onChange={(e) => handleNestedChange('duration', 'days', e.target.value)} className="w-full rounded border p-2 bg-white" />
                   </div>
                   <div>
                     <label className="block text-sm text-gray-600">Nights</label>
-                    <input required type="number" value={formData.duration.nights} onChange={(e) => handleNestedChange('duration', 'nights', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                    <input type="number" value={formData.duration.nights} onChange={(e) => handleNestedChange('duration', 'nights', e.target.value)} className="w-full rounded border p-2 bg-white" />
                   </div>
                 </div>
 
@@ -267,15 +283,15 @@ const Admin = () => {
                   <h3 className="font-semibold text-gray-700">Pricing</h3>
                   <div>
                     <label className="block text-sm text-gray-600">Currency</label>
-                    <input required type="text" value={formData.pricing.currency} onChange={(e) => handleNestedChange('pricing', 'currency', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                    <input type="text" value={formData.pricing.currency} onChange={(e) => handleNestedChange('pricing', 'currency', e.target.value)} className="w-full rounded border p-2 bg-white" />
                   </div>
                   <div>
                     <label className="block text-sm text-gray-600">Base Price</label>
-                    <input required type="number" value={formData.pricing.basePrice} onChange={(e) => handleNestedChange('pricing', 'basePrice', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                    <input type="number" value={formData.pricing.basePrice} onChange={(e) => handleNestedChange('pricing', 'basePrice', e.target.value)} className="w-full rounded border p-2 bg-white" />
                   </div>
                   <div>
                     <label className="block text-sm text-gray-600">Discount %</label>
-                    <input required type="number" value={formData.pricing.discountPercentage} onChange={(e) => handleNestedChange('pricing', 'discountPercentage', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                    <input type="number" value={formData.pricing.discountPercentage} onChange={(e) => handleNestedChange('pricing', 'discountPercentage', e.target.value)} className="w-full rounded border p-2 bg-white" />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-800">Final Price (Auto)</label>
@@ -294,7 +310,7 @@ const Admin = () => {
                 <div>
                   <label className="block text-sm text-gray-600">Thumbnail URL</label>
                   <div className="flex gap-2">
-                    <input required type="text" value={formData.media.thumbnailUrl} onChange={(e) => handleNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white" placeholder="https://..." />
+                    <input type="text" value={formData.media.thumbnailUrl} onChange={(e) => handleNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white" placeholder="https://..." />
                     <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
                       <Upload size={18} />
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'thumbnail')} disabled={uploading} />
