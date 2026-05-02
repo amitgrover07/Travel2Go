@@ -8,4 +8,5 @@ import reactor.core.publisher.Flux;
 @Repository
 public interface HolidayPackageRepository extends FirestoreReactiveRepository<HolidayPackage> {
     Flux<HolidayPackage> findByStatus(String status);
+    Flux<HolidayPackage> findByPackageCode(String packageCode);
 }

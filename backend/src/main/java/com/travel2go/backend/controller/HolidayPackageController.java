@@ -52,7 +52,7 @@ public class HolidayPackageController {
     }
 
     @PostMapping
-    public Mono<HolidayPackage> createPackage(@RequestBody HolidayPackage holidayPackage) {
+    public Mono<ResponseEntity<?>> createPackage(@RequestBody HolidayPackage holidayPackage) {
         String currentUser = getCurrentUser();
         HolidayPackage.Audit audit = HolidayPackage.Audit.builder()
                 .createdBy(currentUser)
@@ -61,38 +61,54 @@ public class HolidayPackageController {
                 .updatedAt(Instant.now())
                 .build();
         holidayPackage.setAudit(audit);
-        return repository.save(holidayPackage);
+
+        return repository.findByPackageCode(holidayPackage.getPackageCode())
+                .hasElements()
+                .flatMap(exists -> {
+                    if (exists) {
+                        return Mono.just(ResponseEntity.status(409).body(java.util.Map.of("message", "Package code already exists")));
+                    }
+                    return repository.save(holidayPackage).map(ResponseEntity::ok);
+                });
     }
 
     @PutMapping("/{id}")
-    public Mono<ResponseEntity<HolidayPackage>> updatePackage(@PathVariable String id, @RequestBody HolidayPackage holidayPackageDetails) {
+    public Mono<ResponseEntity<?>> updatePackage(@PathVariable String id, @RequestBody HolidayPackage holidayPackageDetails) {
         String currentUser = getCurrentUser();
         
         return repository.findById(id)
                 .flatMap(existingPackage -> {
-                    existingPackage.setPackageCode(holidayPackageDetails.getPackageCode());
-                    existingPackage.setTitle(holidayPackageDetails.getTitle());
-                    existingPackage.setDestination(holidayPackageDetails.getDestination());
-                    existingPackage.setStatus(holidayPackageDetails.getStatus());
-                    existingPackage.setOverview(holidayPackageDetails.getOverview());
+                    return repository.findByPackageCode(holidayPackageDetails.getPackageCode())
+                            .filter(pkg -> !pkg.getId().equals(id))
+                            .hasElements()
+                            .flatMap(exists -> {
+                                if (exists) {
+                                    return Mono.just(ResponseEntity.status(409).body(java.util.Map.of("message", "Package code already exists")));
+                                }
+                                
+                                existingPackage.setPackageCode(holidayPackageDetails.getPackageCode());
+                                existingPackage.setTitle(holidayPackageDetails.getTitle());
+                                existingPackage.setDestination(holidayPackageDetails.getDestination());
+                                existingPackage.setStatus(holidayPackageDetails.getStatus());
+                                existingPackage.setOverview(holidayPackageDetails.getOverview());
 
-                    existingPackage.setDuration(holidayPackageDetails.getDuration());
-                    existingPackage.setPricing(holidayPackageDetails.getPricing());
-                    existingPackage.setMedia(holidayPackageDetails.getMedia());
+                                existingPackage.setDuration(holidayPackageDetails.getDuration());
+                                existingPackage.setPricing(holidayPackageDetails.getPricing());
+                                existingPackage.setMedia(holidayPackageDetails.getMedia());
 
-                    existingPackage.setInclusions(holidayPackageDetails.getInclusions());
-                    existingPackage.setExclusions(holidayPackageDetails.getExclusions());
-                    existingPackage.setItinerary(holidayPackageDetails.getItinerary());
+                                existingPackage.setInclusions(holidayPackageDetails.getInclusions());
+                                existingPackage.setExclusions(holidayPackageDetails.getExclusions());
+                                existingPackage.setItinerary(holidayPackageDetails.getItinerary());
 
-                    if (existingPackage.getAudit() == null) {
-                        existingPackage.setAudit(new HolidayPackage.Audit());
-                    }
-                    existingPackage.getAudit().setUpdatedBy(currentUser);
-                    existingPackage.getAudit().setUpdatedAt(Instant.now());
+                                if (existingPackage.getAudit() == null) {
+                                    existingPackage.setAudit(new HolidayPackage.Audit());
+                                }
+                                existingPackage.getAudit().setUpdatedBy(currentUser);
+                                existingPackage.getAudit().setUpdatedAt(Instant.now());
 
-                    return repository.save(existingPackage);
+                                return repository.save(existingPackage).map(ResponseEntity::ok);
+                            });
                 })
-                .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
