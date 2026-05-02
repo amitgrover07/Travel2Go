@@ -25,6 +25,7 @@ const Admin = () => {
   const [editingId, setEditingId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [mediaContexts, setMediaContexts] = useState({ thumbnail: '', gallery: {} });
   const navigate = useNavigate();
 
   const getTokenPayload = () => {
@@ -170,8 +171,14 @@ const Admin = () => {
 
       if (type === 'thumbnail') {
         handleNestedChange('media', 'thumbnailUrl', url);
+        setMediaContexts(prev => ({ ...prev, thumbnail: '' })); // clear after upload
       } else if (type === 'gallery') {
         handleArrayStringChange('galleryUrls', index, url);
+        setMediaContexts(prev => {
+          const newGallery = { ...prev.gallery };
+          delete newGallery[index];
+          return { ...prev, gallery: newGallery };
+        });
       }
     } catch (error) {
       console.error('Error uploading image', error);
@@ -369,10 +376,10 @@ const Admin = () => {
                   <label className="block text-sm text-gray-600">Thumbnail URL</label>
                   <div className="flex gap-2">
                     <input type="text" value={formData.media.thumbnailUrl} onChange={(e) => handleNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white" placeholder="https://..." />
-                    <input type="text" id="thumbnailContext" className="w-32 rounded border p-2 bg-white text-sm" placeholder="Context" />
+                    <input type="text" value={mediaContexts.thumbnail} onChange={(e) => setMediaContexts({ ...mediaContexts, thumbnail: e.target.value })} className="w-32 rounded border p-2 bg-white text-sm" placeholder="Context" />
                     <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
                       <Upload size={18} />
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'thumbnail', null, document.getElementById('thumbnailContext').value)} disabled={uploading} />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'thumbnail', null, mediaContexts.thumbnail)} disabled={uploading} />
                     </label>
                   </div>
                 </div>
@@ -385,10 +392,10 @@ const Admin = () => {
                   {formData.media.galleryUrls.map((url, index) => (
                     <div key={index} className="flex gap-2 mb-2">
                       <input type="text" value={url} onChange={(e) => handleArrayStringChange('galleryUrls', index, e.target.value)} className="flex-1 rounded border p-2 bg-white text-sm" placeholder="https://..." />
-                      <input type="text" id={`galleryContext-${index}`} className="w-32 rounded border p-2 bg-white text-sm" placeholder="Context" />
+                      <input type="text" value={mediaContexts.gallery[index] || ''} onChange={(e) => setMediaContexts({ ...mediaContexts, gallery: { ...mediaContexts.gallery, [index]: e.target.value } })} className="w-32 rounded border p-2 bg-white text-sm" placeholder="Context" />
                       <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
                         <Upload size={16} />
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'gallery', index, document.getElementById(`galleryContext-${index}`).value)} disabled={uploading} />
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'gallery', index, mediaContexts.gallery[index])} disabled={uploading} />
                       </label>
                       <button type="button" onClick={() => removeArrayStringItem('galleryUrls', index)} className="bg-red-500 text-white p-2 rounded"><X size={16}/></button>
                     </div>
