@@ -45,7 +45,12 @@ public class AuthController {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String role = userDetails.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
-            String token = jwtUtil.generateToken(userDetails.getUsername(), role);
+            
+            User user = userRepository.findByEmail(userDetails.getUsername()).block();
+            String name = user != null && user.getName() != null ? user.getName() : "";
+            String picture = user != null && user.getPicture() != null ? user.getPicture() : "";
+            
+            String token = jwtUtil.generateToken(userDetails.getUsername(), role, name, picture);
 
             return ResponseEntity.ok(new AuthResponse(token));
         } catch (Exception e) {
