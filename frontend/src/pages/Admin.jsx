@@ -137,7 +137,8 @@ const Admin = () => {
       }
     } catch (error) {
       console.error('Error uploading image', error);
-      alert('Failed to upload image to Google Cloud Storage. Ensure credentials are valid.');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to upload image';
+      alert(`Upload failed: ${errorMessage}`);
     } finally {
       setUploading(false);
     }

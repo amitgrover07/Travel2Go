@@ -35,12 +35,8 @@ public class GcsStorageService {
                 .setContentType(file.getContentType())
                 .build();
 
-        try {
-            // Upload the file to GCS
-            storage.create(blobInfo, file.getBytes());
-        } catch (Exception e) {
-            throw new IOException("Failed to upload image to Google Cloud Storage. Ensure credentials are valid.", e);
-        }
+        // Upload the file to GCS
+        storage.create(blobInfo, file.getBytes());
 
         // Construct the public URL (assumes the bucket or object is publicly readable)
         return "https://storage.googleapis.com/" + bucketName + "/" + fileName;

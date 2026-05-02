@@ -24,7 +24,7 @@ public class MediaController {
             Map<String, String> response = new HashMap<>();
             response.put("url", fileUrl);
             return ResponseEntity.ok(response);
-        } catch (IOException e) {
+        } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to upload image: " + e.getMessage());
             return ResponseEntity.internalServerError().body(errorResponse);

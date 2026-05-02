@@ -41,14 +41,6 @@ jobs:
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
-      - name: Prepare Base64 Credentials
-        id: b64_creds
-        run: |
-          # Encode the credentials to avoid multiline issues in env_vars
-          B64=$(echo -n '${{ secrets.GCP_CREDENTIALS }}' | base64 -w 0)
-          echo "::add-mask::$B64"
-          echo "GCP_B64=$B64" >> $GITHUB_ENV
-
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v1
         with:
@@ -62,4 +54,3 @@ jobs:
             MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
             MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
             OAUTH2_REDIRECT_URI=https://travel2go-495007.web.app/oauth2/redirect
-            GCP_CREDENTIALS_BASE64=${{ env.GCP_B64 }}
