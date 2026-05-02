@@ -31,6 +31,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
+        String picture = oAuth2User.getAttribute("picture");
         
         // Determine provider (simplified heuristic or from registrationId if passed)
         // Spring Security usually handles this via ClientRegistration, but for simplicity here we check attributes
@@ -43,14 +44,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             if (!provider.equals(user.getProvider()) && "LOCAL".equals(user.getProvider())) {
                 // Optionally handle linking accounts
             }
+            user.setName(name);
+            user.setPicture(picture);
             // Upgrade existing users to ADMIN for testing purposes
             if (!user.getRoles().contains("ADMIN")) {
                 user.setRoles(List.of("ADMIN"));
-                user = userRepository.save(user).block();
             }
+            user = userRepository.save(user).block();
         } else {
             user = User.builder()
                     .email(email)
+                    .name(name)
+                    .picture(picture)
                     .provider(provider)
                     .providerId(providerId)
                     .roles(List.of("ADMIN")) // Grant ADMIN role by default for testing
@@ -60,7 +65,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         }
 
         String role = user.getRoles().iterator().next();
-        String token = jwtUtil.generateToken(user.getEmail(), role);
+        String token = jwtUtil.generateToken(user.getEmail(), role, user.getName(), user.getPicture());
 
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("token", token)

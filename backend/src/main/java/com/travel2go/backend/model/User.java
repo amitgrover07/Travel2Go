@@ -20,6 +20,8 @@ public class User {
     
     private String email;
     private String password;
+    private String name;
+    private String picture;
     
     // Auth provider (LOCAL, GOOGLE, FACEBOOK)
     private String provider;

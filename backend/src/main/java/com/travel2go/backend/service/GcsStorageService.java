@@ -20,7 +20,7 @@ public class GcsStorageService {
 
     private final Storage storage;
 
-    public String uploadFile(MultipartFile file) throws IOException {
+    public String uploadFile(MultipartFile file, String context) throws IOException {
         String originalFileName = file.getOriginalFilename();
         String extension = "";
         if (originalFileName != null && originalFileName.contains(".")) {
@@ -31,9 +31,14 @@ public class GcsStorageService {
         String fileName = UUID.randomUUID().toString() + extension;
 
         BlobId blobId = BlobId.of(bucketName, fileName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                .setContentType(file.getContentType())
-                .build();
+        BlobInfo.Builder blobInfoBuilder = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType());
+                
+        if (context != null && !context.trim().isEmpty()) {
+            blobInfoBuilder.setMetadata(java.util.Map.of("context", context));
+        }
+        
+        BlobInfo blobInfo = blobInfoBuilder.build();
 
         // Upload the file to GCS
         storage.create(blobInfo, file.getBytes());

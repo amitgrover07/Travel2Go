@@ -18,9 +18,11 @@ public class MediaController {
     private final GcsStorageService gcsStorageService;
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> uploadImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "context", required = false) String context) {
         try {
-            String fileUrl = gcsStorageService.uploadFile(file);
+            String fileUrl = gcsStorageService.uploadFile(file, context);
             Map<String, String> response = new HashMap<>();
             response.put("url", fileUrl);
             return ResponseEntity.ok(response);

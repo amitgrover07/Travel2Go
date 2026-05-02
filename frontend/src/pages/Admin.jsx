@@ -27,6 +27,35 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
+  const getTokenPayload = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  };
+  const userProfile = getTokenPayload();
+
+  const getNextPackageCode = (currentPackages) => {
+    if (!currentPackages || currentPackages.length === 0) return 'PKG-001';
+    let maxNumber = 0;
+    currentPackages.forEach(pkg => {
+      const match = pkg.packageCode?.match(/^PKG-(\d+)$/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNumber) maxNumber = num;
+      }
+    });
+    return `PKG-${String(maxNumber + 1).padStart(3, '0')}`;
+  };
+
   useEffect(() => {
     fetchPackages();
   }, []);
@@ -35,6 +64,10 @@ const Admin = () => {
     try {
       const response = await api.get('/packages/all');
       setPackages(response.data);
+      setFormData(prev => ({ 
+        ...prev, 
+        packageCode: editingId ? prev.packageCode : getNextPackageCode(response.data) 
+      }));
     } catch (error) {
       if (error.response && error.response.status === 403) {
         handleLogout();
@@ -118,13 +151,16 @@ const Admin = () => {
     setFormData({ ...formData, itinerary: adjustedItinerary });
   };
 
-  const handleImageUpload = async (e, type, index = null) => {
+  const handleImageUpload = async (e, type, index = null, context = '') => {
     const file = e.target.files[0];
     if (!file) return;
 
     setUploading(true);
     const formDataPayload = new FormData();
     formDataPayload.append('file', file);
+    if (context && context.trim() !== '') {
+      formDataPayload.append('context', context);
+    }
 
     try {
       const response = await api.post('/media/upload', formDataPayload, {
@@ -232,9 +268,17 @@ const Admin = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-            <button onClick={handleLogout} className="flex items-center text-gray-600 hover:text-gray-900">
-              <LogOut className="h-5 w-5 mr-1" /> Logout
-            </button>
+            <div className="flex items-center space-x-4">
+              {userProfile && userProfile.picture && (
+                <div className="flex items-center space-x-2">
+                  <img src={userProfile.picture} alt={userProfile.name} className="w-8 h-8 rounded-full border border-gray-300 object-cover" />
+                  <span className="text-sm font-medium text-gray-700 hidden md:block">{userProfile.name}</span>
+                </div>
+              )}
+              <button onClick={handleLogout} className="flex items-center text-gray-600 hover:text-gray-900">
+                <LogOut className="h-5 w-5 mr-1" /> Logout
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -254,8 +298,8 @@ const Admin = () => {
                 <h3 className="font-semibold text-gray-700">Basic Info</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Package Code</label>
-                    <input type="text" name="packageCode" value={formData.packageCode} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" placeholder="e.g. PKG-001" />
+                    <label className="block text-sm font-medium text-gray-700">Package Code (Auto)</label>
+                    <input readOnly type="text" name="packageCode" value={formData.packageCode} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md shadow-sm p-2 border bg-gray-200 text-gray-600 cursor-not-allowed" placeholder="e.g. PKG-001" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Status</label>
@@ -325,9 +369,10 @@ const Admin = () => {
                   <label className="block text-sm text-gray-600">Thumbnail URL</label>
                   <div className="flex gap-2">
                     <input type="text" value={formData.media.thumbnailUrl} onChange={(e) => handleNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white" placeholder="https://..." />
+                    <input type="text" id="thumbnailContext" className="w-32 rounded border p-2 bg-white text-sm" placeholder="Context" />
                     <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
                       <Upload size={18} />
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'thumbnail')} disabled={uploading} />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'thumbnail', null, document.getElementById('thumbnailContext').value)} disabled={uploading} />
                     </label>
                   </div>
                 </div>
@@ -340,9 +385,10 @@ const Admin = () => {
                   {formData.media.galleryUrls.map((url, index) => (
                     <div key={index} className="flex gap-2 mb-2">
                       <input type="text" value={url} onChange={(e) => handleArrayStringChange('galleryUrls', index, e.target.value)} className="flex-1 rounded border p-2 bg-white text-sm" placeholder="https://..." />
+                      <input type="text" id={`galleryContext-${index}`} className="w-32 rounded border p-2 bg-white text-sm" placeholder="Context" />
                       <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
                         <Upload size={16} />
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'gallery', index)} disabled={uploading} />
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'gallery', index, document.getElementById(`galleryContext-${index}`).value)} disabled={uploading} />
                       </label>
                       <button type="button" onClick={() => removeArrayStringItem('galleryUrls', index)} className="bg-red-500 text-white p-2 rounded"><X size={16}/></button>
                     </div>
@@ -406,7 +452,7 @@ const Admin = () => {
               {/* Submit */}
               <div className="flex justify-end gap-3 border-t pt-4">
                 {editingId && (
-                  <button type="button" onClick={() => { setEditingId(null); setFormData(defaultForm); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                  <button type="button" onClick={() => { setEditingId(null); setFormData({ ...defaultForm, packageCode: getNextPackageCode(packages) }); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     Cancel
                   </button>
                 )}

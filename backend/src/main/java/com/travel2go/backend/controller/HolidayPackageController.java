@@ -9,9 +9,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/packages")
@@ -45,14 +45,16 @@ public class HolidayPackageController {
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<HolidayPackage>> getPackageById(@PathVariable String id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+    public ResponseEntity<HolidayPackage> getPackageById(@PathVariable String id) {
+        HolidayPackage pkg = repository.findById(id).block();
+        if (pkg != null) {
+            return ResponseEntity.ok(pkg);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    public Mono<ResponseEntity<?>> createPackage(@RequestBody HolidayPackage holidayPackage) {
+    public ResponseEntity<?> createPackage(@RequestBody HolidayPackage holidayPackage) {
         String currentUser = getCurrentUser();
         HolidayPackage.Audit audit = HolidayPackage.Audit.builder()
                 .createdBy(currentUser)
@@ -62,60 +64,63 @@ public class HolidayPackageController {
                 .build();
         holidayPackage.setAudit(audit);
 
-        return repository.findByPackageCode(holidayPackage.getPackageCode())
-                .hasElements()
-                .flatMap(exists -> {
-                    if (exists) {
-                        return Mono.just(ResponseEntity.status(409).body(java.util.Map.of("message", "Package code already exists")));
-                    }
-                    return repository.save(holidayPackage).map(ResponseEntity::ok);
-                });
+        Boolean exists = repository.findByPackageCode(holidayPackage.getPackageCode()).hasElements().block();
+        if (Boolean.TRUE.equals(exists)) {
+            return ResponseEntity.status(409).body(Map.of("message", "Package code already exists"));
+        }
+        HolidayPackage saved = repository.save(holidayPackage).block();
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
-    public Mono<ResponseEntity<?>> updatePackage(@PathVariable String id, @RequestBody HolidayPackage holidayPackageDetails) {
+    public ResponseEntity<?> updatePackage(@PathVariable String id, @RequestBody HolidayPackage holidayPackageDetails) {
         String currentUser = getCurrentUser();
         
-        return repository.findById(id)
-                .flatMap(existingPackage -> {
-                    return repository.findByPackageCode(holidayPackageDetails.getPackageCode())
-                            .filter(pkg -> !pkg.getId().equals(id))
-                            .hasElements()
-                            .flatMap(exists -> {
-                                if (exists) {
-                                    return Mono.just(ResponseEntity.status(409).body(java.util.Map.of("message", "Package code already exists")));
-                                }
-                                
-                                existingPackage.setPackageCode(holidayPackageDetails.getPackageCode());
-                                existingPackage.setTitle(holidayPackageDetails.getTitle());
-                                existingPackage.setDestination(holidayPackageDetails.getDestination());
-                                existingPackage.setStatus(holidayPackageDetails.getStatus());
-                                existingPackage.setOverview(holidayPackageDetails.getOverview());
+        HolidayPackage existingPackage = repository.findById(id).block();
+        if (existingPackage == null) {
+            return ResponseEntity.notFound().build();
+        }
 
-                                existingPackage.setDuration(holidayPackageDetails.getDuration());
-                                existingPackage.setPricing(holidayPackageDetails.getPricing());
-                                existingPackage.setMedia(holidayPackageDetails.getMedia());
+        Boolean codeExists = repository.findByPackageCode(holidayPackageDetails.getPackageCode())
+                .filter(pkg -> !pkg.getId().equals(id))
+                .hasElements()
+                .block();
 
-                                existingPackage.setInclusions(holidayPackageDetails.getInclusions());
-                                existingPackage.setExclusions(holidayPackageDetails.getExclusions());
-                                existingPackage.setItinerary(holidayPackageDetails.getItinerary());
+        if (Boolean.TRUE.equals(codeExists)) {
+            return ResponseEntity.status(409).body(Map.of("message", "Package code already exists"));
+        }
+        
+        existingPackage.setPackageCode(holidayPackageDetails.getPackageCode());
+        existingPackage.setTitle(holidayPackageDetails.getTitle());
+        existingPackage.setDestination(holidayPackageDetails.getDestination());
+        existingPackage.setStatus(holidayPackageDetails.getStatus());
+        existingPackage.setOverview(holidayPackageDetails.getOverview());
 
-                                if (existingPackage.getAudit() == null) {
-                                    existingPackage.setAudit(new HolidayPackage.Audit());
-                                }
-                                existingPackage.getAudit().setUpdatedBy(currentUser);
-                                existingPackage.getAudit().setUpdatedAt(Instant.now());
+        existingPackage.setDuration(holidayPackageDetails.getDuration());
+        existingPackage.setPricing(holidayPackageDetails.getPricing());
+        existingPackage.setMedia(holidayPackageDetails.getMedia());
 
-                                return repository.save(existingPackage).map(ResponseEntity::ok);
-                            });
-                })
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+        existingPackage.setInclusions(holidayPackageDetails.getInclusions());
+        existingPackage.setExclusions(holidayPackageDetails.getExclusions());
+        existingPackage.setItinerary(holidayPackageDetails.getItinerary());
+
+        if (existingPackage.getAudit() == null) {
+            existingPackage.setAudit(new HolidayPackage.Audit());
+        }
+        existingPackage.getAudit().setUpdatedBy(currentUser);
+        existingPackage.getAudit().setUpdatedAt(Instant.now());
+
+        HolidayPackage saved = repository.save(existingPackage).block();
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
-    public Mono<ResponseEntity<Void>> deletePackage(@PathVariable String id) {
-        return repository.findById(id)
-                .flatMap(existingPackage -> repository.delete(existingPackage).then(Mono.just(ResponseEntity.noContent().<Void>build())))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+    public ResponseEntity<Void> deletePackage(@PathVariable String id) {
+        HolidayPackage existingPackage = repository.findById(id).block();
+        if (existingPackage != null) {
+            repository.delete(existingPackage).block();
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }
