@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Plus, Edit2, Trash2, X, Upload } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const defaultForm = {
@@ -23,6 +24,7 @@ const Admin = () => {
   const [formData, setFormData] = useState(defaultForm);
   const [editingId, setEditingId] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -138,7 +140,7 @@ const Admin = () => {
     } catch (error) {
       console.error('Error uploading image', error);
       const errorMessage = error.response?.data?.error || error.message || 'Failed to upload image';
-      alert(`Upload failed: ${errorMessage}`);
+      toast.error(`Upload failed: ${errorMessage}`);
     } finally {
       setUploading(false);
     }
@@ -147,7 +149,7 @@ const Admin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (uploading) {
-      alert("Please wait for image upload to finish.");
+      toast.error("Please wait for image upload to finish.");
       return;
     }
 
@@ -163,11 +165,14 @@ const Admin = () => {
       finalPrice: formData.pricing.finalPrice ? Number(formData.pricing.finalPrice) : 0
     };
 
+    setSaving(true);
     try {
       if (editingId) {
         await api.put(`/packages/${editingId}`, payload);
+        toast.success('Package updated successfully');
       } else {
         await api.post('/packages', payload);
+        toast.success('Package saved successfully');
       }
       setFormData(defaultForm);
       setEditingId(null);
@@ -175,13 +180,15 @@ const Admin = () => {
     } catch (error) {
       console.error('Error saving package', error);
       if (error.response && error.response.status === 409) {
-        alert(error.response.data.message || 'This package was modified by another user. Please refresh the page and try again.');
+        toast.error(error.response.data.message || 'This package code already exists.');
       } else if (error.response && error.response.status === 403) {
         handleLogout();
       } else {
         const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to save package';
-        alert(`Failed to save package: ${errorMessage}`);
+        toast.error(`Failed to save package: ${errorMessage}`);
       }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -202,12 +209,19 @@ const Admin = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this package?')) {
+      const previousPackages = [...packages];
+      setPackages(packages.filter(p => p.id !== id));
       try {
         await api.delete(`/packages/${id}`);
-        fetchPackages();
+        toast.success('Package deleted successfully');
       } catch (error) {
+        setPackages(previousPackages);
         console.error('Error deleting package', error);
-        if (error.response && error.response.status === 403) handleLogout();
+        if (error.response && error.response.status === 403) {
+          handleLogout();
+        } else {
+          toast.error('Failed to delete package');
+        }
       }
     }
   };
@@ -396,8 +410,8 @@ const Admin = () => {
                     Cancel
                   </button>
                 )}
-                <button type="submit" disabled={uploading} className="flex items-center px-6 py-2 border border-transparent rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm font-medium disabled:bg-blue-400">
-                  {editingId ? 'Update Package' : 'Save Package'}
+                <button type="submit" disabled={uploading || saving} className="flex items-center px-6 py-2 border border-transparent rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm font-medium disabled:bg-blue-400">
+                  {saving ? 'Saving...' : (editingId ? 'Update Package' : 'Save Package')}
                 </button>
               </div>
             </form>
