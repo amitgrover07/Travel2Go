@@ -43,12 +43,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             if (!provider.equals(user.getProvider()) && "LOCAL".equals(user.getProvider())) {
                 // Optionally handle linking accounts
             }
+            // Upgrade existing users to ADMIN for testing purposes
+            if (!user.getRoles().contains("ADMIN")) {
+                user.setRoles(List.of("ADMIN"));
+                user = userRepository.save(user).block();
+            }
         } else {
             user = User.builder()
                     .email(email)
                     .provider(provider)
                     .providerId(providerId)
-                    .roles(List.of("USER")) // default role
+                    .roles(List.of("ADMIN")) // Grant ADMIN role by default for testing
                     .enabled(true)
                     .build();
             user = userRepository.save(user).block();
