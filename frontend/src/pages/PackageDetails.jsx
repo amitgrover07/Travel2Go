@@ -141,11 +141,11 @@ const PackageDetails = () => {
                 </div>
                 <div className="flex items-baseline mb-6">
                   <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
-                    {pkg.pricing?.currency || '$'}{pkg.pricing?.finalPrice}
+                    {pkg.pricing?.currency || 'INR'} {pkg.pricing?.finalPrice}
                   </span>
                   {pkg.pricing?.basePrice > pkg.pricing?.finalPrice && (
                     <span className="ml-3 text-lg text-gray-400 line-through decoration-red-400">
-                      {pkg.pricing?.currency || '$'}{pkg.pricing?.basePrice}
+                      {pkg.pricing?.currency || 'INR'} {pkg.pricing?.basePrice}
                     </span>
                   )}
                 </div>

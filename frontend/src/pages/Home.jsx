@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Clock, DollarSign } from 'lucide-react';
+import { MapPin, Clock } from 'lucide-react';
 import api from '../services/api';
 
 const Home = () => {
@@ -77,8 +77,7 @@ const Home = () => {
                 
                 <div className="mt-auto border-t border-gray-100 pt-4 flex items-center justify-between">
                   <div className="flex items-center text-gray-700 font-medium">
-                    <DollarSign className="h-5 w-5 text-green-500" />
-                    <span className="text-xl">{pkg.pricing?.currency || '$'} {pkg.pricing?.finalPrice}</span>
+                    <span className="text-xl font-semibold">{pkg.pricing?.currency || 'INR'} {pkg.pricing?.finalPrice}</span>
                   </div>
                   <div className="flex items-center text-gray-500 text-sm">
                     <Clock className="h-4 w-4 mr-1" />
