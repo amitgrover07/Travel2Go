@@ -46,10 +46,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             }
             user.setName(name);
             user.setPicture(picture);
-            // Upgrade existing users to ADMIN for testing purposes
-            if (!user.getRoles().contains("ADMIN")) {
-                user.setRoles(List.of("ADMIN"));
-            }
+            // Leave roles as they are in the database
             user = userRepository.save(user).block();
         } else {
             user = User.builder()
@@ -58,7 +55,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .picture(picture)
                     .provider(provider)
                     .providerId(providerId)
-                    .roles(List.of("ADMIN")) // Grant ADMIN role by default for testing
+                    .roles(List.of("USER")) // Grant USER role by default
                     .enabled(true)
                     .build();
             user = userRepository.save(user).block();

@@ -58,6 +58,17 @@ const Admin = () => {
   };
 
   useEffect(() => {
+    if (!userProfile) {
+      handleLogout();
+      return;
+    }
+    
+    if (userProfile.role !== 'ADMIN') {
+      toast.error('You do not have permission to access the admin dashboard');
+      navigate('/');
+      return;
+    }
+    
     fetchPackages();
   }, []);
 
