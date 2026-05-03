@@ -39,10 +39,14 @@ const PackageDetails = () => {
 
   // Combine thumbnail and gallery urls for the carousel
   const images = [];
-  if (pkg.media?.thumbnailUrl) images.push(pkg.media.thumbnailUrl);
+  if (pkg.media?.thumbnailUrl && pkg.media.thumbnailUrl.trim() !== '') {
+    images.push(pkg.media.thumbnailUrl);
+  }
   if (pkg.media?.galleryUrls && Array.isArray(pkg.media.galleryUrls)) {
     pkg.media.galleryUrls.forEach(url => {
-      if (url !== pkg.media.thumbnailUrl) images.push(url);
+      if (url && url.trim() !== '' && !images.includes(url)) {
+        images.push(url);
+      }
     });
   }
 
