@@ -60,17 +60,6 @@ const PackageDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center">
-            <Link to="/" className="flex items-center text-gray-600 hover:text-blue-600 transition-colors">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              <span className="font-medium">Back</span>
-            </Link>
-          </div>
-        </div>
-      </nav>
 
       <main className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 mt-0 sm:mt-8">
         <div className="bg-white shadow-none sm:shadow-lg sm:rounded-2xl overflow-hidden">

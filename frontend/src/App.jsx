@@ -9,6 +9,8 @@ import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler';
 import Admin from './pages/Admin';
 import PackageDetails from './pages/PackageDetails';
 
+import MainLayout from './components/MainLayout';
+
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -22,8 +24,8 @@ function App() {
     <Router>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/packages/:id" element={<PackageDetails />} />
+        <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+        <Route path="/packages/:id" element={<MainLayout><PackageDetails /></MainLayout>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
