@@ -6,6 +6,7 @@ import com.travel2go.backend.repository.UserRepository;
 import com.travel2go.backend.repository.VerificationCodeRepository;
 import com.travel2go.backend.security.JwtUtil;
 import com.travel2go.backend.service.EmailService;
+import com.travel2go.backend.service.SmsService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final VerificationCodeRepository verificationCodeRepository;
     private final EmailService emailService;
+    private final SmsService smsService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
@@ -122,6 +124,55 @@ public class AuthController {
         return ResponseEntity.ok("Password reset successfully");
     }
 
+    @PostMapping("/send-login-otp")
+    public ResponseEntity<?> sendLoginOtp(@RequestBody PhoneAuthRequest request) {
+        if (request.getPhone() == null || request.getPhone().isEmpty()) {
+            return ResponseEntity.badRequest().body("Phone number is required");
+        }
+        
+        String code = String.format("%06d", new Random().nextInt(999999));
+        
+        verificationCodeRepository.deleteByPhone(request.getPhone()).block();
+        VerificationCode verificationCode = VerificationCode.builder()
+                .phone(request.getPhone())
+                .code(code)
+                .expiryDate(new java.util.Date(System.currentTimeMillis() + 5 * 60 * 1000))
+                .build();
+        verificationCodeRepository.save(verificationCode).block();
+
+        smsService.sendVerificationCode(request.getPhone(), code);
+        return ResponseEntity.ok("OTP sent to phone");
+    }
+
+    @PostMapping("/verify-login-otp")
+    public ResponseEntity<?> verifyLoginOtp(@RequestBody VerifyOtpRequest request) {
+        VerificationCode code = verificationCodeRepository.findByPhoneAndCode(request.getPhone(), request.getOtp()).block();
+        if (code == null || code.isExpired()) {
+            return ResponseEntity.status(401).body("Invalid or expired OTP");
+        }
+
+        User user = userRepository.findByPhone(request.getPhone()).block();
+        if (user == null) {
+            user = User.builder()
+                    .phone(request.getPhone())
+                    .provider("PHONE")
+                    .roles(List.of("USER"))
+                    .enabled(true)
+                    .build();
+            userRepository.save(user).block();
+        }
+
+        String role = user.getRoles() != null && !user.getRoles().isEmpty() ? user.getRoles().get(0) : "USER";
+        String name = user.getName() != null ? user.getName() : request.getPhone();
+        String picture = user.getPicture() != null ? user.getPicture() : "";
+        
+        String token = jwtUtil.generateToken(request.getPhone(), role, name, picture);
+        
+        verificationCodeRepository.deleteByPhone(request.getPhone()).block();
+
+        return ResponseEntity.ok(new AuthResponse(token));
+    }
+
     // DTOs
     @Data
     public static class AuthRequest {
@@ -151,5 +202,16 @@ public class AuthController {
         private String email;
         private String code;
         private String newPassword;
+    }
+
+    @Data
+    public static class PhoneAuthRequest {
+        private String phone;
+    }
+
+    @Data
+    public static class VerifyOtpRequest {
+        private String phone;
+        private String otp;
     }
 }

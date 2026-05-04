@@ -9,4 +9,6 @@ import reactor.core.publisher.Mono;
 public interface VerificationCodeRepository extends FirestoreReactiveRepository<VerificationCode> {
     Mono<VerificationCode> findByEmailAndCode(String email, String code);
     Mono<Void> deleteByEmail(String email);
+    Mono<VerificationCode> findByPhoneAndCode(String phone, String code);
+    Mono<Void> deleteByPhone(String phone);
 }

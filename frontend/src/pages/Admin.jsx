@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { LogOut, Plus, Edit2, Trash2, X, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -285,7 +285,12 @@ const Admin = () => {
       <nav className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+            <div className="flex items-center space-x-4">
+              <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+              <Link to="/" className="text-blue-600 hover:text-blue-800 text-sm font-medium hidden sm:block">
+                View Website
+              </Link>
+            </div>
             <div className="flex items-center space-x-4">
               {userProfile && userProfile.picture && (
                 <div className="flex items-center space-x-2">

@@ -3,25 +3,78 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 
 const Login = () => {
+  const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const getTokenPayload = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const handleLoginSuccess = (token) => {
+    localStorage.setItem('token', token);
+    const payload = getTokenPayload(token);
+    if (payload && payload.role === 'ADMIN') {
+      navigate('/admin');
+    } else {
+      navigate('/');
+    }
+  };
+
+  const handleEmailLogin = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       const response = await api.post('/auth/login', { username: email, password });
-      localStorage.setItem('token', response.data.token);
-      navigate('/admin');
+      handleLoginSuccess(response.data.token);
     } catch (err) {
-      setError('Invalid credentials');
+      setError('Invalid email or password');
+    }
+  };
+
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    try {
+      await api.post('/auth/send-login-otp', { phone });
+      setOtpSent(true);
+      setMessage('OTP sent successfully to your phone!');
+    } catch (err) {
+      setError('Failed to send OTP. Please try again.');
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const response = await api.post('/auth/verify-login-otp', { phone, otp });
+      handleLoginSuccess(response.data.token);
+    } catch (err) {
+      setError('Invalid or expired OTP');
     }
   };
 
   const handleOAuth2Login = (provider) => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-    // Remove the /api from the end of the URL to get the base backend URL
     const baseUrl = apiUrl.replace(/\/api\/?$/, '');
     window.location.href = `${baseUrl}/oauth2/authorization/${provider}`;
   };
@@ -36,55 +89,140 @@ const Login = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleLogin}>
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email address</label>
-              <div className="mt-1">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-            </div>
+          
+          {/* Tabs */}
+          <div className="flex border-b mb-6">
+            <button
+              onClick={() => { setLoginMethod('email'); setError(''); setMessage(''); }}
+              className={`flex-1 py-2 text-center text-sm font-medium ${loginMethod === 'email' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Email Login
+            </button>
+            <button
+              onClick={() => { setLoginMethod('phone'); setError(''); setMessage(''); }}
+              className={`flex-1 py-2 text-center text-sm font-medium ${loginMethod === 'phone' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Phone Login
+            </button>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <div className="mt-1">
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
+          {error && (
+            <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
+              <p className="text-sm text-red-700">{error}</p>
             </div>
+          )}
+          
+          {message && (
+            <div className="mb-4 bg-green-50 border-l-4 border-green-400 p-4">
+              <p className="text-sm text-green-700">{message}</p>
+            </div>
+          )}
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
-                  Forgot your password?
-                </Link>
+          {loginMethod === 'email' ? (
+            <form className="space-y-6" onSubmit={handleEmailLogin}>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email address</label>
+                <div className="mt-1">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <button
-                type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Sign in
-              </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <div className="mt-1">
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                    Forgot your password?
+                  </Link>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Sign in
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-6">
+              {!otpSent ? (
+                <form onSubmit={handleSendOtp} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <div className="mt-1">
+                      <input
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+1234567890"
+                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <button
+                      type="submit"
+                      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Send OTP
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Enter OTP</label>
+                    <div className="mt-1">
+                      <input
+                        type="text"
+                        required
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="123456"
+                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-center tracking-widest text-lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setOtpSent(false)}
+                      className="w-1/3 flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="w-2/3 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Verify & Login
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
-          </form>
+          )}
 
           <div className="mt-6">
             <div className="relative">
