@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import com.google.cloud.firestore.annotation.DocumentId;
 import com.google.cloud.spring.data.firestore.Document;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -19,9 +19,9 @@ public class VerificationCode {
     private String id;
     private String email;
     private String code;
-    private LocalDateTime expiryDate;
+    private Date expiryDate;
     
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(this.expiryDate);
+        return new Date().after(this.expiryDate);
     }
 }

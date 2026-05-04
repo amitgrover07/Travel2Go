@@ -91,7 +91,7 @@ public class AuthController {
         VerificationCode verificationCode = VerificationCode.builder()
                 .email(request.getEmail())
                 .code(code)
-                .expiryDate(LocalDateTime.now().plusMinutes(15))
+                .expiryDate(new java.util.Date(System.currentTimeMillis() + 15 * 60 * 1000))
                 .build();
         verificationCodeRepository.save(verificationCode).block();
 
