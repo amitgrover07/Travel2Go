@@ -132,9 +132,10 @@ const PackageDetails = () => {
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
                   {pkg.title}
                 </h1>
-                <div className="text-gray-600 text-base sm:text-lg leading-relaxed">
-                  {renderBulletPoints(pkg.overview)}
-                </div>
+                <div 
+                  className="text-gray-600 text-base sm:text-lg leading-relaxed quill-content"
+                  dangerouslySetInnerHTML={{ __html: pkg.overview }}
+                />
               </div>
 
               {/* Pricing Card */}
@@ -217,7 +218,10 @@ const PackageDetails = () => {
                             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">Day {day.day}</span>
                             <h4 className="text-lg font-bold text-gray-900">{day.title}</h4>
                           </div>
-                          <p className="text-gray-600 text-sm md:text-base whitespace-pre-wrap leading-relaxed">{day.activities}</p>
+                          <div 
+                            className="text-gray-600 text-sm md:text-base leading-relaxed quill-content"
+                            dangerouslySetInnerHTML={{ __html: day.activities }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -232,9 +236,10 @@ const PackageDetails = () => {
                 <h3 className="text-xl font-bold text-red-600 mb-4 flex items-center">
                   Important Notes & Conditions
                 </h3>
-                <div className="text-gray-700">
-                  {renderBulletPoints(pkg.specialNotes)}
-                </div>
+                <div 
+                  className="text-gray-700 quill-content"
+                  dangerouslySetInnerHTML={{ __html: pkg.specialNotes }}
+                />
               </div>
             )}
           </div>

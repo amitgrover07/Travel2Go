@@ -2,7 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogOut, Plus, Edit2, Trash2, X, Upload, Image } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import api from '../services/api';
+
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, false] }],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+    ['link', 'clean']
+  ],
+};
+
+const quillFormats = [
+  'header',
+  'bold', 'italic', 'underline', 'strike', 'blockquote',
+  'list', 'bullet', 'indent',
+  'link'
+];
 
 const defaultForm = {
   packageCode: '',
@@ -162,6 +180,16 @@ const Admin = () => {
     const newItinerary = formData.itinerary.filter((_, i) => i !== index);
     const adjustedItinerary = newItinerary.map((item, i) => ({ ...item, day: i + 1 }));
     setFormData({ ...formData, itinerary: adjustedItinerary });
+  };
+
+  const handleQuillChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleItineraryQuillChange = (index, value) => {
+    const newItinerary = [...formData.itinerary];
+    newItinerary[index] = { ...newItinerary[index], activities: value };
+    setFormData({ ...formData, itinerary: newItinerary });
   };
 
   const handleImageUpload = async (e, type, index = null, context = '') => {
@@ -346,8 +374,15 @@ const Admin = () => {
                   <input type="text" name="destination" value={formData.destination} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Overview</label>
-                  <textarea name="overview" value={formData.overview} onChange={handleTopLevelChange} rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
+                  <ReactQuill 
+                    theme="snow"
+                    value={formData.overview} 
+                    onChange={(value) => handleQuillChange('overview', value)}
+                    modules={quillModules}
+                    formats={quillFormats}
+                    className="bg-white rounded-md overflow-hidden"
+                  />
                 </div>
               </div>
 
@@ -471,7 +506,15 @@ const Admin = () => {
                       <button type="button" onClick={() => removeItineraryDay(index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700"><X size={16}/></button>
                       <h4 className="font-bold text-gray-800 mb-2">Day {day.day}</h4>
                       <input type="text" placeholder="Day Title (e.g. Arrival in Kochi)" value={day.title} onChange={(e) => handleItineraryChange(index, 'title', e.target.value)} className="w-full mb-2 p-2 border rounded text-sm" />
-                      <textarea placeholder="Activities for the day..." value={day.activities} onChange={(e) => handleItineraryChange(index, 'activities', e.target.value)} rows={2} className="w-full p-2 border rounded text-sm" />
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Activities</label>
+                      <ReactQuill 
+                        theme="snow"
+                        value={day.activities} 
+                        onChange={(value) => handleItineraryQuillChange(index, value)}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        className="bg-white rounded border text-sm"
+                      />
                     </div>
                   ))}
                 </div>
@@ -480,13 +523,14 @@ const Admin = () => {
               {/* Special Notes */}
               <div className="bg-gray-50 p-4 rounded-md">
                 <h3 className="font-semibold text-gray-700 mb-2 text-red-600">Special Notes / Conditions</h3>
-                <textarea 
-                  name="specialNotes" 
-                  value={formData.specialNotes || ''} 
-                  onChange={handleTopLevelChange} 
-                  rows={4} 
-                  placeholder="Enter special notes or conditions here. Separate each point by pressing Enter to display as bullet points."
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" 
+                <ReactQuill 
+                  theme="snow"
+                  value={formData.specialNotes} 
+                  onChange={(value) => handleQuillChange('specialNotes', value)}
+                  modules={quillModules}
+                  formats={quillFormats}
+                  placeholder="Enter special notes or conditions here..."
+                  className="bg-white rounded-md overflow-hidden"
                 />
               </div>
 
