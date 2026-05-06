@@ -95,6 +95,7 @@ public class HolidayPackageController {
         existingPackage.setDestination(holidayPackageDetails.getDestination());
         existingPackage.setStatus(holidayPackageDetails.getStatus());
         existingPackage.setOverview(holidayPackageDetails.getOverview());
+        existingPackage.setSpecialNotes(holidayPackageDetails.getSpecialNotes());
 
         existingPackage.setDuration(holidayPackageDetails.getDuration());
         existingPackage.setPricing(holidayPackageDetails.getPricing());
