@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -46,6 +46,9 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mediaContexts, setMediaContexts] = useState({ thumbnail: '', gallery: {} });
+  const [view, setView] = useState('packages'); // 'packages' or 'settings'
+  const [globalTerms, setGlobalTerms] = useState('');
+  const [savingSettings, setSavingSettings] = useState(false);
   const navigate = useNavigate();
 
   const getTokenPayload = () => {
@@ -90,7 +93,30 @@ const Admin = () => {
     }
     
     fetchPackages();
+    fetchGlobalTerms();
   }, []);
+
+  const fetchGlobalTerms = async () => {
+    try {
+      const response = await api.get('/settings/terms');
+      setGlobalTerms(response.data.termsAndConditions || '');
+    } catch (error) {
+      console.error('Error fetching global terms:', error);
+    }
+  };
+
+  const handleSaveGlobalTerms = async () => {
+    setSavingSettings(true);
+    try {
+      await api.put('/settings/terms', { termsAndConditions: globalTerms });
+      toast.success('Global Terms & Conditions updated successfully');
+    } catch (error) {
+      console.error('Error saving global terms:', error);
+      toast.error('Failed to save global terms');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   const fetchPackages = async () => {
     try {
@@ -324,6 +350,12 @@ const Admin = () => {
               <Link to="/admin/images" className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium hidden sm:block">
                 <Image className="h-4 w-4 mr-1" /> Media Gallery
               </Link>
+              <button 
+                onClick={() => setView(view === 'packages' ? 'settings' : 'packages')}
+                className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                <Settings className="h-4 w-4 mr-1" /> {view === 'packages' ? 'Global Terms' : 'Manage Packages'}
+              </button>
             </div>
             <div className="flex items-center space-x-4">
               {userProfile && userProfile.picture && (
@@ -343,253 +375,290 @@ const Admin = () => {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row gap-6">
           
-          {/* Form Section */}
-          <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-y-auto max-h-[calc(100vh-8rem)]">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 border-b pb-2">
-              {editingId ? 'Edit Package' : 'Add New Package'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              
-              {/* Basic Info */}
-              <div className="space-y-4 bg-gray-50 p-4 rounded-md">
-                <h3 className="font-semibold text-gray-700">Basic Info</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Package Code (Auto)</label>
-                    <input readOnly type="text" name="packageCode" value={formData.packageCode} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md shadow-sm p-2 border bg-gray-200 text-gray-600 cursor-not-allowed" placeholder="e.g. PKG-001" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <select name="status" value={formData.status} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white">
-                      <option value="ACTIVE">ACTIVE</option>
-                      <option value="INACTIVE">INACTIVE</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Title</label>
-                  <input type="text" name="title" value={formData.title} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Destination</label>
-                  <input type="text" name="destination" value={formData.destination} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
-                  <ReactQuill 
-                    theme="snow"
-                    value={formData.overview} 
-                    onChange={(value) => handleQuillChange('overview', value)}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white rounded-md overflow-hidden"
-                  />
-                </div>
+          {/* Settings Section */}
+          {view === 'settings' && (
+            <div className="w-full bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3 mb-6 border-b pb-4">
+                <FileText className="h-6 w-6 text-blue-600" />
+                <h2 className="text-2xl font-bold text-gray-900">Global Terms & Conditions</h2>
               </div>
-
-              {/* Duration & Pricing */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-4 bg-gray-50 p-4 rounded-md">
-                  <h3 className="font-semibold text-gray-700">Duration</h3>
-                  <div>
-                    <label className="block text-sm text-gray-600">Days</label>
-                    <input type="number" value={formData.duration.days} onChange={(e) => handleNestedChange('duration', 'days', e.target.value)} className="w-full rounded border p-2 bg-white" />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600">Nights</label>
-                    <input type="number" value={formData.duration.nights} onChange={(e) => handleNestedChange('duration', 'nights', e.target.value)} className="w-full rounded border p-2 bg-white" />
-                  </div>
-                </div>
-
-                <div className="space-y-4 bg-gray-50 p-4 rounded-md">
-                  <h3 className="font-semibold text-gray-700">Pricing</h3>
-                  <div>
-                    <label className="block text-sm text-gray-600">Currency</label>
-                    <input type="text" value={formData.pricing.currency} onChange={(e) => handleNestedChange('pricing', 'currency', e.target.value)} className="w-full rounded border p-2 bg-white" />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600">Base Price</label>
-                    <input type="number" value={formData.pricing.basePrice} onChange={(e) => handleNestedChange('pricing', 'basePrice', e.target.value)} className="w-full rounded border p-2 bg-white" />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600">Discount %</label>
-                    <input type="number" value={formData.pricing.discountPercentage} onChange={(e) => handleNestedChange('pricing', 'discountPercentage', e.target.value)} className="w-full rounded border p-2 bg-white" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-800">Final Price (Auto)</label>
-                    <input readOnly type="number" value={formData.pricing.finalPrice} className="w-full rounded border p-2 bg-gray-200" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Media with File Upload */}
-              <div className="space-y-4 bg-gray-50 p-4 rounded-md">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold text-gray-700">Media</h3>
-                  {uploading && <span className="text-sm text-blue-600 animate-pulse">Uploading to Cloud...</span>}
-                </div>
-                
-                <div>
-                  <label className="block text-sm text-gray-600">Thumbnail URL</label>
-                  <div className="flex gap-2">
-                    <input type="text" value={formData.media.thumbnailUrl} onChange={(e) => handleNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white" placeholder="https://..." />
-                    <input type="text" value={mediaContexts.thumbnail} onChange={(e) => setMediaContexts({ ...mediaContexts, thumbnail: e.target.value })} className="w-48 rounded border p-2 bg-white text-sm" placeholder="e.g. theme=beach, category=hero" />
-                    <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
-                      <Upload size={18} />
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'thumbnail', null, mediaContexts.thumbnail)} disabled={uploading} />
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-1 mt-4">
-                    <label className="block text-sm text-gray-600">Gallery URLs</label>
-                    <button type="button" onClick={() => addArrayStringItem('galleryUrls')} className="text-blue-600 hover:text-blue-800"><Plus size={16}/></button>
-                  </div>
-                  {formData.media.galleryUrls.map((url, index) => (
-                    <div key={index} className="flex gap-2 mb-2">
-                      <input type="text" value={url} onChange={(e) => handleArrayStringChange('galleryUrls', index, e.target.value)} className="flex-1 rounded border p-2 bg-white text-sm" placeholder="https://..." />
-                      <input type="text" value={mediaContexts.gallery[index] || ''} onChange={(e) => setMediaContexts({ ...mediaContexts, gallery: { ...mediaContexts.gallery, [index]: e.target.value } })} className="w-48 rounded border p-2 bg-white text-sm" placeholder="e.g. key=value, key2=value2" />
-                      <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
-                        <Upload size={16} />
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'gallery', index, mediaContexts.gallery[index])} disabled={uploading} />
-                      </label>
-                      <button type="button" onClick={() => removeArrayStringItem('galleryUrls', index)} className="bg-red-500 text-white p-2 rounded"><X size={16}/></button>
-                    </div>
-                  ))}
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600 mt-4">Alt Text</label>
-                  <input type="text" value={formData.media.altText} onChange={(e) => handleNestedChange('media', 'altText', e.target.value)} className="w-full rounded border p-2 bg-white" />
-                </div>
-              </div>
-
-              {/* Inclusions & Exclusions */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold text-gray-700">Inclusions</h3>
-                    <button type="button" onClick={() => addArrayStringItem('inclusions')} className="text-blue-600 hover:text-blue-800"><Plus size={16}/></button>
-                  </div>
-                  {formData.inclusions.map((item, index) => (
-                    <div key={index} className="flex mb-2">
-                      <input type="text" value={item} onChange={(e) => handleArrayStringChange('inclusions', index, e.target.value)} className="flex-1 rounded-l border p-1 bg-white text-sm" />
-                      <button type="button" onClick={() => removeArrayStringItem('inclusions', index)} className="bg-red-500 text-white p-1 rounded-r"><X size={16}/></button>
-                    </div>
-                  ))}
-                </div>
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold text-gray-700">Exclusions</h3>
-                    <button type="button" onClick={() => addArrayStringItem('exclusions')} className="text-blue-600 hover:text-blue-800"><Plus size={16}/></button>
-                  </div>
-                  {formData.exclusions.map((item, index) => (
-                    <div key={index} className="flex mb-2">
-                      <input type="text" value={item} onChange={(e) => handleArrayStringChange('exclusions', index, e.target.value)} className="flex-1 rounded-l border p-1 bg-white text-sm" />
-                      <button type="button" onClick={() => removeArrayStringItem('exclusions', index)} className="bg-red-500 text-white p-1 rounded-r"><X size={16}/></button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Itinerary */}
-              <div className="bg-gray-50 p-4 rounded-md">
-                <div className="flex justify-between items-center mb-4 border-b pb-2">
-                  <h3 className="font-semibold text-gray-700">Itinerary</h3>
-                  <button type="button" onClick={addItineraryDay} className="flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium">
-                    <Plus size={16} className="mr-1"/> Add Day
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {formData.itinerary.map((day, index) => (
-                    <div key={index} className="border border-gray-200 bg-white p-3 rounded relative">
-                      <button type="button" onClick={() => removeItineraryDay(index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700"><X size={16}/></button>
-                      <h4 className="font-bold text-gray-800 mb-2">Day {day.day}</h4>
-                      <input type="text" placeholder="Day Title (e.g. Arrival in Kochi)" value={day.title} onChange={(e) => handleItineraryChange(index, 'title', e.target.value)} className="w-full mb-2 p-2 border rounded text-sm" />
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Activities</label>
-                      <ReactQuill 
-                        theme="snow"
-                        value={day.activities} 
-                        onChange={(value) => handleItineraryQuillChange(index, value)}
-                        modules={quillModules}
-                        formats={quillFormats}
-                        className="bg-white rounded border text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Special Notes */}
-              <div className="bg-gray-50 p-4 rounded-md">
-                <h3 className="font-semibold text-gray-700 mb-2 text-red-600">Special Notes / Conditions</h3>
+              <p className="text-gray-500 mb-6 italic">
+                These terms will be displayed at the bottom of all package detail pages.
+              </p>
+              <div className="mb-8">
                 <ReactQuill 
                   theme="snow"
-                  value={formData.specialNotes} 
-                  onChange={(value) => handleQuillChange('specialNotes', value)}
+                  value={globalTerms} 
+                  onChange={setGlobalTerms}
                   modules={quillModules}
                   formats={quillFormats}
-                  placeholder="Enter special notes or conditions here..."
-                  className="bg-white rounded-md overflow-hidden"
+                  placeholder="Enter global terms and conditions..."
+                  className="bg-white rounded-md h-96 mb-12"
                 />
               </div>
-
-              {/* Submit */}
-              <div className="flex justify-end gap-3 border-t pt-4">
-                {editingId && (
-                  <button type="button" onClick={() => { setEditingId(null); setFormData({ ...defaultForm, packageCode: getNextPackageCode(packages) }); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    Cancel
-                  </button>
-                )}
-                <button type="submit" disabled={uploading || saving} className="flex items-center px-6 py-2 border border-transparent rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm font-medium disabled:bg-blue-400">
-                  {saving ? 'Saving...' : (editingId ? 'Update Package' : 'Save Package')}
+              <div className="flex justify-end pt-8">
+                <button 
+                  onClick={handleSaveGlobalTerms}
+                  disabled={savingSettings}
+                  className="flex items-center px-8 py-3 border border-transparent rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-md font-bold text-lg disabled:bg-blue-400 transition-all"
+                >
+                  {savingSettings ? 'Saving...' : 'Save Global Terms'}
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
+          )}
 
-          {/* List Section */}
-          <div className="lg:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-8rem)]">
-            <div className="p-4 border-b bg-gray-50">
-              <h2 className="text-lg font-bold text-gray-900">All Packages</h2>
-            </div>
-            <div className="overflow-y-auto flex-1 p-4 space-y-4">
-              {packages.map((pkg) => (
-                <div key={pkg.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
-                  <div className="absolute top-4 right-4 flex space-x-2">
-                    <button onClick={() => handleEdit(pkg)} className="text-blue-600 hover:bg-blue-50 p-1 rounded">
-                      <Edit2 size={18} />
-                    </button>
-                    <button onClick={() => handleDelete(pkg.id)} className="text-red-600 hover:bg-red-50 p-1 rounded">
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+          {view === 'packages' && (
+            <>
+              {/* Form Section */}
+              <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-y-auto max-h-[calc(100vh-8rem)]">
+                <h2 className="text-xl font-bold text-gray-900 mb-6 border-b pb-2">
+                  {editingId ? 'Edit Package' : 'Add New Package'}
+                </h2>
+                <form onSubmit={handleSubmit} className="space-y-6">
                   
-                  <div className="flex gap-4">
-                    <div className="w-24 h-24 flex-shrink-0">
-                      <img src={pkg.media?.thumbnailUrl || 'https://via.placeholder.com/150'} alt={pkg.title} className="w-full h-full object-cover rounded-md border" />
-                    </div>
-                    <div className="flex-1 pr-16">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-600">{pkg.packageCode}</span>
-                        <span className={`text-xs font-bold px-2 py-1 rounded ${pkg.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {pkg.status}
-                        </span>
+                  {/* Basic Info */}
+                  <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                    <h3 className="font-semibold text-gray-700">Basic Info</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Package Code (Auto)</label>
+                        <input readOnly type="text" name="packageCode" value={formData.packageCode} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md shadow-sm p-2 border bg-gray-200 text-gray-600 cursor-not-allowed" placeholder="e.g. PKG-001" />
                       </div>
-                      <h3 className="font-bold text-gray-900">{pkg.title}</h3>
-                      <p className="text-sm text-gray-500 mb-2">{pkg.destination}</p>
-                      
-                      <div className="flex gap-4 text-sm font-medium">
-                        <span className="text-blue-600">{pkg.pricing?.currency} {formatCurrency(pkg.pricing?.finalPrice)}</span>
-                        <span className="text-gray-600">{pkg.duration?.days}D/{pkg.duration?.nights}N</span>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Status</label>
+                        <select name="status" value={formData.status} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white">
+                          <option value="ACTIVE">ACTIVE</option>
+                          <option value="INACTIVE">INACTIVE</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Title</label>
+                      <input type="text" name="title" value={formData.title} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Destination</label>
+                      <input type="text" name="destination" value={formData.destination} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
+                      <ReactQuill 
+                        theme="snow"
+                        value={formData.overview} 
+                        onChange={(value) => handleQuillChange('overview', value)}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        className="bg-white rounded-md overflow-hidden"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Duration & Pricing */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                      <h3 className="font-semibold text-gray-700">Duration</h3>
+                      <div>
+                        <label className="block text-sm text-gray-600">Days</label>
+                        <input type="number" value={formData.duration.days} onChange={(e) => handleNestedChange('duration', 'days', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600">Nights</label>
+                        <input type="number" value={formData.duration.nights} onChange={(e) => handleNestedChange('duration', 'nights', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                      <h3 className="font-semibold text-gray-700">Pricing</h3>
+                      <div>
+                        <label className="block text-sm text-gray-600">Currency</label>
+                        <input type="text" value={formData.pricing.currency} onChange={(e) => handleNestedChange('pricing', 'currency', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600">Base Price</label>
+                        <input type="number" value={formData.pricing.basePrice} onChange={(e) => handleNestedChange('pricing', 'basePrice', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600">Discount %</label>
+                        <input type="number" value={formData.pricing.discountPercentage} onChange={(e) => handleNestedChange('pricing', 'discountPercentage', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-800">Final Price (Auto)</label>
+                        <input readOnly type="number" value={formData.pricing.finalPrice} className="w-full rounded border p-2 bg-gray-200" />
                       </div>
                     </div>
                   </div>
+
+                  {/* Media with File Upload */}
+                  <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-semibold text-gray-700">Media</h3>
+                      {uploading && <span className="text-sm text-blue-600 animate-pulse">Uploading to Cloud...</span>}
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm text-gray-600">Thumbnail URL</label>
+                      <div className="flex gap-2">
+                        <input type="text" value={formData.media.thumbnailUrl} onChange={(e) => handleNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white" placeholder="https://..." />
+                        <input type="text" value={mediaContexts.thumbnail} onChange={(e) => setMediaContexts({ ...mediaContexts, thumbnail: e.target.value })} className="w-48 rounded border p-2 bg-white text-sm" placeholder="e.g. theme=beach, category=hero" />
+                        <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
+                          <Upload size={18} />
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'thumbnail', null, mediaContexts.thumbnail)} disabled={uploading} />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-1 mt-4">
+                        <label className="block text-sm text-gray-600">Gallery URLs</label>
+                        <button type="button" onClick={() => addArrayStringItem('galleryUrls')} className="text-blue-600 hover:text-blue-800"><Plus size={16}/></button>
+                      </div>
+                      {formData.media.galleryUrls.map((url, index) => (
+                        <div key={index} className="flex gap-2 mb-2">
+                          <input type="text" value={url} onChange={(e) => handleArrayStringChange('galleryUrls', index, e.target.value)} className="flex-1 rounded border p-2 bg-white text-sm" placeholder="https://..." />
+                          <input type="text" value={mediaContexts.gallery[index] || ''} onChange={(e) => setMediaContexts({ ...mediaContexts, gallery: { ...mediaContexts.gallery, [index]: e.target.value } })} className="w-48 rounded border p-2 bg-white text-sm" placeholder="e.g. key=value, key2=value2" />
+                          <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
+                            <Upload size={16} />
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'gallery', index, mediaContexts.gallery[index])} disabled={uploading} />
+                          </label>
+                          <button type="button" onClick={() => removeArrayStringItem('galleryUrls', index)} className="bg-red-500 text-white p-2 rounded"><X size={16}/></button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-600 mt-4">Alt Text</label>
+                      <input type="text" value={formData.media.altText} onChange={(e) => handleNestedChange('media', 'altText', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                    </div>
+                  </div>
+
+                  {/* Inclusions & Exclusions */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold text-gray-700">Inclusions</h3>
+                        <button type="button" onClick={() => addArrayStringItem('inclusions')} className="text-blue-600 hover:text-blue-800"><Plus size={16}/></button>
+                      </div>
+                      {formData.inclusions.map((item, index) => (
+                        <div key={index} className="flex mb-2">
+                          <input type="text" value={item} onChange={(e) => handleArrayStringChange('inclusions', index, e.target.value)} className="flex-1 rounded-l border p-1 bg-white text-sm" />
+                          <button type="button" onClick={() => removeArrayStringItem('inclusions', index)} className="bg-red-500 text-white p-1 rounded-r"><X size={16}/></button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold text-gray-700">Exclusions</h3>
+                        <button type="button" onClick={() => addArrayStringItem('exclusions')} className="text-blue-600 hover:text-blue-800"><Plus size={16}/></button>
+                      </div>
+                      {formData.exclusions.map((item, index) => (
+                        <div key={index} className="flex mb-2">
+                          <input type="text" value={item} onChange={(e) => handleArrayStringChange('exclusions', index, e.target.value)} className="flex-1 rounded-l border p-1 bg-white text-sm" />
+                          <button type="button" onClick={() => removeArrayStringItem('exclusions', index)} className="bg-red-500 text-white p-1 rounded-r"><X size={16}/></button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Itinerary */}
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <div className="flex justify-between items-center mb-4 border-b pb-2">
+                      <h3 className="font-semibold text-gray-700">Itinerary</h3>
+                      <button type="button" onClick={addItineraryDay} className="flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        <Plus size={16} className="mr-1"/> Add Day
+                      </button>
+                    </div>
+                    <div className="space-y-4">
+                      {formData.itinerary.map((day, index) => (
+                        <div key={index} className="border border-gray-200 bg-white p-3 rounded relative">
+                          <button type="button" onClick={() => removeItineraryDay(index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700"><X size={16}/></button>
+                          <h4 className="font-bold text-gray-800 mb-2">Day {day.day}</h4>
+                          <input type="text" placeholder="Day Title (e.g. Arrival in Kochi)" value={day.title} onChange={(e) => handleItineraryChange(index, 'title', e.target.value)} className="w-full mb-2 p-2 border rounded text-sm" />
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Activities</label>
+                          <ReactQuill 
+                            theme="snow"
+                            value={day.activities} 
+                            onChange={(value) => handleItineraryQuillChange(index, value)}
+                            modules={quillModules}
+                            formats={quillFormats}
+                            className="bg-white rounded border text-sm"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Special Notes */}
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <h3 className="font-semibold text-gray-700 mb-2 text-red-600">Special Notes / Conditions</h3>
+                    <ReactQuill 
+                      theme="snow"
+                      value={formData.specialNotes} 
+                      onChange={(value) => handleQuillChange('specialNotes', value)}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      placeholder="Enter special notes or conditions here..."
+                      className="bg-white rounded-md overflow-hidden"
+                    />
+                  </div>
+
+                  {/* Submit */}
+                  <div className="flex justify-end gap-3 border-t pt-4">
+                    {editingId && (
+                      <button type="button" onClick={() => { setEditingId(null); setFormData({ ...defaultForm, packageCode: getNextPackageCode(packages) }); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                      </button>
+                    )}
+                    <button type="submit" disabled={uploading || saving} className="flex items-center px-6 py-2 border border-transparent rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm font-medium disabled:bg-blue-400">
+                      {saving ? 'Saving...' : (editingId ? 'Update Package' : 'Save Package')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* List Section */}
+              <div className="lg:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-8rem)]">
+                <div className="p-4 border-b bg-gray-50">
+                  <h2 className="text-lg font-bold text-gray-900">All Packages</h2>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="overflow-y-auto flex-1 p-4 space-y-4">
+                  {packages.map((pkg) => (
+                    <div key={pkg.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
+                      <div className="absolute top-4 right-4 flex space-x-2">
+                        <button onClick={() => handleEdit(pkg)} className="text-blue-600 hover:bg-blue-50 p-1 rounded">
+                          <Edit2 size={18} />
+                        </button>
+                        <button onClick={() => handleDelete(pkg.id)} className="text-red-600 hover:bg-red-50 p-1 rounded">
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                      
+                      <div className="flex gap-4">
+                        <div className="w-24 h-24 flex-shrink-0">
+                          <img src={pkg.media?.thumbnailUrl || 'https://via.placeholder.com/150'} alt={pkg.title} className="w-full h-full object-cover rounded-md border" />
+                        </div>
+                        <div className="flex-1 pr-16">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-600">{pkg.packageCode}</span>
+                            <span className={`text-xs font-bold px-2 py-1 rounded ${pkg.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              {pkg.status}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-gray-900">{pkg.title}</h3>
+                          <p className="text-sm text-gray-500 mb-2">{pkg.destination}</p>
+                          
+                          <div className="flex gap-4 text-sm font-medium">
+                            <span className="text-blue-600">{pkg.pricing?.currency} {formatCurrency(pkg.pricing?.finalPrice)}</span>
+                            <span className="text-gray-600">{pkg.duration?.days}D/{pkg.duration?.nights}N</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
           
         </div>
       </main>
