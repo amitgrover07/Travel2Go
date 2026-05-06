@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Search, Copy, ExternalLink, ArrowLeft, Loader2, Image as ImageIcon, Tag, Calendar, Database } from 'lucide-react';
+import { Search, Copy, ExternalLink, ArrowLeft, Loader2, Image as ImageIcon, Tag, Calendar, Database, Trash2, Plus, X, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
@@ -9,6 +9,11 @@ const ImageGallery = () => {
   const [filteredImages, setFilteredImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [newImage, setNewImage] = useState({ file: null, preview: null });
+  const [customMetadata, setCustomMetadata] = useState([{ key: 'context', value: '' }]);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,7 +24,6 @@ const ImageGallery = () => {
     try {
       setLoading(true);
       const response = await api.get('/media/all');
-      // Sort by updated time descending
       const sorted = response.data.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       setImages(sorted);
       setFilteredImages(sorted);
@@ -34,10 +38,7 @@ const ImageGallery = () => {
   useEffect(() => {
     const term = searchTerm.toLowerCase();
     const filtered = images.filter(img => {
-      // Search in name
       if (img.name.toLowerCase().includes(term)) return true;
-      
-      // Search in metadata keys and values
       if (img.metadata) {
         return Object.entries(img.metadata).some(([key, value]) => 
           key.toLowerCase().includes(term) || value.toLowerCase().includes(term)
@@ -53,6 +54,81 @@ const ImageGallery = () => {
     toast.success('URL copied to clipboard!');
   };
 
+  const handleDelete = async (fileName) => {
+    if (!window.confirm('Are you sure you want to delete this image? This action cannot be undone.')) return;
+    
+    try {
+      await api.delete(`/media/${fileName}`);
+      toast.success('Image deleted successfully');
+      setImages(prev => prev.filter(img => img.name !== fileName));
+    } catch (error) {
+      console.error('Error deleting image', error);
+      toast.error('Failed to delete image');
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewImage({
+        file,
+        preview: URL.createObjectURL(file)
+      });
+    }
+  };
+
+  const handleAddMetadata = () => {
+    setCustomMetadata([...customMetadata, { key: '', value: '' }]);
+  };
+
+  const handleMetadataChange = (index, field, value) => {
+    const newMetadata = [...customMetadata];
+    newMetadata[index][field] = value;
+    setCustomMetadata(newMetadata);
+  };
+
+  const handleRemoveMetadata = (index) => {
+    setCustomMetadata(customMetadata.filter((_, i) => i !== index));
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    if (!newImage.file) {
+      toast.error('Please select an image first');
+      return;
+    }
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', newImage.file);
+
+    // Build context string from metadata
+    const contextString = customMetadata
+      .filter(m => m.key.trim() && m.value.trim())
+      .map(m => `${m.key.trim()}=${m.value.trim()}`)
+      .join(',');
+    
+    if (contextString) {
+      formData.append('context', contextString);
+    }
+
+    try {
+      await api.post('/media/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success('Image uploaded successfully!');
+      setShowUploadModal(false);
+      setNewImage({ file: null, preview: null });
+      setCustomMetadata([{ key: 'context', value: '' }]);
+      fetchImages();
+    } catch (error) {
+      console.error('Upload error', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const formatSize = (bytes) => {
     if (!bytes) return '0 B';
     const k = 1024;
@@ -66,9 +142,7 @@ const ImageGallery = () => {
     return new Date(timestamp).toLocaleDateString('en-IN', {
       day: '2-digit',
       month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: 'numeric'
     });
   };
 
@@ -95,21 +169,24 @@ const ImageGallery = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
-                  placeholder="Filter by name or metadata (e.g. 'beach')..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-sm bg-gray-50 hover:bg-white"
+                  placeholder="Filter by name or metadata..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm bg-gray-50 hover:bg-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-               <span className="text-sm font-medium text-gray-500">
-                 {filteredImages.length} {filteredImages.length === 1 ? 'item' : 'items'}
-               </span>
+            <div className="flex items-center space-x-3">
+               <button 
+                 onClick={() => setShowUploadModal(true)}
+                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all"
+               >
+                 <Plus size={18} /> Upload Image
+               </button>
                <button 
                  onClick={fetchImages}
-                 className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600"
+                 className="p-2 rounded-full hover:bg-gray-100 text-gray-600"
                  title="Refresh"
                >
                  <Database size={18} />
@@ -124,108 +201,49 @@ const ImageGallery = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
             <Loader2 className="animate-spin text-blue-600" size={48} />
-            <p className="text-gray-500 font-medium">Fetching your assets from cloud...</p>
+            <p className="text-gray-500 font-medium">Loading gallery...</p>
           </div>
         ) : filteredImages.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200 shadow-sm">
-             <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-               <ImageIcon size={32} className="text-gray-300" />
-             </div>
+          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
+             <ImageIcon size={48} className="text-gray-300 mx-auto mb-4" />
              <h3 className="text-lg font-semibold text-gray-900">No images found</h3>
-             <p className="text-gray-500 max-w-xs mx-auto mt-2">
-               {searchTerm ? `No results match "${searchTerm}"` : "Try uploading some images in the Admin dashboard."}
-             </p>
-             {searchTerm && (
-               <button 
-                 onClick={() => setSearchTerm('')}
-                 className="mt-6 text-blue-600 font-semibold hover:underline"
-               >
-                 Clear search
-               </button>
-             )}
+             <button 
+                onClick={() => setShowUploadModal(true)}
+                className="mt-4 text-blue-600 font-bold hover:underline"
+             >
+               Upload your first image
+             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {filteredImages.map((img, idx) => (
-              <div 
-                key={img.name + idx} 
-                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col"
-              >
-                {/* Image Container */}
-                <div className="relative aspect-video overflow-hidden bg-gray-100">
-                  <img 
-                    src={img.url} 
-                    alt={img.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/400x225?text=Image+Not+Found';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                    <button 
-                      onClick={() => copyToClipboard(img.url)}
-                      className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 text-white transition-all transform hover:scale-110"
-                      title="Copy URL"
-                    >
-                      <Copy size={20} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredImages.map((img) => (
+              <div key={img.name} className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-200 transition-all flex flex-col">
+                <div className="relative aspect-video bg-gray-100 overflow-hidden">
+                  <img src={img.url} alt={img.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <button onClick={() => copyToClipboard(img.url)} className="p-2 bg-white/20 rounded-full hover:bg-white/40 text-white" title="Copy URL">
+                      <Copy size={18} />
                     </button>
-                    <a 
-                      href={img.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 text-white transition-all transform hover:scale-110"
-                      title="Open Original"
-                    >
-                      <ExternalLink size={20} />
+                    <button onClick={() => handleDelete(img.name)} className="p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 text-red-200" title="Delete Image">
+                      <Trash2 size={18} />
+                    </button>
+                    <a href={img.url} target="_blank" rel="noreferrer" className="p-2 bg-white/20 rounded-full hover:bg-white/40 text-white">
+                      <ExternalLink size={18} />
                     </a>
                   </div>
-                  <div className="absolute bottom-2 left-2 right-2 flex gap-1 flex-wrap">
-                    {img.metadata && Object.entries(img.metadata).slice(0, 3).map(([key, value]) => (
-                      <span key={key} className="px-2 py-0.5 bg-black/60 backdrop-blur-sm text-[10px] text-white rounded-md font-medium">
-                        {value}
-                      </span>
-                    ))}
-                  </div>
                 </div>
-
-                {/* Info Section */}
-                <div className="p-4 flex-1 flex flex-col">
-                  <div className="mb-3">
-                    <h3 className="text-sm font-bold text-gray-900 truncate mb-1" title={img.name}>
-                      {img.name}
-                    </h3>
-                    <div className="flex items-center text-[11px] text-gray-400 space-x-3">
-                      <span className="flex items-center gap-1">
-                        <Tag size={12} /> {formatSize(img.size)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar size={12} /> {formatDate(img.updatedAt)}
-                      </span>
-                    </div>
+                <div className="p-4 flex-1">
+                  <h3 className="text-sm font-bold truncate text-gray-900 mb-1">{img.name}</h3>
+                  <div className="flex items-center text-[10px] text-gray-400 gap-3 mb-3">
+                    <span className="flex items-center gap-1"><Tag size={10} /> {formatSize(img.size)}</span>
+                    <span className="flex items-center gap-1"><Calendar size={10} /> {formatDate(img.updatedAt)}</span>
                   </div>
-
-                  <div className="mt-auto pt-3 border-t border-gray-50">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-mono text-gray-400 truncate max-w-[150px]">
-                        {img.url}
-                      </p>
-                      <button 
-                         onClick={() => copyToClipboard(img.url)}
-                         className="text-blue-600 hover:text-blue-700 text-xs font-bold"
-                      >
-                        Copy URL
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Metadata Detail */}
                   {img.metadata && Object.keys(img.metadata).length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1">
                       {Object.entries(img.metadata).map(([key, value]) => (
-                        <div key={key} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-semibold border border-blue-100">
-                          <span className="opacity-50 uppercase tracking-tighter">{key}:</span> {value}
-                        </div>
+                        <span key={key} className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-bold border border-blue-100">
+                          {key}: {value}
+                        </span>
                       ))}
                     </div>
                   )}
@@ -235,6 +253,112 @@ const ImageGallery = () => {
           </div>
         )}
       </main>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h2 className="text-2xl font-extrabold text-gray-900">Upload Media</h2>
+              <button onClick={() => setShowUploadModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <X size={24} className="text-gray-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpload} className="p-8 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* File Select */}
+                <div className="space-y-4">
+                  <label className="block text-sm font-bold text-gray-700">Image Selection</label>
+                  <div className="relative aspect-video rounded-2xl border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors flex flex-col items-center justify-center bg-gray-50 overflow-hidden">
+                    {newImage.preview ? (
+                      <img src={newImage.preview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center p-4">
+                        <Upload size={32} className="text-gray-400 mx-auto mb-2" />
+                        <p className="text-xs text-gray-500">Click to choose or drag & drop</p>
+                      </div>
+                    )}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleFileChange} 
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                  </div>
+                  {newImage.file && (
+                    <p className="text-xs text-blue-600 font-medium truncate">{newImage.file.name}</p>
+                  )}
+                </div>
+
+                {/* Metadata Section */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-sm font-bold text-gray-700">Custom Metadata</label>
+                    <button 
+                      type="button" 
+                      onClick={handleAddMetadata}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    >
+                      <Plus size={14} /> Add Tag
+                    </button>
+                  </div>
+                  <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
+                    {customMetadata.map((m, i) => (
+                      <div key={i} className="flex gap-2 group">
+                        <input 
+                          type="text" 
+                          placeholder="Key" 
+                          value={m.key} 
+                          onChange={(e) => handleMetadataChange(i, 'key', e.target.value)}
+                          className="w-1/3 p-2 text-xs border rounded-lg outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Value" 
+                          value={m.value} 
+                          onChange={(e) => handleMetadataChange(i, 'value', e.target.value)}
+                          className="flex-1 p-2 text-xs border rounded-lg outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => handleRemoveMetadata(i)}
+                          className="p-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 border-t">
+                <button 
+                  type="button" 
+                  onClick={() => setShowUploadModal(false)}
+                  className="px-6 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={uploading}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-200 disabled:opacity-50 transition-all"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} /> Uploading...
+                    </>
+                  ) : (
+                    'Start Upload'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

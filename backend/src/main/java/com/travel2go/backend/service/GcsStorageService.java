@@ -27,41 +27,44 @@ public class GcsStorageService {
     private final Storage storage;
 
     public String uploadFile(MultipartFile file, String context) throws IOException {
-        String originalFileName = file.getOriginalFilename();
-        String extension = "";
-        if (originalFileName != null && originalFileName.contains(".")) {
-            extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-        }
-        
-        // Generate a unique filename to prevent collisions
-        String fileName = UUID.randomUUID().toString() + extension;
-
-        BlobId blobId = BlobId.of(bucketName, fileName);
-        BlobInfo.Builder blobInfoBuilder = BlobInfo.newBuilder(blobId)
-                .setContentType(file.getContentType());
-                
+        java.util.Map<String, String> metadataMap = new java.util.HashMap<>();
         if (context != null && !context.trim().isEmpty()) {
-            java.util.Map<String, String> metadataMap = new java.util.HashMap<>();
             String[] pairs = context.split(",");
             for (String pair : pairs) {
                 String[] kv = pair.split("[:=]", 2);
                 if (kv.length == 2) {
                     metadataMap.put(kv[0].trim(), kv[1].trim());
                 } else {
-                    // Fallback if no key=value format is used, we use a generic key
                     metadataMap.put("context_" + java.util.UUID.randomUUID().toString().substring(0, 4), kv[0].trim());
                 }
             }
-            blobInfoBuilder.setMetadata(metadataMap);
+        }
+        return uploadFileWithMetadata(file, metadataMap);
+    }
+
+    public String uploadFileWithMetadata(MultipartFile file, java.util.Map<String, String> metadata) throws IOException {
+        String originalFileName = file.getOriginalFilename();
+        String extension = "";
+        if (originalFileName != null && originalFileName.contains(".")) {
+            extension = originalFileName.substring(originalFileName.lastIndexOf("."));
         }
         
-        BlobInfo blobInfo = blobInfoBuilder.build();
-
-        // Upload the file to GCS
-        storage.create(blobInfo, file.getBytes());
-
-        // Construct the public URL (assumes the bucket or object is publicly readable)
+        String fileName = UUID.randomUUID().toString() + extension;
+        BlobId blobId = BlobId.of(bucketName, fileName);
+        BlobInfo.Builder blobInfoBuilder = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType());
+                
+        if (metadata != null && !metadata.isEmpty()) {
+            blobInfoBuilder.setMetadata(metadata);
+        }
+        
+        storage.create(blobInfoBuilder.build(), file.getBytes());
         return "https://storage.googleapis.com/" + bucketName + "/" + fileName;
+    }
+
+    public boolean deleteFile(String fileName) {
+        BlobId blobId = BlobId.of(bucketName, fileName);
+        return storage.delete(blobId);
     }
 
     public List<MediaFileDTO> listAllFiles() {

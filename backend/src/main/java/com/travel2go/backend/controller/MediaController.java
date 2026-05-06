@@ -39,4 +39,14 @@ public class MediaController {
     public ResponseEntity<List<MediaFileDTO>> listAllMedia() {
         return ResponseEntity.ok(gcsStorageService.listAllFiles());
     }
+
+    @DeleteMapping("/{fileName}")
+    public ResponseEntity<?> deleteMedia(@PathVariable String fileName) {
+        boolean deleted = gcsStorageService.deleteFile(fileName);
+        if (deleted) {
+            return ResponseEntity.ok(Map.of("message", "File deleted successfully"));
+        } else {
+            return ResponseEntity.status(404).body(Map.of("error", "File not found or could not be deleted"));
+        }
+    }
 }
