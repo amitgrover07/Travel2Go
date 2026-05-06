@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 
 const Register = () => {
@@ -9,6 +9,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -19,7 +20,7 @@ const Register = () => {
     try {
       await api.post('/auth/register', { email, password });
       setSuccess('Registration successful! You can now log in.');
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => navigate('/login', { state: { from: location.state?.from } }), 2000);
     } catch (err) {
       setError(err.response?.data || 'An error occurred during registration');
     }
@@ -98,7 +99,7 @@ const Register = () => {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-500">Already have an account? </span>
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link to="/login" state={{ from: location.state?.from }} className="font-medium text-blue-600 hover:text-blue-500">
               Sign in
             </Link>
           </div>

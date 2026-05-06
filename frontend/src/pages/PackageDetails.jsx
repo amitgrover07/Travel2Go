@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft } from 'lucide-react';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft, X, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 import { formatCurrency, numberToWords, isHtmlEmpty } from '../utils/formatUtils';
 
@@ -24,6 +25,19 @@ const PackageDetails = () => {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [globalTerms, setGlobalTerms] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Booking form state
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    location: ''
+  });
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   useEffect(() => {
     const fetchPackageDetails = async () => {
@@ -47,6 +61,71 @@ const PackageDetails = () => {
       setGlobalTerms(response.data.termsAndConditions || '');
     } catch (error) {
       console.error('Error fetching global terms:', error);
+    }
+  };
+
+  const handleBookNow = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    
+    // Pre-fill email if possible from token
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setBookingForm(prev => ({ ...prev, email: payload.sub || payload.email || '' }));
+      }
+    } catch (e) {}
+
+    setShowBookingModal(true);
+  };
+
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!bookingForm.firstName || !bookingForm.email || !bookingForm.phone || !bookingForm.location) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(bookingForm.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    // Phone validation (simple)
+    if (bookingForm.phone.length < 10) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+
+    setBookingLoading(true);
+    try {
+      await api.post('/bookings', {
+        ...bookingForm,
+        packageId: id,
+        packageTitle: pkg.title
+      });
+      toast.success('Booking submitted successfully! Check your email for confirmation.');
+      setShowBookingModal(false);
+      setBookingForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        location: ''
+      });
+    } catch (error) {
+      console.error('Booking error:', error);
+      toast.error(error.response?.data?.error || 'Failed to submit booking. Please try again.');
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -182,7 +261,10 @@ const PackageDetails = () => {
                 <div className="text-xs text-gray-500 italic mb-6">
                   {numberToWords(pkg.pricing?.finalPrice)}
                 </div>
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-lg shadow-sm hover:shadow-md transition-all">
+                <button 
+                  onClick={handleBookNow}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-lg shadow-sm hover:shadow-md transition-all"
+                >
                   Book Now
                 </button>
               </div>
@@ -284,6 +366,101 @@ const PackageDetails = () => {
           </div>
         </div>
       </main>
+
+      {/* Booking Modal */}
+      {showBookingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-xl font-bold text-gray-900">Book Your Trip</h3>
+              <button 
+                onClick={() => setShowBookingModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                  <input
+                    type="text"
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={bookingForm.firstName}
+                    onChange={(e) => setBookingForm({...bookingForm, firstName: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={bookingForm.lastName}
+                    onChange={(e) => setBookingForm({...bookingForm, lastName: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={bookingForm.email}
+                  onChange={(e) => setBookingForm({...bookingForm, email: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                <input
+                  type="tel"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={bookingForm.phone}
+                  onChange={(e) => setBookingForm({...bookingForm, phone: e.target.value})}
+                  placeholder="+91 98765 43210"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Your Location/City *</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={bookingForm.location}
+                  onChange={(e) => setBookingForm({...bookingForm, location: e.target.value})}
+                />
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={bookingLoading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {bookingLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      Processing...
+                    </>
+                  ) : (
+                    'Confirm Booking'
+                  )}
+                </button>
+                <p className="text-center text-xs text-gray-500 mt-3">
+                  By clicking confirm, you agree to our Terms & Conditions.
+                </p>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

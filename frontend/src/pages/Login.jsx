@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 
 const Login = () => {
@@ -14,6 +14,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   const getTokenPayload = (token) => {
     try {
@@ -31,10 +32,14 @@ const Login = () => {
   const handleLoginSuccess = (token) => {
     localStorage.setItem('token', token);
     const payload = getTokenPayload(token);
-    if (payload && payload.role === 'ADMIN') {
+    
+    // Check if there's a redirect path in the location state
+    const from = location.state?.from?.pathname || '/';
+    
+    if (payload && payload.role === 'ADMIN' && from === '/') {
       navigate('/admin');
     } else {
-      navigate('/');
+      navigate(from, { replace: true });
     }
   };
 
