@@ -20,6 +20,12 @@
     "react-router-dom": "^7.14.2",
     "tailwindcss": "^4.2.4"
   },
+  "overrides": {
+    "react-quill": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.14",
