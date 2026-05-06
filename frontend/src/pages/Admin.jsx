@@ -16,6 +16,7 @@ const defaultForm = {
   inclusions: [],
   exclusions: [],
   itinerary: [],
+  specialNotes: '',
   version: 0
 };
 
@@ -257,6 +258,7 @@ const Admin = () => {
       inclusions: pkg.inclusions || [],
       exclusions: pkg.exclusions || [],
       itinerary: pkg.itinerary || [],
+      specialNotes: pkg.specialNotes || '',
       version: pkg.version || 0
     });
   };
@@ -473,6 +475,19 @@ const Admin = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Special Notes */}
+              <div className="bg-gray-50 p-4 rounded-md">
+                <h3 className="font-semibold text-gray-700 mb-2 text-red-600">Special Notes / Conditions</h3>
+                <textarea 
+                  name="specialNotes" 
+                  value={formData.specialNotes || ''} 
+                  onChange={handleTopLevelChange} 
+                  rows={4} 
+                  placeholder="Enter special notes or conditions here. Separate each point by pressing Enter to display as bullet points."
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" 
+                />
               </div>
 
               {/* Submit */}

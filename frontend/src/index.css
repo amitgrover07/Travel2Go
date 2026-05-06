@@ -54,4 +54,9 @@
   body {
     @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
   }
+
+  /* Prevent blinking cursor on non-editable text */
+  *:not(input):not(textarea):not([contenteditable="true"]) {
+    caret-color: transparent;
+  }
 }

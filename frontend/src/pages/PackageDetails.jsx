@@ -3,6 +3,20 @@ import { useParams, Link } from 'react-router-dom';
 import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft } from 'lucide-react';
 import api from '../services/api';
 
+const renderBulletPoints = (text) => {
+  if (!text) return null;
+  const points = text.split('\n').filter(p => p.trim() !== '');
+  if (points.length <= 1 && !text.includes('\n')) return text;
+  
+  return (
+    <ul className="list-disc ml-5 space-y-2 mt-2">
+      {points.map((point, index) => (
+        <li key={index} className="text-gray-700 leading-relaxed">{point}</li>
+      ))}
+    </ul>
+  );
+};
+
 const PackageDetails = () => {
   const { id } = useParams();
   const [pkg, setPkg] = useState(null);
@@ -118,9 +132,9 @@ const PackageDetails = () => {
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
                   {pkg.title}
                 </h1>
-                <p className="text-gray-600 text-base sm:text-lg leading-relaxed">
-                  {pkg.overview}
-                </p>
+                <div className="text-gray-600 text-base sm:text-lg leading-relaxed">
+                  {renderBulletPoints(pkg.overview)}
+                </div>
               </div>
 
               {/* Pricing Card */}
@@ -208,6 +222,18 @@ const PackageDetails = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Special Notes / Conditions */}
+            {pkg.specialNotes && (
+              <div className="mt-12 bg-red-50/50 border border-red-100 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-red-600 mb-4 flex items-center">
+                  Important Notes & Conditions
+                </h3>
+                <div className="text-gray-700">
+                  {renderBulletPoints(pkg.specialNotes)}
                 </div>
               </div>
             )}
