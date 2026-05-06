@@ -5,7 +5,6 @@ import com.travel2go.backend.repository.GlobalSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -18,24 +17,26 @@ public class SettingsController {
     private static final String GLOBAL_ID = "global";
 
     @GetMapping("/terms")
-    public Mono<ResponseEntity<GlobalSettings>> getTerms() {
-        return repository.findById(GLOBAL_ID)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.ok(GlobalSettings.builder()
-                        .id(GLOBAL_ID)
-                        .termsAndConditions("")
-                        .build()));
+    public ResponseEntity<GlobalSettings> getTerms() {
+        GlobalSettings settings = repository.findById(GLOBAL_ID).block();
+        if (settings == null) {
+            settings = GlobalSettings.builder()
+                    .id(GLOBAL_ID)
+                    .termsAndConditions("")
+                    .build();
+        }
+        return ResponseEntity.ok(settings);
     }
 
     @PutMapping("/terms")
-    public Mono<ResponseEntity<?>> updateTerms(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<?> updateTerms(@RequestBody Map<String, String> payload) {
         String terms = payload.get("termsAndConditions");
-        return repository.findById(GLOBAL_ID)
-                .defaultIfEmpty(GlobalSettings.builder().id(GLOBAL_ID).build())
-                .flatMap(settings -> {
-                    settings.setTermsAndConditions(terms);
-                    return repository.save(settings);
-                })
-                .map(ResponseEntity::ok);
+        GlobalSettings settings = repository.findById(GLOBAL_ID).block();
+        if (settings == null) {
+            settings = GlobalSettings.builder().id(GLOBAL_ID).build();
+        }
+        settings.setTermsAndConditions(terms);
+        GlobalSettings saved = repository.save(settings).block();
+        return ResponseEntity.ok(saved);
     }
 }
