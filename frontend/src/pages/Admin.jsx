@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import api from '../services/api';
+import { formatCurrency } from '../utils/formatUtils';
 
 const quillModules = {
   toolbar: [
@@ -580,7 +581,7 @@ const Admin = () => {
                       <p className="text-sm text-gray-500 mb-2">{pkg.destination}</p>
                       
                       <div className="flex gap-4 text-sm font-medium">
-                        <span className="text-blue-600">{pkg.pricing?.currency} {pkg.pricing?.finalPrice}</span>
+                        <span className="text-blue-600">{pkg.pricing?.currency} {formatCurrency(pkg.pricing?.finalPrice)}</span>
                         <span className="text-gray-600">{pkg.duration?.days}D/{pkg.duration?.nights}N</span>
                       </div>
                     </div>

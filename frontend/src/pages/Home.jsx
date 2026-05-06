@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Clock } from 'lucide-react';
 import api from '../services/api';
+import { formatCurrency, numberToWords } from '../utils/formatUtils';
 
 const stripHtml = (html) => {
   if (!html) return "";
@@ -66,13 +67,20 @@ const Home = () => {
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{pkg.title}</h3>
                 <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">{stripHtml(pkg.overview)}</p>
                 
-                <div className="mt-auto border-t border-gray-100 pt-4 flex items-center justify-between">
-                  <div className="flex items-center text-gray-700 font-medium">
-                    <span className="text-xl font-semibold">{pkg.pricing?.currency || 'INR'} {pkg.pricing?.finalPrice}</span>
+                <div className="mt-auto border-t border-gray-100 pt-4 flex flex-col">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center text-gray-700 font-medium">
+                      <span className="text-xl font-bold text-blue-600">
+                        {pkg.pricing?.currency || 'INR'} {formatCurrency(pkg.pricing?.finalPrice)}
+                      </span>
+                    </div>
+                    <div className="flex items-center text-gray-500 text-sm">
+                      <Clock className="h-4 w-4 mr-1" />
+                      {pkg.duration?.days}D / {pkg.duration?.nights}N
+                    </div>
                   </div>
-                  <div className="flex items-center text-gray-500 text-sm">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {pkg.duration?.days}D / {pkg.duration?.nights}N
+                  <div className="text-[10px] text-gray-400 font-medium italic">
+                    {numberToWords(pkg.pricing?.finalPrice)}
                   </div>
                 </div>
               </div>

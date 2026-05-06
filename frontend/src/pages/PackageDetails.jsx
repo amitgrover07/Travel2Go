@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft } from 'lucide-react';
 import api from '../services/api';
+import { formatCurrency, numberToWords } from '../utils/formatUtils';
 
 const renderBulletPoints = (text) => {
   if (!text) return null;
@@ -157,15 +158,18 @@ const PackageDetails = () => {
                 <div className="mb-2">
                   <span className="text-gray-500 text-sm font-medium uppercase tracking-wide">Starting from</span>
                 </div>
-                <div className="flex items-baseline mb-6">
+                <div className="flex items-baseline mb-1">
                   <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
-                    {pkg.pricing?.currency || 'INR'} {pkg.pricing?.finalPrice}
+                    {pkg.pricing?.currency || 'INR'} {formatCurrency(pkg.pricing?.finalPrice)}
                   </span>
                   {pkg.pricing?.basePrice > pkg.pricing?.finalPrice && (
                     <span className="ml-3 text-lg text-gray-400 line-through decoration-red-400">
-                      {pkg.pricing?.currency || 'INR'} {pkg.pricing?.basePrice}
+                      {pkg.pricing?.currency || 'INR'} {formatCurrency(pkg.pricing?.basePrice)}
                     </span>
                   )}
+                </div>
+                <div className="text-xs text-gray-500 italic mb-6">
+                  {numberToWords(pkg.pricing?.finalPrice)}
                 </div>
                 <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-lg shadow-sm hover:shadow-md transition-all">
                   Book Now

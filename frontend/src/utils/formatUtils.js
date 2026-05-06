@@ -1,0 +1,44 @@
+export const formatCurrency = (amount, currency = 'INR') => {
+  if (amount === undefined || amount === null) return '';
+  return new Intl.NumberFormat('en-IN', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+export const numberToWords = (num) => {
+  if (num === 0) return 'Zero';
+  if (!num) return '';
+
+  const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  const convert = (n) => {
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+    if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' and ' + convert(n % 100) : '');
+    return '';
+  };
+
+  let result = '';
+  
+  // Handling Crores, Lakhs, Thousands for Indian Numbering System
+  if (num >= 10000000) {
+    result += convert(Math.floor(num / 10000000)) + ' Crore ';
+    num %= 10000000;
+  }
+  if (num >= 100000) {
+    result += convert(Math.floor(num / 100000)) + ' Lakh ';
+    num %= 100000;
+  }
+  if (num >= 1000) {
+    result += convert(Math.floor(num / 1000)) + ' Thousand ';
+    num %= 1000;
+  }
+  if (num > 0) {
+    result += convert(num);
+  }
+
+  return result.trim() + ' Only';
+};
