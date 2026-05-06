@@ -38,6 +38,24 @@ const PackageDetails = () => {
     fetchPackageDetails();
   }, [id]);
 
+  // Combine thumbnail and gallery urls for the carousel
+  const images = [];
+  if (pkg?.media?.thumbnailUrl && pkg.media.thumbnailUrl.trim() !== '') {
+    images.push(pkg.media.thumbnailUrl);
+  }
+  if (pkg?.media?.galleryUrls && Array.isArray(pkg.media.galleryUrls)) {
+    pkg.media.galleryUrls.forEach(url => {
+      if (url && url.trim() !== '' && !images.includes(url)) {
+        images.push(url);
+      }
+    });
+  }
+
+  // Fallback image if empty
+  if (images.length === 0) {
+    images.push('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+  }
+
   useEffect(() => {
     if (images.length <= 1) return;
     
@@ -59,24 +77,6 @@ const PackageDetails = () => {
         <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
       </Link>
     </div>;
-  }
-
-  // Combine thumbnail and gallery urls for the carousel
-  const images = [];
-  if (pkg.media?.thumbnailUrl && pkg.media.thumbnailUrl.trim() !== '') {
-    images.push(pkg.media.thumbnailUrl);
-  }
-  if (pkg.media?.galleryUrls && Array.isArray(pkg.media.galleryUrls)) {
-    pkg.media.galleryUrls.forEach(url => {
-      if (url && url.trim() !== '' && !images.includes(url)) {
-        images.push(url);
-      }
-    });
-  }
-
-  // Fallback image if empty
-  if (images.length === 0) {
-    images.push('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
   }
 
   const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
