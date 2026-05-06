@@ -42,3 +42,11 @@ export const numberToWords = (num) => {
 
   return result.trim() + ' Only';
 };
+
+export const isHtmlEmpty = (html) => {
+  if (!html) return true;
+  // Strip HTML tags and replace &nbsp; with space
+  const stripped = html.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
+  // Check if anything is left (text) or if there are images/iframes
+  return stripped.length === 0 && !html.includes('<img') && !html.includes('<iframe');
+};

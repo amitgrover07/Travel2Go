@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft } from 'lucide-react';
 import api from '../services/api';
-import { formatCurrency, numberToWords } from '../utils/formatUtils';
+import { formatCurrency, numberToWords, isHtmlEmpty } from '../utils/formatUtils';
 
 const renderBulletPoints = (text) => {
   if (!text) return null;
@@ -245,7 +245,7 @@ const PackageDetails = () => {
             )}
 
             {/* Special Notes / Conditions */}
-            {pkg.specialNotes && pkg.specialNotes !== '<p><br></p>' && pkg.specialNotes !== '' && (
+            {!isHtmlEmpty(pkg.specialNotes) && (
               <div id="special-notes" className="mt-12 bg-red-50/50 border-2 border-red-100 rounded-2xl p-8 shadow-sm">
                 <h3 className="text-2xl font-bold text-red-600 mb-6 flex items-center">
                   <span className="bg-red-600 text-white p-1 rounded mr-3 flex items-center justify-center">
