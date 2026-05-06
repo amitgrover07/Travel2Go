@@ -231,13 +231,16 @@ const PackageDetails = () => {
             )}
 
             {/* Special Notes / Conditions */}
-            {pkg.specialNotes && (
-              <div className="mt-12 bg-red-50/50 border border-red-100 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-red-600 mb-4 flex items-center">
+            {pkg.specialNotes && pkg.specialNotes !== '<p><br></p>' && pkg.specialNotes !== '' && (
+              <div id="special-notes" className="mt-12 bg-red-50/50 border-2 border-red-100 rounded-2xl p-8 shadow-sm">
+                <h3 className="text-2xl font-bold text-red-600 mb-6 flex items-center">
+                  <span className="bg-red-600 text-white p-1 rounded mr-3 flex items-center justify-center">
+                    <CheckCircle2 size={18} />
+                  </span>
                   Important Notes & Conditions
                 </h3>
                 <div 
-                  className="text-gray-700 quill-content"
+                  className="text-gray-800 text-lg leading-relaxed quill-content prose max-w-none"
                   dangerouslySetInnerHTML={{ __html: pkg.specialNotes }}
                 />
               </div>
