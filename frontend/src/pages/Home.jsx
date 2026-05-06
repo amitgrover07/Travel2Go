@@ -3,6 +3,12 @@ import { Link } from 'react-router-dom';
 import { MapPin, Clock } from 'lucide-react';
 import api from '../services/api';
 
+const stripHtml = (html) => {
+  if (!html) return "";
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || "";
+};
+
 const Home = () => {
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +64,7 @@ const Home = () => {
                   {pkg.packageCode && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{pkg.packageCode}</span>}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{pkg.title}</h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">{pkg.overview}</p>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">{stripHtml(pkg.overview)}</p>
                 
                 <div className="mt-auto border-t border-gray-100 pt-4 flex items-center justify-between">
                   <div className="flex items-center text-gray-700 font-medium">
