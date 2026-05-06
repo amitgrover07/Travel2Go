@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
@@ -289,6 +289,9 @@ const Admin = () => {
               <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
               <Link to="/" className="text-blue-600 hover:text-blue-800 text-sm font-medium hidden sm:block">
                 View Website
+              </Link>
+              <Link to="/admin/images" className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium hidden sm:block">
+                <Image className="h-4 w-4 mr-1" /> Media Gallery
               </Link>
             </div>
             <div className="flex items-center space-x-4">

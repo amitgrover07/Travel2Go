@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler';
 import Admin from './pages/Admin';
+import ImageGallery from './pages/ImageGallery';
 import PackageDetails from './pages/PackageDetails';
 
 import MainLayout from './components/MainLayout';
@@ -35,6 +36,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/images"
+          element={
+            <ProtectedRoute>
+              <ImageGallery />
             </ProtectedRoute>
           }
         />

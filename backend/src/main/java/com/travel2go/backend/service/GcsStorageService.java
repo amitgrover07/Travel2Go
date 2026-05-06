@@ -1,15 +1,21 @@
 package com.travel2go.backend.service;
 
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import com.travel2go.backend.dto.MediaFileDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -56,5 +62,19 @@ public class GcsStorageService {
 
         // Construct the public URL (assumes the bucket or object is publicly readable)
         return "https://storage.googleapis.com/" + bucketName + "/" + fileName;
+    }
+
+    public List<MediaFileDTO> listAllFiles() {
+        com.google.api.gax.paging.Page<Blob> blobs = storage.list(bucketName);
+        
+        return StreamSupport.stream(blobs.iterateAll().spliterator(), false)
+                .map(blob -> MediaFileDTO.builder()
+                        .name(blob.getName())
+                        .url("https://storage.googleapis.com/" + bucketName + "/" + blob.getName())
+                        .metadata(blob.getMetadata())
+                        .size(blob.getSize())
+                        .updatedAt(blob.getUpdateTime())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

@@ -1,5 +1,6 @@
 package com.travel2go.backend.controller;
 
+import com.travel2go.backend.dto.MediaFileDTO;
 import com.travel2go.backend.service.GcsStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -31,5 +33,10 @@ public class MediaController {
             errorResponse.put("error", "Failed to upload image: " + e.getMessage());
             return ResponseEntity.internalServerError().body(errorResponse);
         }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<MediaFileDTO>> listAllMedia() {
+        return ResponseEntity.ok(gcsStorageService.listAllFiles());
     }
 }
