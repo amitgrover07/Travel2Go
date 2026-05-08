@@ -124,14 +124,14 @@ public class PdfService {
         document.add(subtitle);
         
         // Pricing
-        if (pkg.getPricing() != null && pkg.getPricing().getFinalPrice() != null) {
-            long price = pkg.getPricing().getFinalPrice();
+        if (pkg.getPricing() != null) {
+            long price = (long) pkg.getPricing().getFinalPrice();
             String currency = pkg.getPricing().getCurrency() != null ? pkg.getPricing().getCurrency() : "INR";
             
             PdfPTable priceTable = new PdfPTable(1);
             priceTable.setWidthPercentage(100);
             PdfPCell cell = new PdfPCell();
-            cell.setBorder(Rectangle.NO_BORDER);
+            cell.setBorder(com.lowagie.text.Rectangle.NO_BORDER);
             cell.setBackgroundColor(new Color(240, 253, 244)); // Light green bg
             cell.setPadding(15);
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
