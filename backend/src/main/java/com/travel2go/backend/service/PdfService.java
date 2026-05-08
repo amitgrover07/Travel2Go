@@ -180,7 +180,8 @@ public class PdfService {
         if (booking != null) {
             addSectionHeader(document, "Package Offered To", sectionHeaderFont);
 
-            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a");
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a 'IST'");
+            sdf.setTimeZone(java.util.TimeZone.getTimeZone("Asia/Kolkata"));
             String bookingDateStr = booking.getBookingDate() != null ? sdf.format(booking.getBookingDate()) : "N/A";
 
             com.lowagie.text.List userDetailsList = new com.lowagie.text.List(com.lowagie.text.List.UNORDERED);
