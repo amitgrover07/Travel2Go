@@ -150,7 +150,10 @@ public class PdfService {
         }
 
         // Overview
-        addSection(document, "Overview", stripHtml(pkg.getOverview()), sectionHeaderFont, normalFont);
+        String overviewText = stripHtml(pkg.getOverview());
+        if (!overviewText.isEmpty()) {
+            addSection(document, "Overview", overviewText, sectionHeaderFont, normalFont);
+        }
 
         // Itinerary
         if (pkg.getItinerary() != null && !pkg.getItinerary().isEmpty()) {
@@ -161,9 +164,19 @@ public class PdfService {
                 dayTitle.setSpacingAfter(4);
                 document.add(dayTitle);
                 
-                Paragraph dayDesc = new Paragraph(stripHtml(day.getActivities()), normalFont);
-                dayDesc.setSpacingAfter(10);
-                document.add(dayDesc);
+                String[] acts = extractBulletPoints(day.getActivities());
+                if (acts.length > 0) {
+                    com.lowagie.text.List list = new com.lowagie.text.List(com.lowagie.text.List.UNORDERED);
+                    list.setListSymbol("• ");
+                    for (String act : acts) {
+                        if (!act.trim().isEmpty()) {
+                            ListItem item = new ListItem(act.trim(), normalFont);
+                            item.setSpacingAfter(3);
+                            list.add(item);
+                        }
+                    }
+                    document.add(list);
+                }
             }
         }
 
@@ -176,8 +189,23 @@ public class PdfService {
         }
 
         // Special Notes
-        if (pkg.getSpecialNotes() != null && !pkg.getSpecialNotes().isEmpty()) {
-            addSection(document, "Important Notes & Conditions", stripHtml(pkg.getSpecialNotes()), sectionHeaderFont, normalFont);
+        String specialNotesText = stripHtml(pkg.getSpecialNotes());
+        if (!specialNotesText.isEmpty()) {
+            addSection(document, "Special Notes", specialNotesText, sectionHeaderFont, normalFont);
+        }
+
+        // Terms & Conditions
+        if (settings != null && settings.getTermsAndConditions() != null) {
+            String termsText = stripHtml(settings.getTermsAndConditions());
+            if (!termsText.isEmpty()) {
+                document.add(new Chunk(new com.lowagie.text.pdf.draw.LineSeparator()));
+                Paragraph termsHeader = new Paragraph("Terms & Conditions", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.GRAY));
+                termsHeader.setSpacingBefore(20);
+                termsHeader.setSpacingAfter(10);
+                document.add(termsHeader);
+                Paragraph termsBody = new Paragraph(termsText, FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY));
+                document.add(termsBody);
+            }
         }
 
         document.close();
@@ -202,6 +230,15 @@ public class PdfService {
         Paragraph body = new Paragraph(content, contentFont);
         body.setSpacingAfter(15);
         document.add(body);
+    }
+
+    private String[] extractBulletPoints(String html) {
+        if (html == null) return new String[0];
+        String processed = html.replaceAll("(?i)</li>", "\n")
+                               .replaceAll("(?i)</p>", "\n")
+                               .replaceAll("(?i)<br\\s*/?>", "\n");
+        processed = stripHtml(processed);
+        return processed.split("\\n");
     }
 
     private String stripHtml(String html) {
