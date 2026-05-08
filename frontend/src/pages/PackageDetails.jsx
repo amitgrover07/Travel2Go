@@ -64,21 +64,58 @@ const PackageDetails = () => {
     }
   };
 
-  const handleBookNow = () => {
+  const handleBookNow = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login', { state: { from: location } });
       return;
     }
     
-    // Pre-fill email if possible from token
+    // Try to fetch user profile to prefill details
     try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setBookingForm(prev => ({ ...prev, email: payload.sub || payload.email || '' }));
+      const response = await api.get('/users/me');
+      const user = response.data;
+      
+      let firstName = '';
+      let lastName = '';
+      if (user.name) {
+        const parts = user.name.trim().split(' ');
+        firstName = parts[0];
+        lastName = parts.slice(1).join(' ');
       }
-    } catch (e) {}
+      
+      setBookingForm(prev => ({
+        ...prev,
+        firstName: firstName || prev.firstName,
+        lastName: lastName || prev.lastName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+      }));
+    } catch (e) {
+      console.error('Error fetching profile, falling back to token:', e);
+      // Fallback to token if endpoint fails
+      try {
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          let firstName = '';
+          let lastName = '';
+          if (payload.name) {
+            const parts = payload.name.trim().split(' ');
+            firstName = parts[0];
+            lastName = parts.slice(1).join(' ');
+          }
+          const sub = payload.sub || '';
+          const isEmail = sub.includes('@');
+          setBookingForm(prev => ({ 
+            ...prev, 
+            email: isEmail ? sub : (payload.email || prev.email),
+            phone: !isEmail ? sub : prev.phone,
+            firstName: firstName || prev.firstName,
+            lastName: lastName || prev.lastName
+          }));
+        }
+      } catch (err) {}
+    }
 
     setShowBookingModal(true);
   };
