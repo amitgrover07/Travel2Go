@@ -37,27 +37,6 @@ public class PdfService {
         }
 
         @Override
-        public void onStartPage(PdfWriter writer, Document document) {
-            if (writer.getPageNumber() == 1 && pkg.getMedia() != null && pkg.getMedia().getThumbnailUrl() != null && !pkg.getMedia().getThumbnailUrl().isEmpty()) {
-                try {
-                    Image img = Image.getInstance(new URL(pkg.getMedia().getThumbnailUrl()));
-                    img.setAbsolutePosition(0, document.getPageSize().getHeight() - 250);
-                    img.scaleAbsolute(document.getPageSize().getWidth(), 250);
-                    
-                    PdfContentByte cb = writer.getDirectContentUnder();
-                    cb.saveState();
-                    PdfGState gs1 = new PdfGState();
-                    gs1.setFillOpacity(0.08f); // Faded backdrop only at top
-                    cb.setGState(gs1);
-                    cb.addImage(img);
-                    cb.restoreState();
-                } catch (Exception e) {
-                    // Skip if image fails
-                }
-            }
-        }
-
-        @Override
         public void onEndPage(PdfWriter writer, Document document) {
             PdfContentByte cb = writer.getDirectContent();
             
@@ -98,6 +77,26 @@ public class PdfService {
         PdfWriter writer = PdfWriter.getInstance(document, baos);
         writer.setPageEvent(new PdfHeaderFooter(pkg));
         document.open();
+
+        // Backdrop Image
+        if (pkg.getMedia() != null && pkg.getMedia().getThumbnailUrl() != null && !pkg.getMedia().getThumbnailUrl().isEmpty()) {
+            try {
+                Image img = Image.getInstance(new URL(pkg.getMedia().getThumbnailUrl()));
+                img.setAbsolutePosition(0, document.getPageSize().getHeight() - 250);
+                img.scaleAbsolute(document.getPageSize().getWidth(), 250);
+                
+                PdfContentByte cb = writer.getDirectContentUnder();
+                cb.saveState();
+                PdfGState gs1 = new PdfGState();
+                gs1.setFillOpacity(0.08f);
+                gs1.setStrokeOpacity(0.08f);
+                cb.setGState(gs1);
+                cb.addImage(img);
+                cb.restoreState();
+            } catch (Exception e) {
+                System.err.println("Failed to load PDF backdrop image: " + e.getMessage());
+            }
+        }
 
         // Fonts
         Font brandFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 28, new Color(37, 99, 235)); // Blue-600
