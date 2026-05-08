@@ -79,6 +79,16 @@ const Login = () => {
   };
 
   const handleOAuth2Login = (provider) => {
+    // Save state before redirecting to oauth
+    const stateObj = location.state || {};
+    const fromPath = stateObj.from?.pathname || stateObj.from;
+    if (fromPath) {
+       localStorage.setItem('oauth_redirect_from', fromPath);
+    }
+    if (stateObj.autoOpenBooking) {
+       localStorage.setItem('oauth_autoOpenBooking', 'true');
+    }
+    
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
     const baseUrl = apiUrl.replace(/\/api\/?$/, '');
     window.location.href = `${baseUrl}/oauth2/authorization/${provider}`;
