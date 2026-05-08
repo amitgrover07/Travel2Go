@@ -20,7 +20,7 @@ const Register = () => {
     try {
       await api.post('/auth/register', { email, password });
       setSuccess('Registration successful! You can now log in.');
-      setTimeout(() => navigate('/login', { state: { from: location.state?.from } }), 2000);
+      setTimeout(() => navigate('/login', { state: location.state }), 2000);
     } catch (err) {
       setError(err.response?.data || 'An error occurred during registration');
     }
@@ -99,7 +99,7 @@ const Register = () => {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-500">Already have an account? </span>
-            <Link to="/login" state={{ from: location.state?.from }} className="font-medium text-blue-600 hover:text-blue-500">
+            <Link to="/login" state={location.state} className="font-medium text-blue-600 hover:text-blue-500">
               Sign in
             </Link>
           </div>

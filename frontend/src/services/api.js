@@ -22,7 +22,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    // Do not trigger hard redirect for authentication endpoints
+    const isAuthEndpoint = error.config && error.config.url && error.config.url.includes('/auth/');
+    
+    if (!isAuthEndpoint && error.response && (error.response.status === 401 || error.response.status === 403)) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
