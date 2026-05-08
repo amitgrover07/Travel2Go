@@ -81,18 +81,25 @@ public class PdfService {
         // Backdrop Image
         if (pkg.getMedia() != null && pkg.getMedia().getThumbnailUrl() != null && !pkg.getMedia().getThumbnailUrl().isEmpty()) {
             try {
-                Image img = Image.getInstance(new URL(pkg.getMedia().getThumbnailUrl()));
-                img.setAbsolutePosition(0, document.getPageSize().getHeight() - 250);
-                img.scaleAbsolute(document.getPageSize().getWidth(), 250);
+                java.net.URL url = new java.net.URL(pkg.getMedia().getThumbnailUrl());
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0");
                 
-                PdfContentByte cb = writer.getDirectContentUnder();
-                cb.saveState();
-                PdfGState gs1 = new PdfGState();
-                gs1.setFillOpacity(0.08f);
-                gs1.setStrokeOpacity(0.08f);
-                cb.setGState(gs1);
-                cb.addImage(img);
-                cb.restoreState();
+                try (java.io.InputStream is = connection.getInputStream()) {
+                    byte[] imageBytes = is.readAllBytes();
+                    Image img = Image.getInstance(imageBytes);
+                    img.setAbsolutePosition(0, document.getPageSize().getHeight() - 250);
+                    img.scaleAbsolute(document.getPageSize().getWidth(), 250);
+                    
+                    PdfContentByte cb = writer.getDirectContentUnder();
+                    cb.saveState();
+                    PdfGState gs1 = new PdfGState();
+                    gs1.setFillOpacity(0.25f);
+                    gs1.setStrokeOpacity(0.25f);
+                    cb.setGState(gs1);
+                    cb.addImage(img);
+                    cb.restoreState();
+                }
             } catch (Exception e) {
                 System.err.println("Failed to load PDF backdrop image: " + e.getMessage());
             }
