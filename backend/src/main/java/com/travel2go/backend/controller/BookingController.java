@@ -53,7 +53,7 @@ public class BookingController {
                 .location(request.getLocation())
                 .packageId(request.getPackageId())
                 .packageTitle(request.getPackageTitle())
-                .bookingDate(LocalDateTime.now())
+                .bookingDate(new java.util.Date())
                 .status("CONFIRMED")
                 .build();
             

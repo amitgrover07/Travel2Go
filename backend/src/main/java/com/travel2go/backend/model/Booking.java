@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.google.cloud.firestore.annotation.DocumentId;
 import com.google.cloud.spring.data.firestore.Document;
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -26,6 +26,6 @@ public class Booking {
     private String packageId;
     private String packageTitle;
     
-    private LocalDateTime bookingDate;
+    private Date bookingDate;
     private String status;
 }
