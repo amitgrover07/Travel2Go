@@ -201,7 +201,10 @@ const PackageDetails = () => {
       delete state.autoOpenBooking;
       navigate(location.pathname, { replace: true, state });
       
-      handleBookNow();
+      // Delay opening to prevent aggressive browser anti-phishing heuristics
+      setTimeout(() => {
+        handleBookNow();
+      }, 500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pkg, location.state?.autoOpenBooking]);
