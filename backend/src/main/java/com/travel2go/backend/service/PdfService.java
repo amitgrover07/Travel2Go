@@ -4,9 +4,12 @@ import com.lowagie.text.*;
 import com.lowagie.text.Font;
 import com.lowagie.text.Image;
 import com.lowagie.text.pdf.*;
+import com.travel2go.backend.model.Booking;
 import com.travel2go.backend.model.GlobalSettings;
 import com.travel2go.backend.model.HolidayPackage;
 import org.springframework.stereotype.Service;
+
+import java.text.SimpleDateFormat;
 
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
@@ -38,13 +41,13 @@ public class PdfService {
             if (writer.getPageNumber() == 1 && pkg.getMedia() != null && pkg.getMedia().getThumbnailUrl() != null && !pkg.getMedia().getThumbnailUrl().isEmpty()) {
                 try {
                     Image img = Image.getInstance(new URL(pkg.getMedia().getThumbnailUrl()));
-                    img.setAbsolutePosition(0, document.getPageSize().getHeight() - 300);
-                    img.scaleAbsolute(document.getPageSize().getWidth(), 300);
+                    img.setAbsolutePosition(0, document.getPageSize().getHeight() - 250);
+                    img.scaleAbsolute(document.getPageSize().getWidth(), 250);
                     
                     PdfContentByte cb = writer.getDirectContentUnder();
                     cb.saveState();
                     PdfGState gs1 = new PdfGState();
-                    gs1.setFillOpacity(0.15f); // Faded
+                    gs1.setFillOpacity(0.08f); // Faded backdrop only at top
                     cb.setGState(gs1);
                     cb.addImage(img);
                     cb.restoreState();
@@ -84,12 +87,12 @@ public class PdfService {
             total.setFontAndSize(bf, 10);
             total.setColorFill(Color.GRAY);
             total.setTextMatrix(0, 0);
-            total.showText(String.valueOf(writer.getPageNumber()));
+            total.showText(String.valueOf(writer.getPageNumber() - 1));
             total.endText();
         }
     }
 
-    public byte[] generatePackagePdf(HolidayPackage pkg, GlobalSettings settings) throws Exception {
+    public byte[] generatePackagePdf(HolidayPackage pkg, GlobalSettings settings, Booking booking) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Document document = new Document(PageSize.A4, 40, 40, 60, 40);
         PdfWriter writer = PdfWriter.getInstance(document, baos);
@@ -192,6 +195,39 @@ public class PdfService {
         String specialNotesText = stripHtml(pkg.getSpecialNotes());
         if (!specialNotesText.isEmpty()) {
             addSection(document, "Special Notes", specialNotesText, sectionHeaderFont, normalFont);
+        }
+
+        // Package Offered To
+        if (booking != null) {
+            addSectionHeader(document, "Package Offered To", sectionHeaderFont);
+
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a");
+            String bookingDateStr = booking.getBookingDate() != null ? sdf.format(booking.getBookingDate()) : "N/A";
+
+            com.lowagie.text.List userDetailsList = new com.lowagie.text.List(com.lowagie.text.List.UNORDERED);
+            userDetailsList.setListSymbol("");
+            
+            ListItem nameItem = new ListItem("Name: " + booking.getFirstName() + " " + (booking.getLastName() != null ? booking.getLastName() : ""), normalFont);
+            nameItem.setSpacingAfter(3);
+            userDetailsList.add(nameItem);
+            
+            ListItem emailItem = new ListItem("Email: " + booking.getEmail(), normalFont);
+            emailItem.setSpacingAfter(3);
+            userDetailsList.add(emailItem);
+            
+            ListItem phoneItem = new ListItem("Phone: " + booking.getPhone(), normalFont);
+            phoneItem.setSpacingAfter(3);
+            userDetailsList.add(phoneItem);
+            
+            ListItem locationItem = new ListItem("Location: " + booking.getLocation(), normalFont);
+            locationItem.setSpacingAfter(3);
+            userDetailsList.add(locationItem);
+            
+            ListItem dateItem = new ListItem("Date of Request: " + bookingDateStr, normalFont);
+            dateItem.setSpacingAfter(3);
+            userDetailsList.add(dateItem);
+            
+            document.add(userDetailsList);
         }
 
         // Terms & Conditions

@@ -65,7 +65,7 @@ public class BookingController {
 
             byte[] pdfBytes = null;
             if (pkg != null) {
-                pdfBytes = pdfService.generatePackagePdf(pkg, settings);
+                pdfBytes = pdfService.generatePackagePdf(pkg, settings, booking);
             }
 
             // Send confirmation email with PDF attachment
