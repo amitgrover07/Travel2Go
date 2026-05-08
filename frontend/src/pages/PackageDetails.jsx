@@ -197,14 +197,13 @@ const PackageDetails = () => {
   // Auto-open booking modal if redirecting from login
   useEffect(() => {
     if (pkg && location.state?.autoOpenBooking && !showBookingModal) {
-      const state = { ...location.state };
-      delete state.autoOpenBooking;
-      navigate(location.pathname, { replace: true, state });
+      // Clear the state without triggering a router re-render
+      const newState = { ...location.state };
+      delete newState.autoOpenBooking;
+      window.history.replaceState({ ...window.history.state, usr: newState }, '');
       
-      // Delay opening to prevent aggressive browser anti-phishing heuristics
-      setTimeout(() => {
-        handleBookNow();
-      }, 500);
+      // Call immediately
+      handleBookNow();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pkg, location.state?.autoOpenBooking]);
