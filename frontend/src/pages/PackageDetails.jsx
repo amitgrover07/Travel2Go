@@ -66,7 +66,23 @@ const PackageDetails = () => {
 
   const handleBookNow = async () => {
     const token = localStorage.getItem('token');
-    if (!token) {
+    
+    // Check if token exists and is not expired
+    let isValidToken = false;
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        // Add 1 minute buffer for expiration
+        if (payload.exp && (payload.exp * 1000) > (Date.now() + 60000)) {
+          isValidToken = true;
+        }
+      } catch (e) {
+        // Invalid token format
+      }
+    }
+
+    if (!isValidToken) {
+      localStorage.removeItem('token'); // Clear invalid/expired token
       navigate('/login', { state: { from: location.pathname, autoOpenBooking: true } });
       return;
     }
@@ -197,12 +213,10 @@ const PackageDetails = () => {
   // Auto-open booking modal if redirecting from login
   useEffect(() => {
     if (pkg && location.state?.autoOpenBooking && !showBookingModal) {
-      // Clear the state without triggering a router re-render
-      const newState = { ...location.state };
-      delete newState.autoOpenBooking;
-      window.history.replaceState({ ...window.history.state, usr: newState }, '');
+      const state = { ...location.state };
+      delete state.autoOpenBooking;
+      navigate(location.pathname, { replace: true, state });
       
-      // Call immediately
       handleBookNow();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
