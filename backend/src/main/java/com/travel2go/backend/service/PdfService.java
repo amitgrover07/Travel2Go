@@ -78,33 +78,6 @@ public class PdfService {
         writer.setPageEvent(new PdfHeaderFooter(pkg));
         document.open();
 
-        // Backdrop Image
-        if (pkg.getMedia() != null && pkg.getMedia().getThumbnailUrl() != null && !pkg.getMedia().getThumbnailUrl().isEmpty()) {
-            try {
-                java.net.URL url = new java.net.URL(pkg.getMedia().getThumbnailUrl());
-                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-                
-                try (java.io.InputStream is = connection.getInputStream()) {
-                    byte[] imageBytes = is.readAllBytes();
-                    Image img = Image.getInstance(imageBytes);
-                    img.setAbsolutePosition(0, document.getPageSize().getHeight() - 250);
-                    img.scaleAbsolute(document.getPageSize().getWidth(), 250);
-                    
-                    PdfContentByte cb = writer.getDirectContentUnder();
-                    cb.saveState();
-                    PdfGState gs1 = new PdfGState();
-                    gs1.setFillOpacity(0.25f);
-                    gs1.setStrokeOpacity(0.25f);
-                    cb.setGState(gs1);
-                    cb.addImage(img);
-                    cb.restoreState();
-                }
-            } catch (Exception e) {
-                System.err.println("Failed to load PDF backdrop image: " + e.getMessage());
-            }
-        }
-
         // Fonts
         Font brandFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 28, new Color(37, 99, 235)); // Blue-600
         Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, Color.BLACK);
