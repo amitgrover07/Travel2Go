@@ -67,7 +67,7 @@ const PackageDetails = () => {
   const handleBookNow = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      navigate('/login', { state: { from: location } });
+      navigate('/login', { state: { from: location.pathname, autoOpenBooking: true } });
       return;
     }
     
@@ -193,6 +193,18 @@ const PackageDetails = () => {
 
     return () => clearInterval(interval);
   }, [images.length]);
+
+  // Auto-open booking modal if redirecting from login
+  useEffect(() => {
+    if (pkg && location.state?.autoOpenBooking && !showBookingModal) {
+      const state = { ...location.state };
+      delete state.autoOpenBooking;
+      navigate(location.pathname, { replace: true, state });
+      
+      handleBookNow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pkg, location.state?.autoOpenBooking]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;

@@ -34,12 +34,12 @@ const Login = () => {
     const payload = getTokenPayload(token);
     
     // Check if there's a redirect path in the location state
-    const from = location.state?.from?.pathname || '/';
+    const from = location.state?.from?.pathname || location.state?.from || '/';
     
     if (payload && payload.role === 'ADMIN' && from === '/') {
       navigate('/admin');
     } else {
-      navigate(from, { replace: true });
+      navigate(from, { replace: true, state: location.state });
     }
   };
 
