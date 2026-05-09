@@ -412,7 +412,7 @@ const PackageDetails = () => {
                   Important Notes & Conditions
                 </h3>
                 <div 
-                  className="text-gray-800 text-lg leading-relaxed quill-content prose max-w-none"
+                  className="text-gray-800 text-lg leading-relaxed quill-content prose max-w-none break-words overflow-hidden"
                   dangerouslySetInnerHTML={{ __html: pkg.specialNotes }}
                 />
               </div>
@@ -420,10 +420,10 @@ const PackageDetails = () => {
 
             {/* Global Terms & Conditions */}
             {!isHtmlEmpty(globalTerms) && (
-              <div className="mt-16 border-t border-gray-100 pt-10">
+              <div className="mt-16 border-t border-gray-100 pt-10 overflow-hidden">
                 <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 px-2">Terms & Conditions</h4>
                 <div 
-                  className="text-gray-500 text-xs sm:text-sm leading-relaxed quill-content prose prose-sm max-w-none px-2 opacity-80"
+                  className="text-gray-500 text-xs sm:text-sm leading-relaxed quill-content prose prose-sm max-w-none px-2 opacity-80 break-words"
                   dangerouslySetInnerHTML={{ __html: globalTerms }}
                 />
               </div>
