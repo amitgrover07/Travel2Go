@@ -241,8 +241,8 @@ const PackageDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
 
-      <main className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 mt-0 sm:mt-8">
-        <div className="bg-white shadow-none sm:shadow-lg sm:rounded-2xl overflow-hidden">
+      <main className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 mt-0 sm:mt-8 w-full">
+        <div className="bg-white shadow-none sm:shadow-lg sm:rounded-2xl overflow-hidden w-full max-w-full">
           {/* Image Carousel */}
           <div className="relative aspect-w-16 aspect-h-12 sm:aspect-h-7 lg:aspect-h-6 bg-gray-200">
             <img
@@ -281,9 +281,9 @@ const PackageDetails = () => {
           </div>
 
           {/* Content */}
-          <div className="p-4 sm:p-8">
-            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-8 gap-6">
-              <div className="flex-1">
+          <div className="p-4 sm:p-8 w-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-8 gap-6 w-full">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 text-sm text-blue-600 font-medium mb-3">
                   <span className="flex items-center">
                     <MapPin className="h-4 w-4 mr-1" />
