@@ -1,16 +1,27 @@
 import axios from 'axios';
 
-let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-if (baseUrl.endsWith('/')) {
-  baseUrl = baseUrl.slice(0, -1);
-}
-// Ensure it ends with /api
-if (!baseUrl.endsWith('/api')) {
-  baseUrl = baseUrl + '/api';
-}
+const getBaseUrl = () => {
+  let url = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+  
+  if (!url || typeof url !== 'string') {
+    return 'http://localhost:8080/api';
+  }
+
+  // Remove trailing slash
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+
+  // Ensure it ends with /api for the gateway
+  if (!url.endsWith('/api')) {
+    url = url + '/api';
+  }
+  
+  return url;
+};
 
 const api = axios.create({
-  baseURL: baseUrl,
+  baseURL: getBaseUrl(),
 });
 
 api.interceptors.request.use(
@@ -29,7 +40,6 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Do not trigger hard redirect for authentication endpoints
     const isAuthEndpoint = error.config && error.config.url && error.config.url.includes('/auth/');
     
     if (!isAuthEndpoint && error.response && (error.response.status === 401 || error.response.status === 403)) {
