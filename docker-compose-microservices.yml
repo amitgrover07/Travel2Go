@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./microservices/api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - travel2go-network
+    depends_on:
+      - identity-service
+      - package-service
+      - booking-service
+      - media-service
+      - notification-service
+    environment:
+      - IDENTITY_SERVICE_URL=http://identity-service:8081
+      - PACKAGE_SERVICE_URL=http://package-service:8082
+      - BOOKING_SERVICE_URL=http://booking-service:8083
+      - MEDIA_SERVICE_URL=http://media-service:8084
+
+  identity-service:
+    build: ./microservices/identity-service
+    ports:
+      - "8081:8081"
+    networks:
+      - travel2go-network
+    environment:
+      - SERVER_PORT=8081
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8085
+
+  package-service:
+    build: ./microservices/package-service
+    ports:
+      - "8082:8082"
+    networks:
+      - travel2go-network
+    environment:
+      - SERVER_PORT=8082
+
+  booking-service:
+    build: ./microservices/booking-service
+    ports:
+      - "8083:8083"
+    networks:
+      - travel2go-network
+    environment:
+      - SERVER_PORT=8083
+      - PACKAGE_SERVICE_URL=http://package-service:8082
+      - IDENTITY_SERVICE_URL=http://identity-service:8081
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8085
+
+  media-service:
+    build: ./microservices/media-service
+    ports:
+      - "8084:8084"
+    networks:
+      - travel2go-network
+    environment:
+      - SERVER_PORT=8084
+
+  notification-service:
+    build: ./microservices/notification-service
+    ports:
+      - "8085:8085"
+    networks:
+      - travel2go-network
+    environment:
+      - SERVER_PORT=8085
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - travel2go-network
+    depends_on:
+      - api-gateway
+
+networks:
+  travel2go-network:
+    driver: bridge
