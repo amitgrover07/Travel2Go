@@ -18,12 +18,20 @@ public class SettingsController {
 
     @GetMapping("/terms")
     public ResponseEntity<GlobalSettings> getTerms() {
-        GlobalSettings settings = repository.findById(GLOBAL_ID).block();
-        if (settings == null) {
+        return getSettingsById(GLOBAL_ID);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<GlobalSettings> getSettingsById(@PathVariable String id) {
+        GlobalSettings settings = repository.findById(id).block();
+        if (settings == null && GLOBAL_ID.equals(id)) {
             settings = GlobalSettings.builder()
                     .id(GLOBAL_ID)
                     .termsAndConditions("")
                     .build();
+        }
+        if (settings == null) {
+            return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(settings);
     }
