@@ -1,9 +1,16 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+if (baseUrl.endsWith('/')) {
+  baseUrl = baseUrl.slice(0, -1);
+}
+// Ensure it ends with /api
+if (!baseUrl.endsWith('/api')) {
+  baseUrl = baseUrl + '/api';
+}
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: baseUrl,
 });
 
 api.interceptors.request.use(
