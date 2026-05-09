@@ -96,7 +96,7 @@ const Home = () => {
                     </div>
                     {pkg.packageCode && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{pkg.packageCode}</span>}
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{pkg.title}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 truncate" title={pkg.title}>{pkg.title}</h3>
                   <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">{stripHtml(pkg.overview)}</p>
                   
                   <div className="mt-auto border-t border-gray-100 pt-4 flex flex-col">

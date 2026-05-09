@@ -295,11 +295,11 @@ const PackageDetails = () => {
                     </span>
                   )}
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-4 break-words">
                   {pkg.title}
                 </h1>
                 <div 
-                  className="text-gray-600 text-base sm:text-lg leading-relaxed quill-content"
+                  className="text-gray-600 text-base sm:text-lg leading-relaxed quill-content break-words overflow-hidden"
                   dangerouslySetInnerHTML={{ __html: pkg.overview }}
                 />
               </div>
@@ -343,11 +343,11 @@ const PackageDetails = () => {
                     <CheckCircle2 className="h-6 w-6 text-green-500 mr-2" />
                     What's Included
                   </h3>
-                  <ul className="space-y-3">
+                  <ul className="space-y-3 list-none">
                     {pkg.inclusions.map((item, idx) => (
-                      <li key={idx} className="flex items-start">
-                        <span className="text-green-500 mr-2 mt-1">•</span>
-                        <span className="text-gray-700">{item}</span>
+                      <li key={idx} className="flex items-start text-sm sm:text-base">
+                        <CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-700 break-words">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -361,11 +361,11 @@ const PackageDetails = () => {
                     <XCircle className="h-6 w-6 text-red-500 mr-2" />
                     What's Excluded
                   </h3>
-                  <ul className="space-y-3">
+                  <ul className="space-y-3 list-none">
                     {pkg.exclusions.map((item, idx) => (
-                      <li key={idx} className="flex items-start">
-                        <span className="text-red-400 mr-2 mt-1">•</span>
-                        <span className="text-gray-700">{item}</span>
+                      <li key={idx} className="flex items-start text-sm sm:text-base">
+                        <XCircle className="h-5 w-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-700 break-words">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -391,7 +391,7 @@ const PackageDetails = () => {
                             <h4 className="text-lg font-bold text-gray-900">{day.title}</h4>
                           </div>
                           <div 
-                            className="text-gray-600 text-sm md:text-base leading-relaxed quill-content"
+                            className="text-gray-600 text-sm md:text-base leading-relaxed quill-content break-words overflow-hidden"
                             dangerouslySetInnerHTML={{ __html: day.activities }}
                           />
                         </div>
