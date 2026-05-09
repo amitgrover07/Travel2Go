@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.function.Function;
 
 @Component
@@ -42,6 +45,13 @@ public class JwtUtil {
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    public List<SimpleGrantedAuthority> extractRoles(String token) {
+        final io.jsonwebtoken.Claims claims = extractAllClaims(token);
+        List<String> roles = claims.get("roles", List.class);
+        if (roles == null) return List.of();
+        return roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
     }
 
     public String extractUsername(String token) {
