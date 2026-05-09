@@ -24,6 +24,7 @@ public class HolidayPackage {
     private String title;
     private String destination;
     private String status;
+    private String packageType;
     private String overview;
     private String specialNotes;
     

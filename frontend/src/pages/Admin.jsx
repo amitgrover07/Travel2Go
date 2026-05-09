@@ -28,6 +28,7 @@ const defaultForm = {
   title: '',
   destination: '',
   status: 'ACTIVE',
+  packageType: 'Domestic',
   overview: '',
   duration: { days: '', nights: '' },
   pricing: { currency: 'INR', basePrice: '', discountPercentage: '', finalPrice: '' },
@@ -430,6 +431,13 @@ const Admin = () => {
                         <select name="status" value={formData.status} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white">
                           <option value="ACTIVE">ACTIVE</option>
                           <option value="INACTIVE">INACTIVE</option>
+                        </select>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Package Type</label>
+                        <select name="packageType" value={formData.packageType} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white font-semibold text-blue-700">
+                          <option value="Domestic">Domestic</option>
+                          <option value="International">International</option>
                         </select>
                       </div>
                     </div>

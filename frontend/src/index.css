@@ -87,3 +87,27 @@
     margin-bottom: 0.5rem;
   }
 }
+
+/* Global Input Highlights */
+input:not([type="checkbox"]):not([type="radio"]):not([readOnly]), 
+select, 
+textarea, 
+.ql-container {
+  border: 2px solid #bfdbfe !important; /* blue-200 */
+  transition: all 0.2s ease-in-out !important;
+  border-radius: 0.5rem !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([readOnly]):focus, 
+select:focus, 
+textarea:focus {
+  border-color: #2563eb !important; /* blue-600 */
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+  outline: none !important;
+}
+
+.ql-toolbar {
+  border: 2px solid #bfdbfe !important;
+  border-bottom: none !important;
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+}
