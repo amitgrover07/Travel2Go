@@ -70,6 +70,12 @@ jobs:
 
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v1
+        env:
+          IDENTITY_SERVICE_URL: ${{ secrets.IDENTITY_SERVICE_URL }}
+          PACKAGE_SERVICE_URL: ${{ secrets.PACKAGE_SERVICE_URL }}
+          BOOKING_SERVICE_URL: ${{ secrets.BOOKING_SERVICE_URL }}
+          MEDIA_SERVICE_URL: ${{ secrets.MEDIA_SERVICE_URL }}
+          NOTIFICATION_SERVICE_URL: ${{ secrets.NOTIFICATION_SERVICE_URL }}
         with:
           service: ${{ matrix.service }}
           region: ${{ env.REGION }}
@@ -85,8 +91,8 @@ jobs:
             TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN || 'placeholder' }}
             TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER || 'placeholder' }}
             OAUTH2_REDIRECT_URI=https://travel2go-495007.web.app/oauth2/redirect
-            IDENTITY_SERVICE_URL=${{ secrets.IDENTITY_SERVICE_URL || 'http://identity-tbd' }}
-            PACKAGE_SERVICE_URL=${{ secrets.PACKAGE_SERVICE_URL || 'http://package-tbd' }}
-            BOOKING_SERVICE_URL=${{ secrets.BOOKING_SERVICE_URL || 'http://booking-tbd' }}
-            MEDIA_SERVICE_URL=${{ secrets.MEDIA_SERVICE_URL || 'http://media-tbd' }}
-            NOTIFICATION_SERVICE_URL=${{ secrets.NOTIFICATION_SERVICE_URL || 'http://notification-tbd' }}
+            IDENTITY_SERVICE_URL=${{ env.IDENTITY_SERVICE_URL || 'http://identity-tbd' }}
+            PACKAGE_SERVICE_URL=${{ env.PACKAGE_SERVICE_URL || 'http://package-tbd' }}
+            BOOKING_SERVICE_URL=${{ env.BOOKING_SERVICE_URL || 'http://booking-tbd' }}
+            MEDIA_SERVICE_URL=${{ env.MEDIA_SERVICE_URL || 'http://media-tbd' }}
+            NOTIFICATION_SERVICE_URL=${{ env.NOTIFICATION_SERVICE_URL || 'http://notification-tbd' }}
