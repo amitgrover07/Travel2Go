@@ -76,17 +76,17 @@ jobs:
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ matrix.service }}:${{ github.sha }}
           flags: "--port=${{ matrix.port }} --allow-unauthenticated"
           env_vars: |
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
-            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
-            TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}
-            TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}
-            TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }}
+            JWT_SECRET=${{ secrets.JWT_SECRET || 'placeholder' }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || 'placeholder' }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || 'placeholder' }}
+            MAIL_USERNAME=${{ secrets.MAIL_USERNAME || 'placeholder' }}
+            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD || 'placeholder' }}
+            TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID || 'placeholder' }}
+            TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN || 'placeholder' }}
+            TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER || 'placeholder' }}
             OAUTH2_REDIRECT_URI=https://travel2go-495007.web.app/oauth2/redirect
-            IDENTITY_SERVICE_URL=${{ secrets.IDENTITY_SERVICE_URL }}
-            PACKAGE_SERVICE_URL=${{ secrets.PACKAGE_SERVICE_URL }}
-            BOOKING_SERVICE_URL=${{ secrets.BOOKING_SERVICE_URL }}
-            MEDIA_SERVICE_URL=${{ secrets.MEDIA_SERVICE_URL }}
-            NOTIFICATION_SERVICE_URL=${{ secrets.NOTIFICATION_SERVICE_URL }}
+            IDENTITY_SERVICE_URL=${{ secrets.IDENTITY_SERVICE_URL || 'http://identity-tbd' }}
+            PACKAGE_SERVICE_URL=${{ secrets.PACKAGE_SERVICE_URL || 'http://package-tbd' }}
+            BOOKING_SERVICE_URL=${{ secrets.BOOKING_SERVICE_URL || 'http://booking-tbd' }}
+            MEDIA_SERVICE_URL=${{ secrets.MEDIA_SERVICE_URL || 'http://media-tbd' }}
+            NOTIFICATION_SERVICE_URL=${{ secrets.NOTIFICATION_SERVICE_URL || 'http://notification-tbd' }}
