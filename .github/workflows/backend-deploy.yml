@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'microservices/**'
+      - '.github/workflows/backend-deploy.yml'
 
 env:
   PROJECT_ID: travel2go-495007
@@ -68,31 +69,43 @@ jobs:
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
+      - name: Prepare Environment Variables
+        run: |
+          echo "FINAL_JWT_SECRET=${{ secrets.JWT_SECRET || 'placeholder' }}" >> $GITHUB_ENV
+          echo "FINAL_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || 'placeholder' }}" >> $GITHUB_ENV
+          echo "FINAL_GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || 'placeholder' }}" >> $GITHUB_ENV
+          echo "FINAL_MAIL_USERNAME=${{ secrets.MAIL_USERNAME || 'placeholder' }}" >> $GITHUB_ENV
+          echo "FINAL_MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD || 'placeholder' }}" >> $GITHUB_ENV
+          echo "FINAL_TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID || 'placeholder' }}" >> $GITHUB_ENV
+          echo "FINAL_TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN || 'placeholder' }}" >> $GITHUB_ENV
+          echo "FINAL_TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER || 'placeholder' }}" >> $GITHUB_ENV
+          
+          # Service URLs
+          if [ -z "${{ secrets.IDENTITY_SERVICE_URL }}" ]; then echo "FINAL_IDENTITY_URL=http://identity-tbd" >> $GITHUB_ENV; else echo "FINAL_IDENTITY_URL=${{ secrets.IDENTITY_SERVICE_URL }}" >> $GITHUB_ENV; fi
+          if [ -z "${{ secrets.PACKAGE_SERVICE_URL }}" ]; then echo "FINAL_PACKAGE_URL=http://package-tbd" >> $GITHUB_ENV; else echo "FINAL_PACKAGE_URL=${{ secrets.PACKAGE_SERVICE_URL }}" >> $GITHUB_ENV; fi
+          if [ -z "${{ secrets.BOOKING_SERVICE_URL }}" ]; then echo "FINAL_BOOKING_URL=http://booking-tbd" >> $GITHUB_ENV; else echo "FINAL_BOOKING_URL=${{ secrets.BOOKING_SERVICE_URL }}" >> $GITHUB_ENV; fi
+          if [ -z "${{ secrets.MEDIA_SERVICE_URL }}" ]; then echo "FINAL_MEDIA_URL=http://media-tbd" >> $GITHUB_ENV; else echo "FINAL_MEDIA_URL=${{ secrets.MEDIA_SERVICE_URL }}" >> $GITHUB_ENV; fi
+          if [ -z "${{ secrets.NOTIFICATION_SERVICE_URL }}" ]; then echo "FINAL_NOTIFICATION_URL=http://notification-tbd" >> $GITHUB_ENV; else echo "FINAL_NOTIFICATION_URL=${{ secrets.NOTIFICATION_SERVICE_URL }}" >> $GITHUB_ENV; fi
+
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v1
-        env:
-          IDENTITY_SERVICE_URL: ${{ secrets.IDENTITY_SERVICE_URL }}
-          PACKAGE_SERVICE_URL: ${{ secrets.PACKAGE_SERVICE_URL }}
-          BOOKING_SERVICE_URL: ${{ secrets.BOOKING_SERVICE_URL }}
-          MEDIA_SERVICE_URL: ${{ secrets.MEDIA_SERVICE_URL }}
-          NOTIFICATION_SERVICE_URL: ${{ secrets.NOTIFICATION_SERVICE_URL }}
         with:
           service: ${{ matrix.service }}
           region: ${{ env.REGION }}
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ matrix.service }}:${{ github.sha }}
           flags: "--port=${{ matrix.port }} --allow-unauthenticated"
           env_vars: |
-            JWT_SECRET=${{ secrets.JWT_SECRET || 'placeholder' }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || 'placeholder' }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || 'placeholder' }}
-            MAIL_USERNAME=${{ secrets.MAIL_USERNAME || 'placeholder' }}
-            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD || 'placeholder' }}
-            TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID || 'placeholder' }}
-            TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN || 'placeholder' }}
-            TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER || 'placeholder' }}
+            JWT_SECRET=${{ env.FINAL_JWT_SECRET }}
+            GOOGLE_CLIENT_ID=${{ env.FINAL_GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ env.FINAL_GOOGLE_CLIENT_SECRET }}
+            MAIL_USERNAME=${{ env.FINAL_MAIL_USERNAME }}
+            MAIL_PASSWORD=${{ env.FINAL_MAIL_PASSWORD }}
+            TWILIO_ACCOUNT_SID=${{ env.FINAL_TWILIO_ACCOUNT_SID }}
+            TWILIO_AUTH_TOKEN=${{ env.FINAL_TWILIO_AUTH_TOKEN }}
+            TWILIO_PHONE_NUMBER=${{ env.FINAL_TWILIO_PHONE_NUMBER }}
             OAUTH2_REDIRECT_URI=https://travel2go-495007.web.app/oauth2/redirect
-            IDENTITY_SERVICE_URL=${{ env.IDENTITY_SERVICE_URL || 'http://identity-tbd' }}
-            PACKAGE_SERVICE_URL=${{ env.PACKAGE_SERVICE_URL || 'http://package-tbd' }}
-            BOOKING_SERVICE_URL=${{ env.BOOKING_SERVICE_URL || 'http://booking-tbd' }}
-            MEDIA_SERVICE_URL=${{ env.MEDIA_SERVICE_URL || 'http://media-tbd' }}
-            NOTIFICATION_SERVICE_URL=${{ env.NOTIFICATION_SERVICE_URL || 'http://notification-tbd' }}
+            IDENTITY_SERVICE_URL=${{ env.FINAL_IDENTITY_URL }}
+            PACKAGE_SERVICE_URL=${{ env.FINAL_PACKAGE_URL }}
+            BOOKING_SERVICE_URL=${{ env.FINAL_BOOKING_URL }}
+            MEDIA_SERVICE_URL=${{ env.FINAL_MEDIA_URL }}
+            NOTIFICATION_SERVICE_URL=${{ env.FINAL_NOTIFICATION_URL }}
