@@ -47,11 +47,25 @@ public class JwtUtil {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    public List<SimpleGrantedAuthority> extractRoles(String token) {
+        public List<SimpleGrantedAuthority> extractRoles(String token) {
         final io.jsonwebtoken.Claims claims = extractAllClaims(token);
-        List<String> roles = claims.get("roles", List.class);
-        if (roles == null) return List.of();
-        return roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        java.util.List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
+        
+        // Check singular 'role'
+        String role = claims.get("role", String.class);
+        if (role != null) {
+            authorities.add(new SimpleGrantedAuthority(role.startsWith("ROLE_") ? role : "ROLE_" + role));
+        }
+        
+        // Check plural 'roles'
+        java.util.List<String> roles = claims.get("roles", java.util.List.class);
+        if (roles != null) {
+            for (String r : roles) {
+                authorities.add(new SimpleGrantedAuthority(r.startsWith("ROLE_") ? r : "ROLE_" + r));
+            }
+        }
+        
+        return authorities;
     }
 
     public String extractUsername(String token) {
