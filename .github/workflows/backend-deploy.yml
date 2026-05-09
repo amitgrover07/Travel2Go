@@ -21,17 +21,11 @@ jobs:
       matrix:
         include:
           - service: identity-service
-            port: 8081
           - service: package-service
-            port: 8082
           - service: booking-service
-            port: 8083
           - service: media-service
-            port: 8084
           - service: notification-service
-            port: 8085
           - service: api-gateway
-            port: 8080
 
     steps:
       - name: Checkout repository
@@ -72,7 +66,6 @@ jobs:
       - name: Prepare Environment Variables
         shell: bash
         run: |
-          # Function to set default if empty
           set_env() {
             local name=$1
             local value=$2
@@ -83,22 +76,14 @@ jobs:
               echo "$name=$value" >> $GITHUB_ENV
             fi
           }
-
-          # Auth & Security
           set_env "FINAL_JWT_SECRET" "${{ secrets.JWT_SECRET }}" "placeholder_secret"
           set_env "FINAL_GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}" "placeholder_client_id"
           set_env "FINAL_GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}" "placeholder_client_secret"
-          
-          # Email
           set_env "FINAL_MAIL_USERNAME" "${{ secrets.MAIL_USERNAME }}" "placeholder_mail"
           set_env "FINAL_MAIL_PASSWORD" "${{ secrets.MAIL_PASSWORD }}" "placeholder_pass"
-          
-          # Twilio
           set_env "FINAL_TWILIO_ACCOUNT_SID" "${{ secrets.TWILIO_ACCOUNT_SID }}" "placeholder_sid"
           set_env "FINAL_TWILIO_AUTH_TOKEN" "${{ secrets.TWILIO_AUTH_TOKEN }}" "placeholder_token"
           set_env "FINAL_TWILIO_PHONE_NUMBER" "${{ secrets.TWILIO_PHONE_NUMBER }}" "placeholder_phone"
-          
-          # Service URLs
           set_env "FINAL_IDENTITY_URL" "${{ secrets.IDENTITY_SERVICE_URL }}" "http://identity-tbd"
           set_env "FINAL_PACKAGE_URL" "${{ secrets.PACKAGE_SERVICE_URL }}" "http://package-tbd"
           set_env "FINAL_BOOKING_URL" "${{ secrets.BOOKING_SERVICE_URL }}" "http://booking-tbd"
@@ -111,7 +96,7 @@ jobs:
           service: ${{ matrix.service }}
           region: ${{ env.REGION }}
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ matrix.service }}:${{ github.sha }}
-          flags: "--port=${{ matrix.port }} --allow-unauthenticated"
+          flags: "--port=8080 --allow-unauthenticated"
           env_vars: |
             JWT_SECRET=${{ env.FINAL_JWT_SECRET }}
             GOOGLE_CLIENT_ID=${{ env.FINAL_GOOGLE_CLIENT_ID }}
