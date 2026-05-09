@@ -70,22 +70,40 @@ jobs:
           docker push $IMAGE_NAME
 
       - name: Prepare Environment Variables
+        shell: bash
         run: |
-          echo "FINAL_JWT_SECRET=${{ secrets.JWT_SECRET || 'placeholder' }}" >> $GITHUB_ENV
-          echo "FINAL_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || 'placeholder' }}" >> $GITHUB_ENV
-          echo "FINAL_GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || 'placeholder' }}" >> $GITHUB_ENV
-          echo "FINAL_MAIL_USERNAME=${{ secrets.MAIL_USERNAME || 'placeholder' }}" >> $GITHUB_ENV
-          echo "FINAL_MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD || 'placeholder' }}" >> $GITHUB_ENV
-          echo "FINAL_TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID || 'placeholder' }}" >> $GITHUB_ENV
-          echo "FINAL_TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN || 'placeholder' }}" >> $GITHUB_ENV
-          echo "FINAL_TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER || 'placeholder' }}" >> $GITHUB_ENV
+          # Function to set default if empty
+          set_env() {
+            local name=$1
+            local value=$2
+            local default=$3
+            if [ -z "$value" ]; then
+              echo "$name=$default" >> $GITHUB_ENV
+            else
+              echo "$name=$value" >> $GITHUB_ENV
+            fi
+          }
+
+          # Auth & Security
+          set_env "FINAL_JWT_SECRET" "${{ secrets.JWT_SECRET }}" "placeholder_secret"
+          set_env "FINAL_GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}" "placeholder_client_id"
+          set_env "FINAL_GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}" "placeholder_client_secret"
+          
+          # Email
+          set_env "FINAL_MAIL_USERNAME" "${{ secrets.MAIL_USERNAME }}" "placeholder_mail"
+          set_env "FINAL_MAIL_PASSWORD" "${{ secrets.MAIL_PASSWORD }}" "placeholder_pass"
+          
+          # Twilio
+          set_env "FINAL_TWILIO_ACCOUNT_SID" "${{ secrets.TWILIO_ACCOUNT_SID }}" "placeholder_sid"
+          set_env "FINAL_TWILIO_AUTH_TOKEN" "${{ secrets.TWILIO_AUTH_TOKEN }}" "placeholder_token"
+          set_env "FINAL_TWILIO_PHONE_NUMBER" "${{ secrets.TWILIO_PHONE_NUMBER }}" "placeholder_phone"
           
           # Service URLs
-          if [ -z "${{ secrets.IDENTITY_SERVICE_URL }}" ]; then echo "FINAL_IDENTITY_URL=http://identity-tbd" >> $GITHUB_ENV; else echo "FINAL_IDENTITY_URL=${{ secrets.IDENTITY_SERVICE_URL }}" >> $GITHUB_ENV; fi
-          if [ -z "${{ secrets.PACKAGE_SERVICE_URL }}" ]; then echo "FINAL_PACKAGE_URL=http://package-tbd" >> $GITHUB_ENV; else echo "FINAL_PACKAGE_URL=${{ secrets.PACKAGE_SERVICE_URL }}" >> $GITHUB_ENV; fi
-          if [ -z "${{ secrets.BOOKING_SERVICE_URL }}" ]; then echo "FINAL_BOOKING_URL=http://booking-tbd" >> $GITHUB_ENV; else echo "FINAL_BOOKING_URL=${{ secrets.BOOKING_SERVICE_URL }}" >> $GITHUB_ENV; fi
-          if [ -z "${{ secrets.MEDIA_SERVICE_URL }}" ]; then echo "FINAL_MEDIA_URL=http://media-tbd" >> $GITHUB_ENV; else echo "FINAL_MEDIA_URL=${{ secrets.MEDIA_SERVICE_URL }}" >> $GITHUB_ENV; fi
-          if [ -z "${{ secrets.NOTIFICATION_SERVICE_URL }}" ]; then echo "FINAL_NOTIFICATION_URL=http://notification-tbd" >> $GITHUB_ENV; else echo "FINAL_NOTIFICATION_URL=${{ secrets.NOTIFICATION_SERVICE_URL }}" >> $GITHUB_ENV; fi
+          set_env "FINAL_IDENTITY_URL" "${{ secrets.IDENTITY_SERVICE_URL }}" "http://identity-tbd"
+          set_env "FINAL_PACKAGE_URL" "${{ secrets.PACKAGE_SERVICE_URL }}" "http://package-tbd"
+          set_env "FINAL_BOOKING_URL" "${{ secrets.BOOKING_SERVICE_URL }}" "http://booking-tbd"
+          set_env "FINAL_MEDIA_URL" "${{ secrets.MEDIA_SERVICE_URL }}" "http://media-tbd"
+          set_env "FINAL_NOTIFICATION_URL" "${{ secrets.NOTIFICATION_SERVICE_URL }}" "http://notification-tbd"
 
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v1
