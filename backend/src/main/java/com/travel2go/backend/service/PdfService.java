@@ -132,9 +132,8 @@ public class PdfService {
         }
 
         // Overview
-        String overviewText = stripHtml(pkg.getOverview());
-        if (!overviewText.isEmpty()) {
-            addSection(document, "Overview", overviewText, sectionHeaderFont, normalFont);
+        if (pkg.getOverview() != null && !pkg.getOverview().isEmpty()) {
+            addRichTextSection(document, "Overview", pkg.getOverview(), sectionHeaderFont, normalFont);
         }
 
         // Itinerary
@@ -171,9 +170,8 @@ public class PdfService {
         }
 
         // Special Notes
-        String specialNotesText = stripHtml(pkg.getSpecialNotes());
-        if (!specialNotesText.isEmpty()) {
-            addSection(document, "Special Notes", specialNotesText, sectionHeaderFont, normalFont);
+        if (pkg.getSpecialNotes() != null && !pkg.getSpecialNotes().isEmpty()) {
+            addRichTextSection(document, "Special Notes", pkg.getSpecialNotes(), sectionHeaderFont, normalFont);
         }
 
         // Package Offered To
@@ -246,6 +244,38 @@ public class PdfService {
         Paragraph body = new Paragraph(content, contentFont);
         body.setSpacingAfter(15);
         document.add(body);
+    }
+
+    private void addRichTextSection(Document document, String title, String html, Font headerFont, Font normalFont) throws DocumentException {
+        if (html == null || html.trim().isEmpty()) return;
+        String cleanHtml = stripHtml(html).trim();
+        if (cleanHtml.isEmpty()) return;
+        
+        addSectionHeader(document, title, headerFont);
+        
+        String processed = html.replaceAll("(?i)<li>", "• ")
+                               .replaceAll("(?i)</li>", "\n")
+                               .replaceAll("(?i)</p>", "\n")
+                               .replaceAll("(?i)<br\\s*/?>", "\n")
+                               .replaceAll("&nbsp;", " ")
+                               .replaceAll("\u00A0", " ");
+                               
+        processed = stripHtml(processed); 
+        
+        String[] lines = processed.split("\\n");
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (!trimmed.isEmpty()) {
+                Paragraph p = new Paragraph(trimmed, normalFont);
+                p.setSpacingAfter(6);
+                document.add(p);
+            }
+        }
+        
+        // Add some extra space after the entire section
+        Paragraph spacer = new Paragraph(" ", normalFont);
+        spacer.setSpacingAfter(10);
+        document.add(spacer);
     }
 
     private String[] extractBulletPoints(String html) {
