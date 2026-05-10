@@ -86,6 +86,11 @@
   .quill-content p {
     margin-bottom: 0.5rem;
   }
+  
+  /* Hide arbitrary break tags from copy-pasted PDF text that split words */
+  .quill-content br {
+    display: none;
+  }
 }
 
 /* Global Input Highlights */
@@ -116,7 +121,6 @@ textarea:focus {
 .quill-content, 
 .quill-content * {
   max-width: 100% !important;
-  word-wrap: break-word !important;
   overflow-wrap: break-word !important;
   white-space: normal !important; /* Changed from pre-wrap to avoid breaking pasted text with hidden newlines */
   word-break: normal !important;
