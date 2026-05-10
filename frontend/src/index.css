@@ -118,7 +118,7 @@ textarea:focus {
   max-width: 100% !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
-  white-space: pre-wrap !important; /* This fixes the "no wrap" issue from the editor */
+  white-space: normal !important; /* Changed from pre-wrap to avoid breaking pasted text with hidden newlines */
   word-break: normal !important;
 }
 
