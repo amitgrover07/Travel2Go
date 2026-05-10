@@ -118,7 +118,8 @@ public class PdfService {
             cell.setPadding(15);
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             
-            Paragraph pricePara = new Paragraph("Final Price: " + currency + " " + String.format("%,d", price), priceFont);
+            java.text.NumberFormat format = java.text.NumberFormat.getNumberInstance(new java.util.Locale("en", "IN"));
+            Paragraph pricePara = new Paragraph("Final Price: " + currency + " " + format.format(price), priceFont);
             pricePara.setAlignment(Element.ALIGN_CENTER);
             cell.addElement(pricePara);
             
