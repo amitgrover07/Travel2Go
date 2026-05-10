@@ -382,13 +382,19 @@ const PackageDetails = () => {
                 </h2>
                 <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
                   {pkg.itinerary.map((day, idx) => (
-                    <div key={idx} className="relative flex items-start md:justify-center">
-                      <div className="absolute left-0 md:left-1/2 -ml-3 md:-ml-3 mt-1.5 h-6 w-6 rounded-full border-4 border-white bg-blue-500 shadow-sm z-10 flex items-center justify-center"></div>
-                      <div className="ml-10 md:ml-0 md:w-1/2 md:even:pl-10 md:odd:pr-10 md:odd:text-right flex flex-col w-auto flex-1">
-                        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex items-center md:odd:justify-end gap-2 mb-2">
-                            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">Day {day.day}</span>
-                            <h4 className="text-lg font-bold text-gray-900">{day.title}</h4>
+                    <div key={idx} className="relative flex flex-col md:flex-row items-start w-full mb-8">
+                      {/* Timeline dot */}
+                      <div className="absolute left-0 md:left-1/2 -ml-3 md:-ml-3 mt-5 h-6 w-6 rounded-full border-4 border-white bg-blue-500 shadow-sm z-10 flex items-center justify-center"></div>
+                      
+                      {/* Left or Right spacing block for alternating timeline */}
+                      {idx % 2 !== 0 && <div className="hidden md:block md:w-1/2"></div>}
+                      
+                      {/* Content Card */}
+                      <div className={`ml-10 md:ml-0 md:w-1/2 flex flex-col w-[calc(100%-2.5rem)] ${idx % 2 === 0 ? 'md:pr-10' : 'md:pl-10'}`}>
+                        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow w-full">
+                          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-4 text-center">
+                            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded shrink-0">Day {day.day}</span>
+                            <h4 className="text-lg font-bold text-gray-900 leading-tight">{day.title}</h4>
                           </div>
                           <div 
                             className="text-gray-600 text-sm md:text-base leading-relaxed quill-content overflow-hidden"
