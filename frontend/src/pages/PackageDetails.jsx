@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft, X, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
-import { formatCurrency, numberToWords, isHtmlEmpty } from '../utils/formatUtils';
+import { formatCurrency, numberToWords, isHtmlEmpty, cleanHtmlForDisplay } from '../utils/formatUtils';
 
 const renderBulletPoints = (text) => {
   if (!text) return null;
@@ -300,7 +300,7 @@ const PackageDetails = () => {
                 </h1>
                 <div 
                   className="text-gray-600 text-base sm:text-lg leading-relaxed quill-content overflow-hidden"
-                  dangerouslySetInnerHTML={{ __html: pkg.overview }}
+                  dangerouslySetInnerHTML={{ __html: cleanHtmlForDisplay(pkg.overview) }}
                 />
               </div>
 
@@ -386,13 +386,13 @@ const PackageDetails = () => {
                       <div className="absolute left-0 md:left-1/2 -ml-3 md:-ml-3 mt-1.5 h-6 w-6 rounded-full border-4 border-white bg-blue-500 shadow-sm z-10 flex items-center justify-center"></div>
                       <div className="ml-10 md:ml-0 md:w-1/2 md:even:pl-10 md:odd:pr-10 md:odd:text-right flex flex-col w-full">
                         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex flex-wrap items-center justify-center gap-2 mb-4 text-center">
-                            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded shrink-0">Day {day.day}</span>
-                            <h4 className="text-lg font-bold text-gray-900 w-full sm:w-auto break-words">{day.title}</h4>
+                          <div className="flex items-center md:odd:justify-end gap-2 mb-2">
+                            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">Day {day.day}</span>
+                            <h4 className="text-lg font-bold text-gray-900">{day.title}</h4>
                           </div>
                           <div 
                             className="text-gray-600 text-sm md:text-base leading-relaxed quill-content overflow-hidden"
-                            dangerouslySetInnerHTML={{ __html: day.activities }}
+                            dangerouslySetInnerHTML={{ __html: cleanHtmlForDisplay(day.activities) }}
                           />
                         </div>
                       </div>
@@ -413,7 +413,7 @@ const PackageDetails = () => {
                 </h3>
                 <div 
                   className="text-gray-800 text-lg leading-relaxed quill-content prose max-w-none overflow-hidden"
-                  dangerouslySetInnerHTML={{ __html: pkg.specialNotes }}
+                  dangerouslySetInnerHTML={{ __html: cleanHtmlForDisplay(pkg.specialNotes) }}
                 />
               </div>
             )}
@@ -424,7 +424,7 @@ const PackageDetails = () => {
                 <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 px-2">Terms & Conditions</h4>
                 <div 
                   className="text-gray-500 text-xs sm:text-sm leading-relaxed quill-content prose prose-sm max-w-none px-2 opacity-80"
-                  dangerouslySetInnerHTML={{ __html: globalTerms }}
+                  dangerouslySetInnerHTML={{ __html: cleanHtmlForDisplay(globalTerms) }}
                 />
               </div>
             )}

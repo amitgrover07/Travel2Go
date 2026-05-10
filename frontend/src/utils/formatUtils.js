@@ -50,3 +50,19 @@ export const isHtmlEmpty = (html) => {
   // Check if anything is left (text) or if there are images/iframes
   return stripped.length === 0 && !html.includes('<img') && !html.includes('<iframe');
 };
+
+export const cleanHtmlForDisplay = (html) => {
+  if (!html) return '';
+  let clean = html;
+  
+  // 1. Merge words split by \n or <br> mid-word (lowercase/hyphen followed by break followed by lowercase)
+  clean = clean.replace(/([a-z-])\s*(?:<br\s*\/?>|\n)\s*([a-z])/g, '$1$2');
+  
+  // 2. Replace any remaining \n with a space
+  clean = clean.replace(/\n/g, ' ');
+  
+  // 3. Replace any remaining <br> with a space
+  clean = clean.replace(/<br\s*\/?>/gi, ' ');
+  
+  return clean;
+};
