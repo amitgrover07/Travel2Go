@@ -118,8 +118,8 @@ public class PdfService {
             cell.setPadding(15);
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             
-            java.text.NumberFormat format = java.text.NumberFormat.getNumberInstance(new java.util.Locale("en", "IN"));
-            Paragraph pricePara = new Paragraph("Final Price: " + currency + " " + format.format(price), priceFont);
+            String formattedPrice = formatIndianCurrency(price);
+            Paragraph pricePara = new Paragraph("Final Price: " + currency + " " + formattedPrice, priceFont);
             pricePara.setAlignment(Element.ALIGN_CENTER);
             cell.addElement(pricePara);
             
@@ -299,5 +299,20 @@ public class PdfService {
                    .replaceAll("&gt;", ">")
                    .replaceAll("&#39;", "'")
                    .trim();
+    }
+
+    private String formatIndianCurrency(long value) {
+        String s = Long.toString(value);
+        if (s.length() <= 3) return s;
+        StringBuilder sb = new StringBuilder();
+        sb.append(s.substring(s.length() - 3));
+        int i = s.length() - 3;
+        while (i > 0) {
+            sb.insert(0, ",");
+            int start = Math.max(0, i - 2);
+            sb.insert(0, s.substring(start, i));
+            i = start;
+        }
+        return sb.toString();
     }
 }
