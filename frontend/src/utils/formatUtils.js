@@ -55,6 +55,9 @@ export const cleanHtmlForDisplay = (html) => {
   if (!html) return '';
   let clean = html;
   
+  // Replace non-breaking spaces with standard spaces to allow natural word wrapping
+  clean = clean.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
+  
   // 1. Merge words split by \n or <br> mid-word (lowercase/hyphen followed by break followed by lowercase)
   clean = clean.replace(/([a-z-])\s*(?:<br\s*\/?>|\n)\s*([a-z])/g, '$1$2');
   
