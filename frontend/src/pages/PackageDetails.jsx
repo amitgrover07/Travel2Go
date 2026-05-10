@@ -384,7 +384,7 @@ const PackageDetails = () => {
                   {pkg.itinerary.map((day, idx) => (
                     <div key={idx} className="relative flex items-start md:justify-center">
                       <div className="absolute left-0 md:left-1/2 -ml-3 md:-ml-3 mt-1.5 h-6 w-6 rounded-full border-4 border-white bg-blue-500 shadow-sm z-10 flex items-center justify-center"></div>
-                      <div className="ml-10 md:ml-0 md:w-1/2 md:even:pl-10 md:odd:pr-10 md:odd:text-right flex flex-col w-full">
+                      <div className="ml-10 md:ml-0 md:w-1/2 md:even:pl-10 md:odd:pr-10 md:odd:text-right flex flex-col w-auto flex-1">
                         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                           <div className="flex items-center md:odd:justify-end gap-2 mb-2">
                             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">Day {day.day}</span>

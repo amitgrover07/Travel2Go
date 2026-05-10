@@ -121,9 +121,14 @@ textarea:focus {
 .quill-content, 
 .quill-content * {
   max-width: 100% !important;
-  overflow-wrap: break-word !important;
-  white-space: normal !important; /* Changed from pre-wrap to avoid breaking pasted text with hidden newlines */
+  white-space: normal !important; 
   word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+/* Only break words if they are links, preventing mobile spillover without the WebKit flex bug */
+.quill-content a {
+  word-break: break-all !important;
 }
 
 /* Ensure the main containers don't allow overflow */
