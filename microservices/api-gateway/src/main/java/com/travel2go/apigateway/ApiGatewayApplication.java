@@ -39,6 +39,7 @@ public class ApiGatewayApplication {
         corsConfig.setAllowedOrigins(Arrays.asList(
             "https://travel2go-495007.web.app", 
             "https://travel2go-495007.firebaseapp.com",
+            "https://travel2go.in",
             "http://localhost:5173"
         ));
         corsConfig.setMaxAge(3600L);

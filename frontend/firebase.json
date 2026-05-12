@@ -8,6 +8,27 @@
     ],
     "rewrites": [
       {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "api-gateway",
+          "region": "asia-south2"
+        }
+      },
+      {
+        "source": "/oauth2/**",
+        "run": {
+          "serviceId": "api-gateway",
+          "region": "asia-south2"
+        }
+      },
+      {
+        "source": "/login/oauth2/**",
+        "run": {
+          "serviceId": "api-gateway",
+          "region": "asia-south2"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
