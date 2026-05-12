@@ -1,3 +1,4 @@
+// Trigger redeploy: 2026-05-12
 package com.travel2go.backend.model;
 
 import com.google.cloud.firestore.annotation.DocumentId;
