@@ -32,7 +32,7 @@ const Navbar = () => {
         <div className="flex justify-between h-16 items-center">
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center">
-              <img src="/logo.png" alt="Travel2Go.in" className="h-10 w-auto" />
+              <img src="/logo.png" alt="travel2go.in" className="h-12 w-auto object-contain" />
             </Link>
           </div>
           <div className="flex items-center space-x-4">
