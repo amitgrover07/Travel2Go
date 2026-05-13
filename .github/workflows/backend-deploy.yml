@@ -106,7 +106,7 @@ jobs:
             TWILIO_ACCOUNT_SID=${{ env.FINAL_TWILIO_ACCOUNT_SID }}
             TWILIO_AUTH_TOKEN=${{ env.FINAL_TWILIO_AUTH_TOKEN }}
             TWILIO_PHONE_NUMBER=${{ env.FINAL_TWILIO_PHONE_NUMBER }}
-            OAUTH2_REDIRECT_URI=https://travel2go-495007.web.app/oauth2/redirect
+            OAUTH2_REDIRECT_URI=https://travel2go.in/oauth2/redirect
             IDENTITY_SERVICE_URL=${{ env.FINAL_IDENTITY_URL }}
             PACKAGE_SERVICE_URL=${{ env.FINAL_PACKAGE_URL }}
             BOOKING_SERVICE_URL=${{ env.FINAL_BOOKING_URL }}
