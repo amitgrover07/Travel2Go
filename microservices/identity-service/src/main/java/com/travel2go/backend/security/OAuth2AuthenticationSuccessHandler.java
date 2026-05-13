@@ -22,6 +22,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.oauth2.redirect-uri}")
     private String redirectUri;
@@ -69,5 +70,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        httpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
     }
 }

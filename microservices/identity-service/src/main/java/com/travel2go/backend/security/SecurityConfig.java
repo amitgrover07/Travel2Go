@@ -53,6 +53,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
+                        )
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler((request, response, exception) -> {
                             String targetUrl = "https://travel2go.in/login?error=true";
