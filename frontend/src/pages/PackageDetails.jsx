@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft, X, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import SEO from '../components/SEO';
 import { formatCurrency, numberToWords, isHtmlEmpty, cleanHtmlForDisplay } from '../utils/formatUtils';
 
 const renderBulletPoints = (text) => {
@@ -235,12 +236,15 @@ const PackageDetails = () => {
     </div>;
   }
 
-  const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-
+      <SEO 
+        title={`${pkg.title} - ${pkg.destination}`} 
+        description={`Book the ${pkg.title} package to ${pkg.destination}. ${pkg.duration?.days} days of unforgettable experience starting from ${pkg.pricing?.currency} ${formatCurrency(pkg.pricing?.finalPrice)}.`}
+      />
       <main className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 mt-0 sm:mt-8 w-full">
         <div className="bg-white shadow-none sm:shadow-lg sm:rounded-2xl overflow-hidden w-full max-w-full">
           {/* Image Carousel */}

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /oauth2/
+Disallow: /login/
+
+Sitemap: https://travel2go.in/sitemap.xml
