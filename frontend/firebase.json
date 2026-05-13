@@ -15,7 +15,7 @@
         }
       },
       {
-        "source": "/oauth2/**",
+        "source": "/oauth2/authorization/**",
         "run": {
           "serviceId": "api-gateway",
           "region": "asia-south2"
