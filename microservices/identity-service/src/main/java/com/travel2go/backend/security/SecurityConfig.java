@@ -27,6 +27,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final CustomOAuth2AuthenticationFailureHandler customOAuth2AuthenticationFailureHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
     @Bean
@@ -58,10 +59,7 @@ public class SecurityConfig {
                                 .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
                         )
                         .successHandler(oAuth2AuthenticationSuccessHandler)
-                        .failureHandler((request, response, exception) -> {
-                            String targetUrl = "https://travel2go.in/login?error=true";
-                            response.sendRedirect(targetUrl);
-                        })
+                        .failureHandler(customOAuth2AuthenticationFailureHandler)
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
