@@ -31,8 +31,8 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/">
-              <span className="text-2xl font-bold text-blue-600">Travel2Go</span>
+            <Link to="/" className="flex items-center">
+              <img src="/logo.png" alt="Travel2Go.in" className="h-10 w-auto" />
             </Link>
           </div>
           <div className="flex items-center space-x-4">
