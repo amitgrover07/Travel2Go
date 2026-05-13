@@ -1,3 +1,4 @@
+// Triggering redeploy for custom domain and stateless OAuth2 fixes
 package com.travel2go.backend.security;
 
 import lombok.RequiredArgsConstructor;
