@@ -20,8 +20,8 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
         log.error("OAuth2 Authentication Failure: {}", exception.getMessage());
-        
-        // Log all headers for debugging
+        log.error("Request URL: {}", request.getRequestURL());
+        log.error("Query String: {}", request.getQueryString());
         log.debug("--- Request Headers ---");
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {

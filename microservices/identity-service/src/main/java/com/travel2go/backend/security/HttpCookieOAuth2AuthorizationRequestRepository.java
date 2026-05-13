@@ -16,8 +16,8 @@ import java.util.Optional;
 @Component
 @Slf4j
 public class HttpCookieOAuth2AuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
-    public static final String OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME = "oauth2_auth_request";
-    public static final String REDIRECT_URI_PARAM_COOKIE_NAME = "redirect_uri";
+    public static final String OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME = "__session";
+    public static final String REDIRECT_URI_PARAM_COOKIE_NAME = "__session_redir"; // We will try to see if Firebase allows this, otherwise we will merge it.
     private static final int cookieExpireSeconds = 180;
 
     @Override
