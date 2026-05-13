@@ -25,7 +25,13 @@ public class ApiGatewayApplication {
 	@Bean
 	public GlobalFilter customGlobalFilter() {
 		return (exchange, chain) -> {
-			logger.info("Gateway received request: {} {}", exchange.getRequest().getMethod(), exchange.getRequest().getURI());
+			String host = exchange.getRequest().getHeaders().getFirst("Host");
+			String forwardedHost = exchange.getRequest().getHeaders().getFirst("X-Forwarded-Host");
+			logger.info("Gateway received request: {} {} | Host: {} | X-Forwarded-Host: {}", 
+                exchange.getRequest().getMethod(), 
+                exchange.getRequest().getURI(),
+                host,
+                forwardedHost);
 			return chain.filter(exchange).then(Mono.fromRunnable(() -> {
 				logger.info("Gateway responded with status: {}", exchange.getResponse().getStatusCode());
 			}));
