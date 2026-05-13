@@ -16,6 +16,13 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('error')) {
+      setError('Social login failed. Please try again or use another method.');
+    }
+  }, [location]);
+
   const getTokenPayload = (token) => {
     try {
       const base64Url = token.split('.')[1];
