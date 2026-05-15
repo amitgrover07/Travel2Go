@@ -58,6 +58,9 @@ const Admin = () => {
   const [cloneFetching, setCloneFetching] = useState(false);
   const [cloneStatus, setCloneStatus] = useState(null); // null | 'success' | 'error'
 
+  // Package list search
+  const [packageSearch, setPackageSearch] = useState('');
+
   const getTokenPayload = () => {
     const token = localStorage.getItem('token');
     if (!token) return null;
@@ -755,43 +758,109 @@ const Admin = () => {
 
               {/* List Section */}
               <div className="lg:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-8rem)]">
-                <div className="p-4 border-b bg-gray-50">
-                  <h2 className="text-lg font-bold text-gray-900">All Packages</h2>
+                <div className="p-4 border-b bg-gray-50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-gray-900">All Packages</h2>
+                    {packageSearch && (
+                      <span className="text-xs text-gray-500">
+                        {packages.filter(pkg => {
+                          const q = packageSearch.toLowerCase();
+                          return (
+                            pkg.packageCode?.toLowerCase().includes(q) ||
+                            pkg.title?.toLowerCase().includes(q) ||
+                            pkg.destination?.toLowerCase().includes(q) ||
+                            pkg.packageType?.toLowerCase().includes(q) ||
+                            pkg.status?.toLowerCase().includes(q)
+                          );
+                        }).length} of {packages.length} shown
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <input
+                      id="package-list-search"
+                      type="text"
+                      value={packageSearch}
+                      onChange={e => setPackageSearch(e.target.value)}
+                      placeholder="Search by code, name, destination, type…"
+                      className="w-full pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
+                    />
+                    {packageSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setPackageSearch('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="overflow-y-auto flex-1 p-4 space-y-4">
-                  {packages.map((pkg) => (
-                    <div key={pkg.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
-                      <div className="absolute top-4 right-4 flex space-x-2">
-                        <button onClick={() => handleEdit(pkg)} className="text-blue-600 hover:bg-blue-50 p-1 rounded">
-                          <Edit2 size={18} />
-                        </button>
-                        <button onClick={() => handleDelete(pkg.id)} className="text-red-600 hover:bg-red-50 p-1 rounded">
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                      
-                      <div className="flex gap-4">
-                        <div className="w-24 h-24 flex-shrink-0">
-                          <img src={pkg.media?.thumbnailUrl || 'https://via.placeholder.com/150'} alt={pkg.title} className="w-full h-full object-cover rounded-md border" />
+                  {(() => {
+                    const q = packageSearch.toLowerCase().trim();
+                    const filtered = q
+                      ? packages.filter(pkg =>
+                          pkg.packageCode?.toLowerCase().includes(q) ||
+                          pkg.title?.toLowerCase().includes(q) ||
+                          pkg.destination?.toLowerCase().includes(q) ||
+                          pkg.packageType?.toLowerCase().includes(q) ||
+                          pkg.status?.toLowerCase().includes(q)
+                        )
+                      : packages;
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center h-full text-gray-400 py-16">
+                          <Search size={32} className="mb-3 opacity-40" />
+                          <p className="text-sm font-medium">No packages match &ldquo;{packageSearch}&rdquo;</p>
+                          <button
+                            type="button"
+                            onClick={() => setPackageSearch('')}
+                            className="mt-2 text-xs text-blue-500 hover:underline"
+                          >Clear search</button>
                         </div>
-                        <div className="flex-1 pr-16">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-600">{pkg.packageCode}</span>
-                            <span className={`text-xs font-bold px-2 py-1 rounded ${pkg.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                              {pkg.status}
-                            </span>
+                      );
+                    }
+
+                    return filtered.map((pkg) => (
+                      <div key={pkg.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
+                        <div className="absolute top-4 right-4 flex space-x-2">
+                          <button onClick={() => handleEdit(pkg)} className="text-blue-600 hover:bg-blue-50 p-1 rounded">
+                            <Edit2 size={18} />
+                          </button>
+                          <button onClick={() => handleDelete(pkg.id)} className="text-red-600 hover:bg-red-50 p-1 rounded">
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                        
+                        <div className="flex gap-4">
+                          <div className="w-24 h-24 flex-shrink-0">
+                            <img src={pkg.media?.thumbnailUrl || 'https://via.placeholder.com/150'} alt={pkg.title} className="w-full h-full object-cover rounded-md border" />
                           </div>
-                          <h3 className="font-bold text-gray-900">{pkg.title}</h3>
-                          <p className="text-sm text-gray-500 mb-2">{pkg.destination}</p>
-                          
-                          <div className="flex gap-4 text-sm font-medium">
-                            <span className="text-blue-600">{pkg.pricing?.currency} {formatCurrency(pkg.pricing?.finalPrice)}</span>
-                            <span className="text-gray-600">{pkg.duration?.days}D/{pkg.duration?.nights}N</span>
+                          <div className="flex-1 pr-16">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-600">{pkg.packageCode}</span>
+                              <span className={`text-xs font-bold px-2 py-1 rounded ${pkg.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {pkg.status}
+                              </span>
+                              {pkg.packageType && (
+                                <span className="text-xs font-medium bg-blue-50 text-blue-600 px-2 py-1 rounded">{pkg.packageType}</span>
+                              )}
+                            </div>
+                            <h3 className="font-bold text-gray-900">{pkg.title}</h3>
+                            <p className="text-sm text-gray-500 mb-2">{pkg.destination}</p>
+                            
+                            <div className="flex gap-4 text-sm font-medium">
+                              <span className="text-blue-600">{pkg.pricing?.currency} {formatCurrency(pkg.pricing?.finalPrice)}</span>
+                              <span className="text-gray-600">{pkg.duration?.days}D/{pkg.duration?.nights}N</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </div>
             </>
