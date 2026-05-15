@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -51,6 +51,12 @@ const Admin = () => {
   const [globalTerms, setGlobalTerms] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
   const navigate = useNavigate();
+
+  // Clone-from-package state
+  const [clonePanelOpen, setClonePanelOpen] = useState(false);
+  const [cloneCode, setCloneCode] = useState('');
+  const [cloneFetching, setCloneFetching] = useState(false);
+  const [cloneStatus, setCloneStatus] = useState(null); // null | 'success' | 'error'
 
   const getTokenPayload = () => {
     const token = localStorage.getItem('token');
@@ -127,10 +133,69 @@ const Admin = () => {
         ...prev, 
         packageCode: editingId ? prev.packageCode : getNextPackageCode(response.data) 
       }));
+      return response.data;
     } catch (error) {
       if (error.response && error.response.status === 403) {
         handleLogout();
       }
+      return [];
+    }
+  };
+
+  const handleCloneFetch = async () => {
+    const code = cloneCode.trim().toUpperCase();
+    if (!code) {
+      toast.error('Please enter a package code to clone from.');
+      return;
+    }
+    setCloneFetching(true);
+    setCloneStatus(null);
+    try {
+      // First try from already-loaded packages list
+      let source = packages.find(p => p.packageCode?.toUpperCase() === code);
+
+      // Fallback: fetch fresh list from API
+      if (!source) {
+        const freshList = await fetchPackages();
+        source = freshList.find(p => p.packageCode?.toUpperCase() === code);
+      }
+
+      if (!source) {
+        setCloneStatus('error');
+        toast.error(`No package found with code "${code}"`);
+        return;
+      }
+
+      // Determine the next available package code for the clone
+      const latestPackages = packages.length > 0 ? packages : await fetchPackages();
+      const newCode = getNextPackageCode(latestPackages);
+
+      // Populate the form with cloned data but a new package code
+      setFormData({
+        ...defaultForm,
+        ...source,
+        packageCode: newCode,          // new auto-generated code
+        status: 'ACTIVE',              // always start active
+        duration: source.duration || defaultForm.duration,
+        pricing: source.pricing || defaultForm.pricing,
+        media: source.media || defaultForm.media,
+        inclusions: source.inclusions ? [...source.inclusions] : [],
+        exclusions: source.exclusions ? [...source.exclusions] : [],
+        itinerary: source.itinerary ? source.itinerary.map(d => ({ ...d })) : [],
+        specialNotes: source.specialNotes || '',
+        version: 0,
+        id: undefined,
+      });
+      setEditingId(null); // treat as new package
+      setMediaContexts({ thumbnail: '', gallery: {} });
+      setCloneStatus('success');
+      toast.success(`Package cloned from "${source.title}" — review and save as new.`);
+    } catch (err) {
+      console.error('Clone fetch error:', err);
+      setCloneStatus('error');
+      toast.error('Failed to fetch source package.');
+    } finally {
+      setCloneFetching(false);
     }
   };
 
@@ -413,9 +478,73 @@ const Admin = () => {
             <>
               {/* Form Section */}
               <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-y-auto max-h-[calc(100vh-8rem)]">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 border-b pb-2">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
                   {editingId ? 'Edit Package' : 'Add New Package'}
                 </h2>
+
+                {/* ── Clone from existing package panel ── */}
+                {!editingId && (
+                  <div className="mb-6 rounded-lg border border-dashed border-blue-300 bg-blue-50 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => { setClonePanelOpen(o => !o); setCloneStatus(null); }}
+                      className="w-full flex items-center justify-between px-4 py-3 text-blue-700 hover:bg-blue-100 transition-colors"
+                    >
+                      <span className="flex items-center gap-2 font-semibold text-sm">
+                        <Copy size={16} />
+                        Clone from an Existing Package
+                      </span>
+                      {clonePanelOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+
+                    {clonePanelOpen && (
+                      <div className="px-4 pb-4 pt-2 border-t border-blue-200">
+                        <p className="text-xs text-blue-600 mb-3">
+                          Enter the source package code below. All fields will be pre-filled so you can make adjustments before saving as a new package.
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            id="clone-code-input"
+                            type="text"
+                            value={cloneCode}
+                            onChange={e => { setCloneCode(e.target.value.toUpperCase()); setCloneStatus(null); }}
+                            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleCloneFetch())}
+                            placeholder="e.g. PKG-004"
+                            className={`flex-1 rounded border p-2 text-sm font-mono uppercase tracking-wider bg-white focus:outline-none focus:ring-2 ${
+                              cloneStatus === 'success' ? 'border-green-400 focus:ring-green-300' :
+                              cloneStatus === 'error'   ? 'border-red-400 focus:ring-red-300' :
+                              'border-blue-300 focus:ring-blue-300'
+                            }`}
+                          />
+                          <button
+                            id="clone-fetch-btn"
+                            type="button"
+                            onClick={handleCloneFetch}
+                            disabled={cloneFetching || !cloneCode.trim()}
+                            className="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:bg-blue-300 transition-colors whitespace-nowrap"
+                          >
+                            {cloneFetching
+                              ? <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                              : <Search size={15} />}
+                            {cloneFetching ? 'Fetching…' : 'Fetch & Clone'}
+                          </button>
+                        </div>
+
+                        {cloneStatus === 'success' && (
+                          <p className="mt-2 text-xs text-green-700 font-medium flex items-center gap-1">
+                            ✅ Fields populated! A new package code has been assigned. Review and save below.
+                          </p>
+                        )}
+                        {cloneStatus === 'error' && (
+                          <p className="mt-2 text-xs text-red-600 font-medium flex items-center gap-1">
+                            ❌ Package not found. Please check the code and try again.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   
                   {/* Basic Info */}
