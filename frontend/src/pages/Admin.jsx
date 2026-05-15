@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -60,6 +60,10 @@ const Admin = () => {
 
   // Package list search
   const [packageSearch, setPackageSearch] = useState('');
+
+  // Itinerary drag-and-drop
+  const dragIndexRef = React.useRef(null);      // index being dragged
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   const getTokenPayload = () => {
     const token = localStorage.getItem('token');
@@ -703,26 +707,84 @@ const Admin = () => {
                   {/* Itinerary */}
                   <div className="bg-gray-50 p-4 rounded-md">
                     <div className="flex justify-between items-center mb-4 border-b pb-2">
-                      <h3 className="font-semibold text-gray-700">Itinerary</h3>
+                      <div>
+                        <h3 className="font-semibold text-gray-700">Itinerary</h3>
+                        {formData.itinerary.length > 1 && (
+                          <p className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1">
+                            <GripVertical size={10} /> Drag the grip handle to reorder days
+                          </p>
+                        )}
+                      </div>
                       <button type="button" onClick={addItineraryDay} className="flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium">
                         <Plus size={16} className="mr-1"/> Add Day
                       </button>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {formData.itinerary.map((day, index) => (
-                        <div key={index} className="border border-gray-200 bg-white p-3 rounded relative">
-                          <button type="button" onClick={() => removeItineraryDay(index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700"><X size={16}/></button>
-                          <h4 className="font-bold text-gray-800 mb-2">Day {day.day}</h4>
-                          <input type="text" placeholder="Day Title (e.g. Arrival in Kochi)" value={day.title} onChange={(e) => handleItineraryChange(index, 'title', e.target.value)} className="w-full mb-2 p-2 border rounded text-sm" />
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Activities</label>
-                          <ReactQuill 
-                            theme="snow"
-                            value={day.activities} 
-                            onChange={(value) => handleItineraryQuillChange(index, value)}
-                            modules={quillModules}
-                            formats={quillFormats}
-                            className="bg-white rounded border text-sm"
-                          />
+                        <div
+                          key={index}
+                          draggable
+                          onDragStart={() => { dragIndexRef.current = index; }}
+                          onDragEnd={() => { dragIndexRef.current = null; setDragOverIndex(null); }}
+                          onDragOver={e => { e.preventDefault(); if (dragIndexRef.current !== index) setDragOverIndex(index); }}
+                          onDragLeave={() => setDragOverIndex(null)}
+                          onDrop={e => {
+                            e.preventDefault();
+                            const from = dragIndexRef.current;
+                            const to = index;
+                            if (from === null || from === to) { setDragOverIndex(null); return; }
+                            const reordered = [...formData.itinerary];
+                            const [moved] = reordered.splice(from, 1);
+                            reordered.splice(to, 0, moved);
+                            // renumber days sequentially
+                            const renumbered = reordered.map((d, i) => ({ ...d, day: i + 1 }));
+                            setFormData(prev => ({ ...prev, itinerary: renumbered }));
+                            dragIndexRef.current = null;
+                            setDragOverIndex(null);
+                          }}
+                          style={{
+                            borderTop: dragOverIndex === index ? '3px solid #3b82f6' : '3px solid transparent',
+                            opacity: dragIndexRef.current === index ? 0.45 : 1,
+                            transition: 'border-color 0.12s ease, opacity 0.12s ease',
+                          }}
+                          className="border border-gray-200 bg-white rounded-lg relative"
+                        >
+                          {/* Header row: grip + day label + delete */}
+                          <div
+                            className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-gray-100 select-none"
+                            style={{ cursor: 'grab' }}
+                          >
+                            <GripVertical size={16} className="text-gray-300 flex-shrink-0" style={{ cursor: 'grab' }} />
+                            <span className="flex-1 font-bold text-gray-800 text-sm">Day {day.day}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeItineraryDay(index)}
+                              className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded"
+                              onMouseDown={e => e.stopPropagation()}
+                            >
+                              <X size={15}/>
+                            </button>
+                          </div>
+
+                          {/* Content */}
+                          <div className="p-3">
+                            <input
+                              type="text"
+                              placeholder="Day Title (e.g. Arrival in Kochi)"
+                              value={day.title}
+                              onChange={(e) => handleItineraryChange(index, 'title', e.target.value)}
+                              className="w-full mb-2 p-2 border rounded text-sm"
+                            />
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Activities</label>
+                            <ReactQuill
+                              theme="snow"
+                              value={day.activities}
+                              onChange={(value) => handleItineraryQuillChange(index, value)}
+                              modules={quillModules}
+                              formats={quillFormats}
+                              className="bg-white rounded border text-sm"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
