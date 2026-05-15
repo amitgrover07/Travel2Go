@@ -825,38 +825,98 @@ const Admin = () => {
                     }
 
                     return filtered.map((pkg) => (
-                      <div key={pkg.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
-                        <div className="absolute top-4 right-4 flex space-x-2">
-                          <button onClick={() => handleEdit(pkg)} className="text-blue-600 hover:bg-blue-50 p-1 rounded">
-                            <Edit2 size={18} />
-                          </button>
-                          <button onClick={() => handleDelete(pkg.id)} className="text-red-600 hover:bg-red-50 p-1 rounded">
-                            <Trash2 size={18} />
-                          </button>
+                      <div
+                        key={pkg.id}
+                        className="group relative flex gap-0 rounded-xl border border-gray-200 bg-white overflow-hidden"
+                        style={{
+                          height: '110px',
+                          transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-3px)';
+                          e.currentTarget.style.boxShadow = '0 8px 24px rgba(59,130,246,0.18)';
+                          e.currentTarget.style.borderColor = '#3b82f6';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                          e.currentTarget.style.borderColor = '#e5e7eb';
+                        }}
+                      >
+                        {/* Blue left accent bar */}
+                        <div
+                          className="w-1 flex-shrink-0 bg-blue-500 opacity-0 group-hover:opacity-100"
+                          style={{ transition: 'opacity 0.18s ease' }}
+                        />
+
+                        {/* Thumbnail — fixed 110×110 */}
+                        <div className="w-[110px] h-[110px] flex-shrink-0 overflow-hidden">
+                          <img
+                            src={pkg.media?.thumbnailUrl || 'https://via.placeholder.com/150'}
+                            alt={pkg.title}
+                            className="w-full h-full object-cover"
+                            style={{ transition: 'transform 0.25s ease' }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.07)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                          />
                         </div>
-                        
-                        <div className="flex gap-4">
-                          <div className="w-24 h-24 flex-shrink-0">
-                            <img src={pkg.media?.thumbnailUrl || 'https://via.placeholder.com/150'} alt={pkg.title} className="w-full h-full object-cover rounded-md border" />
-                          </div>
-                          <div className="flex-1 pr-16">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-600">{pkg.packageCode}</span>
-                              <span className={`text-xs font-bold px-2 py-1 rounded ${pkg.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {pkg.status}
+
+                        {/* Content — fills remaining width, vertically centred */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-center px-4 pr-20">
+                          {/* Badges row */}
+                          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                            <span className="text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-500 tracking-wide">
+                              {pkg.packageCode}
+                            </span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${pkg.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {pkg.status}
+                            </span>
+                            {pkg.packageType && (
+                              <span className="text-[10px] font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                                {pkg.packageType}
                               </span>
-                              {pkg.packageType && (
-                                <span className="text-xs font-medium bg-blue-50 text-blue-600 px-2 py-1 rounded">{pkg.packageType}</span>
-                              )}
-                            </div>
-                            <h3 className="font-bold text-gray-900">{pkg.title}</h3>
-                            <p className="text-sm text-gray-500 mb-2">{pkg.destination}</p>
-                            
-                            <div className="flex gap-4 text-sm font-medium">
-                              <span className="text-blue-600">{pkg.pricing?.currency} {formatCurrency(pkg.pricing?.finalPrice)}</span>
-                              <span className="text-gray-600">{pkg.duration?.days}D/{pkg.duration?.nights}N</span>
-                            </div>
+                            )}
                           </div>
+
+                          {/* Title — single line, clipped */}
+                          <h3
+                            className="font-bold text-gray-900 text-sm leading-tight"
+                            style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
+                          >
+                            {pkg.title}
+                          </h3>
+
+                          {/* Destination — single line, clipped */}
+                          <p
+                            className="text-xs text-gray-500 mt-0.5"
+                            style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
+                          >
+                            {pkg.destination}
+                          </p>
+
+                          {/* Price + duration */}
+                          <div className="flex gap-3 text-xs font-semibold mt-1.5">
+                            <span className="text-blue-600">{pkg.pricing?.currency} {formatCurrency(pkg.pricing?.finalPrice)}</span>
+                            <span className="text-gray-500">{pkg.duration?.days}D / {pkg.duration?.nights}N</span>
+                          </div>
+                        </div>
+
+                        {/* Action buttons — vertically centred on the right */}
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1.5">
+                          <button
+                            onClick={() => handleEdit(pkg)}
+                            className="text-blue-500 hover:text-white hover:bg-blue-500 p-1.5 rounded-md border border-blue-200 hover:border-blue-500"
+                            style={{ transition: 'all 0.15s ease' }}
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(pkg.id)}
+                            className="text-red-400 hover:text-white hover:bg-red-500 p-1.5 rounded-md border border-red-200 hover:border-red-500"
+                            style={{ transition: 'all 0.15s ease' }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       </div>
                     ));

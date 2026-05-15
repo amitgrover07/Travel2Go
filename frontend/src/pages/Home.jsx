@@ -77,44 +77,152 @@ const Home = () => {
         <div className="grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
           {filteredPackages.length > 0 ? (
             filteredPackages.map((pkg) => (
-              <Link key={pkg.id} to={`/packages/${pkg.id}`} className="group relative bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col cursor-pointer block max-w-full">
-                <div className="aspect-w-3 aspect-h-2 bg-gray-200 relative overflow-hidden rounded-t-2xl">
-                  <div className="absolute top-4 left-4 z-10">
-                    <span className="bg-white/90 backdrop-blur text-blue-600 text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+              <Link
+                key={pkg.id}
+                to={`/packages/${pkg.id}`}
+                className="group flex flex-col bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden cursor-pointer"
+                style={{
+                  transition: 'transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-6px)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(59,130,246,0.18)';
+                  e.currentTarget.style.borderColor = '#93c5fd';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.07)';
+                  e.currentTarget.style.borderColor = '#e5e7eb';
+                }}
+              >
+                {/* ── Fixed-height image area ── */}
+                <div className="relative overflow-hidden" style={{ height: '200px', flexShrink: 0 }}>
+                  {/* Package type badge */}
+                  <div className="absolute top-3 left-3 z-20">
+                    <span className="bg-white/90 backdrop-blur-sm text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-full shadow">
                       {pkg.packageType || 'Domestic'}
                     </span>
                   </div>
+
+                  {/* Package code badge */}
+                  {pkg.packageCode && (
+                    <div className="absolute top-3 right-3 z-20">
+                      <span className="bg-black/40 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                        {pkg.packageCode}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Thumbnail with zoom on hover */}
                   <img
                     src={pkg.media?.thumbnailUrl || 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'}
                     alt={pkg.media?.altText || pkg.title}
-                    className="object-cover w-full h-48"
+                    className="w-full h-full object-cover"
+                    style={{ transition: 'transform 0.4s ease' }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                   />
-                </div>
-                <div className="p-6 flex-1 flex flex-col items-center text-center overflow-hidden">
-                  <div className="flex flex-wrap items-center justify-center gap-2 mb-2 w-full">
-                    <div className="flex items-center text-sm text-gray-500 shrink-0">
-                      <MapPin className="h-4 w-4 mr-1 text-blue-500" />
-                      {pkg.destination}
-                    </div>
-                    {pkg.packageCode && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full shrink-0">{pkg.packageCode}</span>}
+
+                  {/* Gradient overlay + CTA that slides up on hover */}
+                  <div
+                    className="absolute inset-0 flex items-end justify-center pb-4 z-10"
+                    style={{
+                      background: 'linear-gradient(to top, rgba(30,64,175,0.55) 0%, transparent 60%)',
+                      opacity: 0,
+                      transition: 'opacity 0.25s ease',
+                    }}
+                    ref={el => {
+                      if (el) {
+                        el.closest('a').addEventListener('mouseenter', () => { el.style.opacity = '1'; });
+                        el.closest('a').addEventListener('mouseleave', () => { el.style.opacity = '0'; });
+                      }
+                    }}
+                  >
+                    <span className="text-white text-xs font-bold tracking-wide px-4 py-1.5 rounded-full border border-white/60 bg-white/10 backdrop-blur-sm">
+                      View Package →
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight max-w-full">{pkg.title}</h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">{stripHtml(pkg.overview)}</p>
-                  
-                  <div className="mt-auto border-t border-gray-100 pt-4 flex flex-col w-full">
-                    <div className="flex flex-wrap items-center justify-center sm:justify-between gap-2 mb-1">
-                      <div className="flex items-center text-gray-700 font-medium">
-                        <span className="text-xl font-bold text-blue-600 shrink-0">
+                </div>
+
+                {/* ── Fixed-height body ── */}
+                <div className="flex flex-col flex-1 p-5">
+                  {/* Destination + duration row */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center text-xs text-gray-500 min-w-0">
+                      <MapPin className="h-3.5 w-3.5 mr-1 text-blue-400 flex-shrink-0" />
+                      <span className="truncate">{pkg.destination}</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-400 flex-shrink-0 ml-2">
+                      <Clock className="h-3.5 w-3.5 mr-1" />
+                      {pkg.duration?.days}D / {pkg.duration?.nights}N
+                    </div>
+                  </div>
+
+                  {/* Title — 2 lines max, then ellipsis */}
+                  <h3
+                    className="text-base font-bold text-gray-900 leading-snug mb-2"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      minHeight: '2.6em',
+                      transition: 'color 0.2s ease',
+                    }}
+                    ref={el => {
+                      if (el) {
+                        el.closest('a').addEventListener('mouseenter', () => { el.style.color = '#2563eb'; });
+                        el.closest('a').addEventListener('mouseleave', () => { el.style.color = '#111827'; });
+                      }
+                    }}
+                  >
+                    {pkg.title}
+                  </h3>
+
+                  {/* Overview — 3 lines max, reserved block so cards stay aligned */}
+                  <p
+                    className="text-gray-500 text-xs leading-relaxed"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      minHeight: '4.5em',   /* 3 lines × 1.5em line-height */
+                      flex: '0 0 auto',
+                    }}
+                  >
+                    {stripHtml(pkg.overview)}
+                  </p>
+
+                  {/* ── Pinned footer ── */}
+                  <div className="mt-auto pt-4 border-t border-gray-100">
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <span className="text-lg font-extrabold text-blue-600">
                           {pkg.pricing?.currency || 'INR'} {formatCurrency(pkg.pricing?.finalPrice)}
                         </span>
+                        <div className="text-[10px] text-gray-400 italic mt-0.5">
+                          {numberToWords(pkg.pricing?.finalPrice)}
+                        </div>
                       </div>
-                      <div className="flex items-center text-gray-500 text-sm shrink-0">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {pkg.duration?.days}D / {pkg.duration?.nights}N
-                      </div>
-                    </div>
-                    <div className="text-[10px] text-gray-400 font-medium italic text-center sm:text-left">
-                      {numberToWords(pkg.pricing?.finalPrice)}
+                      <span
+                        className="text-xs font-semibold text-blue-600 border border-blue-200 rounded-lg px-3 py-1.5 bg-blue-50"
+                        style={{ transition: 'background 0.18s ease, color 0.18s ease' }}
+                        ref={el => {
+                          if (el) {
+                            el.closest('a').addEventListener('mouseenter', () => {
+                              el.style.background = '#2563eb';
+                              el.style.color = '#fff';
+                            });
+                            el.closest('a').addEventListener('mouseleave', () => {
+                              el.style.background = '#eff6ff';
+                              el.style.color = '#2563eb';
+                            });
+                          }
+                        }}
+                      >
+                        Explore →
+                      </span>
                     </div>
                   </div>
                 </div>
