@@ -195,7 +195,8 @@ const Admin = () => {
       return data;
     } catch (error) {
       console.error('Error fetching custom packages:', error);
-      toast.error('Failed to load custom packages');
+      const msg = error.response ? `Failed: ${error.response.status} - ${JSON.stringify(error.response.data)}` : error.message;
+      toast.error(`Failed to load custom packages: ${msg}`);
       return [];
     }
   };
