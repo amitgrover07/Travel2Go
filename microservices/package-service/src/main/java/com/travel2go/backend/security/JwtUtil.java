@@ -26,7 +26,12 @@ public class JwtUtil {
     private Long expiration;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        String trimmedSecret = secret != null ? secret.trim() : "";
+        // Remove quotes if present
+        if (trimmedSecret.startsWith("\"") && trimmedSecret.endsWith("\"")) {
+            trimmedSecret = trimmedSecret.substring(1, trimmedSecret.length() - 1);
+        }
+        byte[] keyBytes = trimmedSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
