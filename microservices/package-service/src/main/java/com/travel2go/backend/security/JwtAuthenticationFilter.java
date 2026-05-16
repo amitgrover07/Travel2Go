@@ -32,24 +32,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            System.out.println("No Bearer token found in request to: " + request.getRequestURI());
+        if (authHeader == null || !authHeader.toLowerCase().startsWith("bearer ")) {
+            System.out.println("No valid Authorization header found for URI: " + request.getRequestURI() + 
+                               " (Header present: " + (authHeader != null) + ")");
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
+        jwt = authHeader.substring(7).trim();
+        System.out.println("Processing token for URI: " + request.getRequestURI() + " (Token length: " + jwt.length() + ")");
+        
         try {
             username = jwtUtil.extractUsername(jwt);
-            System.out.println("Extracted username: " + username + " from token for URI: " + request.getRequestURI());
+            System.out.println("Extracted username: " + username);
             
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> roles = jwtUtil.extractRoles(jwt);
-                System.out.println("Extracted roles: " + roles);
+                System.out.println("Extracted roles from token: " + roles);
                 
                 org.springframework.security.core.userdetails.User userDetails = new org.springframework.security.core.userdetails.User(username, "", roles);
                 if (jwtUtil.validateToken(jwt, userDetails)) {
-                    System.out.println("Token validated successfully for user: " + username);
+                    System.out.println("Token validation SUCCESS for: " + username);
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
@@ -58,12 +61,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 } else {
-                    System.out.println("Token validation failed for user: " + username);
+                    System.out.println("Token validation FAILED for user: " + username);
                 }
             }
         } catch (Exception e) {
-            System.err.println("JWT Authentication Error: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("JWT Authentication Error for URI " + request.getRequestURI() + ": " + e.getMessage());
         }
         filterChain.doFilter(request, response);
     }
