@@ -48,7 +48,7 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mediaContexts, setMediaContexts] = useState({ thumbnail: '', gallery: {} });
-  const [view, setView] = useState('packages'); // 'packages' or 'settings'
+  const [view, setView] = useState('packages'); // 'packages' | 'settings' | 'customPackages'
   const [globalTerms, setGlobalTerms] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
   const navigate = useNavigate();
@@ -62,9 +62,42 @@ const Admin = () => {
   // Package list search
   const [packageSearch, setPackageSearch] = useState('');
 
+  // ── Custom Packages ──
+  const defaultCustomForm = {
+    packageCode: '',
+    title: '',
+    destination: '',
+    status: 'ACTIVE',
+    packageType: 'Custom',
+    overview: '',
+    duration: { days: '', nights: '' },
+    pricing: { currency: 'INR', basePrice: '', discountPercentage: '', finalPrice: '' },
+    media: { thumbnailUrl: '', galleryUrls: [], altText: '' },
+    inclusions: [],
+    exclusions: [],
+    itinerary: [],
+    specialNotes: '',
+    version: 0
+  };
+
+  const [customPackages, setCustomPackages] = useState([]);
+  const [customFormData, setCustomFormData] = useState(defaultCustomForm);
+  const [customEditingId, setCustomEditingId] = useState(null);
+  const [customSaving, setCustomSaving] = useState(false);
+  const [customMediaContexts, setCustomMediaContexts] = useState({ thumbnail: '', gallery: {} });
+  const [customPackageSearch, setCustomPackageSearch] = useState('');
+
+  // Clone-from-package for custom packages
+  const [customClonePanelOpen, setCustomClonePanelOpen] = useState(false);
+  const [customCloneCode, setCustomCloneCode] = useState('');
+  const [customCloneFetching, setCustomCloneFetching] = useState(false);
+  const [customCloneStatus, setCustomCloneStatus] = useState(null);
+
   // Itinerary drag-and-drop
   const dragIndexRef = React.useRef(null);      // index being dragged
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const customDragIndexRef = React.useRef(null);
+  const [customDragOverIndex, setCustomDragOverIndex] = useState(null);
 
   const getTokenPayload = () => {
     const token = localStorage.getItem('token');
@@ -95,6 +128,149 @@ const Admin = () => {
     return `PKG-${String(maxNumber + 1).padStart(3, '0')}`;
   };
 
+  const getNextCustomPackageCode = (currentPackages) => {
+    if (!currentPackages || currentPackages.length === 0) return 'CUSPKG-001';
+    let maxNumber = 0;
+    currentPackages.forEach(pkg => {
+      const match = pkg.packageCode?.match(/^CUSPKG-(\d+)$/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNumber) maxNumber = num;
+      }
+    });
+    return `CUSPKG-${String(maxNumber + 1).padStart(3, '0')}`;
+  };
+
+  const fetchCustomPackages = async () => {
+    try {
+      const response = await api.get('/custom-packages/all');
+      setCustomPackages(response.data);
+      setCustomFormData(prev => ({
+        ...prev,
+        packageCode: customEditingId ? prev.packageCode : getNextCustomPackageCode(response.data)
+      }));
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.status === 403) handleLogout();
+      return [];
+    }
+  };
+
+  const handleCustomSubmit = async (e) => {
+    e.preventDefault();
+    if (uploading) { toast.error('Please wait for image upload to finish.'); return; }
+    const payload = { ...customFormData };
+    payload.duration = {
+      days: customFormData.duration.days ? Number(customFormData.duration.days) : 0,
+      nights: customFormData.duration.nights ? Number(customFormData.duration.nights) : 0
+    };
+    payload.pricing = {
+      ...customFormData.pricing,
+      basePrice: customFormData.pricing.basePrice ? Number(customFormData.pricing.basePrice) : 0,
+      discountPercentage: customFormData.pricing.discountPercentage ? Number(customFormData.pricing.discountPercentage) : 0,
+      finalPrice: customFormData.pricing.finalPrice ? Number(customFormData.pricing.finalPrice) : 0
+    };
+    setCustomSaving(true);
+    try {
+      if (customEditingId) {
+        await api.put(`/custom-packages/${customEditingId}`, payload);
+        toast.success('Custom package updated successfully');
+      } else {
+        await api.post('/custom-packages', payload);
+        toast.success('Custom package saved successfully');
+      }
+      const fresh = await fetchCustomPackages();
+      setCustomFormData({ ...defaultCustomForm, packageCode: getNextCustomPackageCode(fresh) });
+      setCustomEditingId(null);
+    } catch (error) {
+      if (error.response?.status === 409) toast.error(error.response.data.message || 'Package code already exists.');
+      else if (error.response?.status === 403) handleLogout();
+      else toast.error(`Failed to save: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setCustomSaving(false);
+    }
+  };
+
+  const handleCustomEdit = (pkg) => {
+    setCustomEditingId(pkg.id);
+    setCustomFormData({
+      ...defaultCustomForm,
+      ...pkg,
+      duration: pkg.duration || defaultCustomForm.duration,
+      pricing: pkg.pricing || defaultCustomForm.pricing,
+      media: pkg.media || defaultCustomForm.media,
+      inclusions: pkg.inclusions || [],
+      exclusions: pkg.exclusions || [],
+      itinerary: pkg.itinerary || [],
+      specialNotes: pkg.specialNotes || '',
+      version: pkg.version || 0
+    });
+  };
+
+  const handleCustomDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this custom package?')) return;
+    const prev = [...customPackages];
+    setCustomPackages(customPackages.filter(p => p.id !== id));
+    try {
+      await api.delete(`/custom-packages/${id}`);
+      toast.success('Custom package deleted successfully');
+      fetchCustomPackages();
+    } catch (error) {
+      setCustomPackages(prev);
+      if (error.response?.status === 403) handleLogout();
+      else toast.error('Failed to delete custom package');
+    }
+  };
+
+  const handleCustomCloneFetch = async () => {
+    const code = customCloneCode.trim().toUpperCase();
+    if (!code) { toast.error('Please enter a package code to clone from.'); return; }
+    setCustomCloneFetching(true);
+    setCustomCloneStatus(null);
+    try {
+      // Search in all packages (both regular and custom)
+      let allPkgs = [...packages, ...customPackages];
+      let source = allPkgs.find(p => p.packageCode?.toUpperCase() === code);
+      if (!source) {
+        const freshRegular = await fetchPackages();
+        const freshCustom = await fetchCustomPackages();
+        source = [...freshRegular, ...freshCustom].find(p => p.packageCode?.toUpperCase() === code);
+      }
+      if (!source) {
+        setCustomCloneStatus('error');
+        toast.error(`No package found with code "${code}"`);
+        return;
+      }
+      const freshCustom = await fetchCustomPackages();
+      const newCode = getNextCustomPackageCode(freshCustom);
+      setCustomFormData({
+        ...defaultCustomForm,
+        ...source,
+        packageCode: newCode,
+        packageType: 'Custom',
+        status: 'ACTIVE',
+        duration: source.duration || defaultCustomForm.duration,
+        pricing: source.pricing || defaultCustomForm.pricing,
+        media: source.media || defaultCustomForm.media,
+        inclusions: source.inclusions ? [...source.inclusions] : [],
+        exclusions: source.exclusions ? [...source.exclusions] : [],
+        itinerary: source.itinerary ? source.itinerary.map(d => ({ ...d })) : [],
+        specialNotes: source.specialNotes || '',
+        version: 0,
+        id: undefined,
+      });
+      setCustomEditingId(null);
+      setCustomMediaContexts({ thumbnail: '', gallery: {} });
+      setCustomCloneStatus('success');
+      toast.success(`Cloned from "${source.title}" — review and save as new custom package.`);
+    } catch (err) {
+      setCustomCloneStatus('error');
+      toast.error('Failed to fetch source package.');
+    } finally {
+      setCustomCloneFetching(false);
+    }
+  };
+
   useEffect(() => {
     if (!userProfile) {
       handleLogout();
@@ -109,6 +285,7 @@ const Admin = () => {
     
     fetchPackages();
     fetchGlobalTerms();
+    fetchCustomPackages();
   }, []);
 
   const fetchGlobalTerms = async () => {
@@ -215,6 +392,77 @@ const Admin = () => {
   const handleTopLevelChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  // ── Custom form helpers ──
+  const handleCustomTopLevelChange = (e) => {
+    const { name, value } = e.target;
+    setCustomFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCustomNestedChange = (category, field, value) => {
+    let next = { ...customFormData, [category]: { ...customFormData[category], [field]: value } };
+    if (category === 'pricing' && (field === 'basePrice' || field === 'discountPercentage')) {
+      const base = field === 'basePrice' ? Number(value) : Number(next.pricing.basePrice);
+      const disc = field === 'discountPercentage' ? Number(value) : Number(next.pricing.discountPercentage);
+      if (!isNaN(base) && !isNaN(disc)) next.pricing.finalPrice = base - base * (disc / 100);
+    }
+    setCustomFormData(next);
+  };
+
+  const handleCustomArrayChange = (category, index, value) => {
+    if (category === 'galleryUrls') {
+      const arr = [...customFormData.media.galleryUrls]; arr[index] = value;
+      setCustomFormData(prev => ({ ...prev, media: { ...prev.media, galleryUrls: arr } }));
+    } else {
+      const arr = [...customFormData[category]]; arr[index] = value;
+      setCustomFormData(prev => ({ ...prev, [category]: arr }));
+    }
+  };
+
+  const addCustomArrayItem = (category) => {
+    if (category === 'galleryUrls')
+      setCustomFormData(prev => ({ ...prev, media: { ...prev.media, galleryUrls: [...prev.media.galleryUrls, ''] } }));
+    else
+      setCustomFormData(prev => ({ ...prev, [category]: [...prev[category], ''] }));
+  };
+
+  const removeCustomArrayItem = (category, index) => {
+    if (category === 'galleryUrls') {
+      setCustomFormData(prev => ({ ...prev, media: { ...prev.media, galleryUrls: prev.media.galleryUrls.filter((_, i) => i !== index) } }));
+    } else {
+      setCustomFormData(prev => ({ ...prev, [category]: prev[category].filter((_, i) => i !== index) }));
+    }
+  };
+
+  const handleCustomItineraryChange = (index, field, value) => {
+    const it = [...customFormData.itinerary]; it[index] = { ...it[index], [field]: value };
+    setCustomFormData(prev => ({ ...prev, itinerary: it }));
+  };
+
+  const addCustomItineraryDay = () => {
+    setCustomFormData(prev => ({ ...prev, itinerary: [...prev.itinerary, { day: prev.itinerary.length + 1, title: '', activities: '' }] }));
+  };
+
+  const removeCustomItineraryDay = (index) => {
+    setCustomFormData(prev => {
+      const it = prev.itinerary.filter((_, i) => i !== index).map((d, i) => ({ ...d, day: i + 1 }));
+      return { ...prev, itinerary: it };
+    });
+  };
+
+  const handleCustomImageUpload = async (e, type, index = null, context = '') => {
+    const file = e.target.files[0]; if (!file) return;
+    setUploading(true);
+    const fd = new FormData(); fd.append('file', file);
+    if (context && context.trim()) fd.append('context', context);
+    try {
+      const res = await api.post('/media/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const url = res.data.url;
+      if (type === 'thumbnail') { handleCustomNestedChange('media', 'thumbnailUrl', url); setCustomMediaContexts(p => ({ ...p, thumbnail: '' })); }
+      else if (type === 'gallery') { handleCustomArrayChange('galleryUrls', index, url); setCustomMediaContexts(p => { const g = { ...p.gallery }; delete g[index]; return { ...p, gallery: g }; }); }
+    } catch (err) { toast.error(`Upload failed: ${err.response?.data?.error || err.message}`); }
+    finally { setUploading(false); }
   };
 
   const handleNestedChange = (category, field, value) => {
@@ -424,11 +672,29 @@ const Admin = () => {
               <Link to="/admin/images" className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium hidden sm:block">
                 <Image className="h-4 w-4 mr-1" /> Media Gallery
               </Link>
-              <button 
-                onClick={() => setView(view === 'packages' ? 'settings' : 'packages')}
-                className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+              <button
+                onClick={() => setView('packages')}
+                className={`flex items-center text-sm font-medium ${
+                  view === 'packages' ? 'text-blue-700 font-bold underline underline-offset-2' : 'text-blue-600 hover:text-blue-800'
+                }`}
               >
-                <Settings className="h-4 w-4 mr-1" /> {view === 'packages' ? 'Global Terms' : 'Manage Packages'}
+                Packages
+              </button>
+              <button
+                onClick={() => { setView('customPackages'); fetchCustomPackages(); }}
+                className={`flex items-center text-sm font-medium ${
+                  view === 'customPackages' ? 'text-purple-700 font-bold underline underline-offset-2' : 'text-purple-600 hover:text-purple-800'
+                }`}
+              >
+                Custom Package
+              </button>
+              <button 
+                onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
+                className={`flex items-center text-sm font-medium ${
+                  view === 'settings' ? 'text-blue-700 font-bold underline underline-offset-2' : 'text-blue-600 hover:text-blue-800'
+                }`}
+              >
+                <Settings className="h-4 w-4 mr-1" /> Global Terms
               </button>
             </div>
             <div className="flex items-center space-x-4">
@@ -984,6 +1250,213 @@ const Admin = () => {
                       </div>
                     ));
                   })()}
+                </div>
+              </div>
+            </>
+          )}
+
+          {view === 'customPackages' && (
+            <>
+              {/* Custom Package Form Section */}
+              <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-y-auto max-h-[calc(100vh-8rem)]">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                  {customEditingId ? 'Edit Custom Package' : 'Add New Custom Package'}
+                </h2>
+
+                {/* ── Clone from existing package panel (for Custom) ── */}
+                {!customEditingId && (
+                  <div className="mb-6 rounded-lg border border-dashed border-purple-300 bg-purple-50 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => { setCustomClonePanelOpen(o => !o); setCustomCloneStatus(null); }}
+                      className="w-full flex items-center justify-between px-4 py-3 text-purple-700 hover:bg-purple-100 transition-colors"
+                    >
+                      <span className="flex items-center gap-2 font-semibold text-sm">
+                        <Copy size={16} />
+                        Clone from Regular/Custom Package
+                      </span>
+                      {customClonePanelOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+
+                    {customClonePanelOpen && (
+                      <div className="px-4 pb-4 pt-2 border-t border-purple-200">
+                        <p className="text-xs text-purple-600 mb-3">
+                          Enter the source package code (PKG-xxx or CUSPKG-xxx). All fields will be pre-filled so you can adjust and save as a new custom package.
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={customCloneCode}
+                            onChange={e => { setCustomCloneCode(e.target.value.toUpperCase()); setCustomCloneStatus(null); }}
+                            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleCustomCloneFetch())}
+                            placeholder="e.g. PKG-004 or CUSPKG-001"
+                            className={`flex-1 rounded border p-2 text-sm font-mono uppercase tracking-wider bg-white focus:outline-none focus:ring-2 ${
+                              customCloneStatus === 'success' ? 'border-green-400 focus:ring-green-300' :
+                              customCloneStatus === 'error'   ? 'border-red-400 focus:ring-red-300' :
+                              'border-purple-300 focus:ring-purple-300'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCustomCloneFetch}
+                            disabled={customCloneFetching || !customCloneCode.trim()}
+                            className="flex items-center gap-2 px-4 py-2 rounded bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 disabled:bg-purple-300 transition-colors whitespace-nowrap"
+                          >
+                            {customCloneFetching
+                              ? <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                              : <Search size={15} />}
+                            {customCloneFetching ? 'Fetching…' : 'Fetch & Clone'}
+                          </button>
+                        </div>
+                        {customCloneStatus === 'success' && (
+                          <p className="mt-2 text-xs text-green-700 font-medium flex items-center gap-1">
+                            ✅ Fields populated! Assigned a new CUSPKG code.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <form onSubmit={handleCustomSubmit} className="space-y-6">
+                  {/* Basic Info */}
+                  <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                    <h3 className="font-semibold text-gray-700">Basic Info</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Package Code (Auto)</label>
+                        <input readOnly type="text" name="packageCode" value={customFormData.packageCode} className="mt-1 block w-full rounded-md shadow-sm p-2 border bg-gray-200 text-gray-600 cursor-not-allowed" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Status</label>
+                        <select name="status" value={customFormData.status} onChange={handleCustomTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white">
+                          <option value="ACTIVE">ACTIVE</option>
+                          <option value="INACTIVE">INACTIVE</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Title</label>
+                      <input type="text" name="title" value={customFormData.title} onChange={handleCustomTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Destination</label>
+                      <input type="text" name="destination" value={customFormData.destination} onChange={handleCustomTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
+                      <ReactQuill theme="snow" value={customFormData.overview} onChange={(val) => setCustomFormData(p => ({...p, overview: val}))} modules={quillModules} formats={quillFormats} className="bg-white rounded-md overflow-hidden" />
+                    </div>
+                  </div>
+
+                  {/* Pricing & Duration */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                      <h3 className="font-semibold text-gray-700">Duration</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-600">Days</label>
+                          <input type="number" value={customFormData.duration.days} onChange={(e) => handleCustomNestedChange('duration', 'days', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600">Nights</label>
+                          <input type="number" value={customFormData.duration.nights} onChange={(e) => handleCustomNestedChange('duration', 'nights', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                      <h3 className="font-semibold text-gray-700">Pricing</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-600">Base Price</label>
+                          <input type="number" value={customFormData.pricing.basePrice} onChange={(e) => handleCustomNestedChange('pricing', 'basePrice', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600">Final Price</label>
+                          <input readOnly type="number" value={customFormData.pricing.finalPrice} className="w-full rounded border p-2 bg-gray-200" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Media */}
+                  <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                    <h3 className="font-semibold text-gray-700">Media</h3>
+                    <div>
+                      <label className="block text-sm text-gray-600">Thumbnail URL</label>
+                      <div className="flex gap-2">
+                        <input type="text" value={customFormData.media.thumbnailUrl} onChange={(e) => handleCustomNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white" />
+                        <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
+                          <Upload size={18} />
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleCustomImageUpload(e, 'thumbnail', null, customMediaContexts.thumbnail)} disabled={uploading} />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Itinerary */}
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <div className="flex justify-between items-center mb-4 border-b pb-2">
+                      <h3 className="font-semibold text-gray-700">Itinerary</h3>
+                      <button type="button" onClick={addCustomItineraryDay} className="flex items-center text-sm text-purple-600 hover:text-purple-800 font-medium">
+                        <Plus size={16} className="mr-1"/> Add Day
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {customFormData.itinerary.map((day, idx) => (
+                        <div key={idx} className="border border-gray-200 bg-white rounded-lg p-3">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-bold text-gray-800 text-sm">Day {day.day}</span>
+                            <button type="button" onClick={() => removeCustomItineraryDay(idx)} className="text-red-400 hover:text-red-600"><X size={15}/></button>
+                          </div>
+                          <input type="text" placeholder="Title" value={day.title} onChange={(e) => handleCustomItineraryChange(idx, 'title', e.target.value)} className="w-full mb-2 p-2 border rounded text-sm" />
+                          <ReactQuill theme="snow" value={day.activities} onChange={(val) => handleCustomItineraryChange(idx, 'activities', val)} modules={quillModules} formats={quillFormats} className="bg-white rounded border text-sm" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 border-t pt-4">
+                    {customEditingId && (
+                      <button type="button" onClick={() => { setCustomEditingId(null); setCustomFormData({ ...defaultCustomForm, packageCode: getNextCustomPackageCode(customPackages) }); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">Cancel</button>
+                    )}
+                    <button type="submit" disabled={uploading || customSaving} className="flex items-center px-6 py-2 border border-transparent rounded-md text-white bg-purple-600 hover:bg-purple-700 shadow-sm font-medium disabled:bg-purple-400">
+                      {customSaving ? 'Saving...' : (customEditingId ? 'Update Custom Package' : 'Save Custom Package')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Custom Package List Section */}
+              <div className="lg:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[calc(100vh-8rem)]">
+                <div className="p-4 border-b bg-gray-50 flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-gray-900">Custom Packages</h2>
+                  <div className="relative w-64">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input type="text" value={customPackageSearch} onChange={e => setCustomPackageSearch(e.target.value)} placeholder="Search..." className="w-full pl-9 pr-4 py-1.5 text-sm border rounded-md" />
+                  </div>
+                </div>
+                <div className="overflow-y-auto flex-1 p-4 space-y-4">
+                  {customPackages.filter(p => p.packageCode?.toLowerCase().includes(customPackageSearch.toLowerCase()) || p.title?.toLowerCase().includes(customPackageSearch.toLowerCase())).map(pkg => (
+                    <div key={pkg.id} className="group relative flex gap-4 rounded-xl border border-gray-200 bg-white p-3 hover:border-purple-500 transition-all">
+                      <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg">
+                        <img src={pkg.media?.thumbnailUrl || 'https://via.placeholder.com/150'} alt={pkg.title} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex gap-2 mb-1">
+                          <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded">{pkg.packageCode}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${pkg.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{pkg.status}</span>
+                        </div>
+                        <h3 className="font-bold text-gray-900 text-sm truncate">{pkg.title}</h3>
+                        <p className="text-xs text-gray-500 truncate">{pkg.destination}</p>
+                        <div className="mt-1 text-xs font-semibold text-purple-600">{pkg.pricing?.currency} {formatCurrency(pkg.pricing?.finalPrice)}</div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button onClick={() => handleCustomEdit(pkg)} className="text-blue-500 p-1.5 rounded hover:bg-blue-50"><Edit2 size={15} /></button>
+                        <button onClick={() => handleCustomDelete(pkg.id)} className="text-red-500 p-1.5 rounded hover:bg-red-50"><Trash2 size={15} /></button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </>

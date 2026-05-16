@@ -12,25 +12,53 @@ const stripHtml = (html) => {
   return doc.body.textContent || "";
 };
 
+const getTokenPayload = () => {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+};
+
 const Home = () => {
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Domestic');
+  const userProfile = getTokenPayload();
+  const isAdmin = userProfile && userProfile.role === 'ADMIN';
 
   useEffect(() => {
-    const fetchPackages = async () => {
+    const fetchAllData = async () => {
       try {
-        const response = await api.get('/packages');
-        setPackages(response.data);
+        setLoading(true);
+        const [regRes, custRes] = await Promise.allSettled([
+          api.get('/packages'),
+          isAdmin ? api.get('/custom-packages/all') : Promise.resolve({ data: [] })
+        ]);
+
+        const regularPkgs = regRes.status === 'fulfilled' ? regRes.value.data : [];
+        const customPkgs = custRes.status === 'fulfilled' ? custRes.value.data : [];
+        
+        // Ensure custom packages have the correct type for filtering
+        const processedCustom = customPkgs.map(p => ({ ...p, packageType: 'Custom' }));
+        
+        setPackages([...regularPkgs, ...processedCustom]);
       } catch (error) {
-        console.error('Error fetching packages:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPackages();
-  }, []);
+    fetchAllData();
+  }, [isAdmin]);
 
   const filteredPackages = packages.filter(pkg => {
     // Fallback for old packages that might not have the type field yet
@@ -58,7 +86,7 @@ const Home = () => {
         {/* Tabs */}
         <div className="flex justify-center mb-10 w-full overflow-x-auto pb-2">
           <div className="inline-flex p-1 bg-gray-200 rounded-xl shadow-inner min-w-max">
-            {['Domestic', 'International'].map((tab) => (
+            {['Domestic', 'International', ...(isAdmin ? ['Custom'] : [])].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
