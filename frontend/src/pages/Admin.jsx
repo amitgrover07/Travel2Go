@@ -1,7 +1,7 @@
 // redeploy: 2026-05-16
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -114,6 +114,46 @@ const Admin = () => {
     }
   };
   const userProfile = getTokenPayload();
+
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [sendPackage, setSendPackage] = useState(null);
+  const [sendLoading, setSendLoading] = useState(false);
+  const [sendForm, setSendForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    location: ''
+  });
+
+  const handleOpenSendModal = (pkg, isCustom) => {
+    setSendPackage({ ...pkg, isCustom });
+    setShowSendModal(true);
+  };
+
+  const handleSendSubmit = async (e) => {
+    e.preventDefault();
+    if (!sendForm.firstName || !sendForm.email || !sendForm.phone || !sendForm.location) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    setSendLoading(true);
+    try {
+      await api.post('/bookings', {
+        ...sendForm,
+        packageId: sendPackage.id,
+        packageTitle: sendPackage.title,
+        isCustom: sendPackage.isCustom
+      });
+      toast.success('Itinerary PDF sent successfully!');
+      setShowSendModal(false);
+      setSendForm({ firstName: '', lastName: '', email: '', phone: '', location: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to send package');
+    } finally {
+      setSendLoading(false);
+    }
+  };
 
   const getNextPackageCode = (currentPackages) => {
     if (!currentPackages || currentPackages.length === 0) return 'PKG-001';
@@ -1229,7 +1269,14 @@ const Admin = () => {
                         </div>
 
                         {/* Action buttons — vertically centred on the right */}
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1.5">
+                          <button
+                            onClick={() => handleOpenSendModal(pkg, false)}
+                            className="text-purple-500 hover:text-white hover:bg-purple-500 p-1.5 rounded-md border border-purple-200 hover:border-purple-500"
+                            title="Send to Customer"
+                            style={{ transition: 'all 0.15s ease' }}
+                          >
+                            <Mail size={15} />
+                          </button>
                           <button
                             onClick={() => handleEdit(pkg)}
                             className="text-blue-500 hover:text-white hover:bg-blue-500 p-1.5 rounded-md border border-blue-200 hover:border-blue-500"
@@ -1317,101 +1364,225 @@ const Admin = () => {
                 )}
 
                 <form onSubmit={handleCustomSubmit} className="space-y-6">
+                  
                   {/* Basic Info */}
-                  <div className="space-y-4 bg-gray-50 p-4 rounded-md">
-                    <h3 className="font-semibold text-gray-700">Basic Info</h3>
+                  <div className="space-y-4 bg-gray-50 p-4 rounded-md border-l-4 border-purple-500">
+                    <h3 className="font-semibold text-purple-700">Basic Info</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Package Code (Auto)</label>
-                        <input readOnly type="text" name="packageCode" value={customFormData.packageCode} className="mt-1 block w-full rounded-md shadow-sm p-2 border bg-gray-200 text-gray-600 cursor-not-allowed" />
+                        <input readOnly type="text" name="packageCode" value={customFormData.packageCode} className="mt-1 block w-full rounded-md shadow-sm p-2 border bg-gray-200 text-gray-600 cursor-not-allowed font-mono" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Status</label>
-                        <select name="status" value={customFormData.status} onChange={handleCustomTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white">
+                        <select name="status" value={customFormData.status} onChange={handleCustomTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border bg-white">
                           <option value="ACTIVE">ACTIVE</option>
                           <option value="INACTIVE">INACTIVE</option>
                         </select>
                       </div>
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">Package Type</label>
+                        <input readOnly type="text" value="Custom" className="mt-1 block w-full rounded-md border-purple-200 shadow-sm p-2 border bg-purple-50 font-semibold text-purple-700 cursor-not-allowed" />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Title</label>
-                      <input type="text" name="title" value={customFormData.title} onChange={handleCustomTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                      <input type="text" name="title" value={customFormData.title} onChange={handleCustomTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border bg-white" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Destination</label>
-                      <input type="text" name="destination" value={customFormData.destination} onChange={handleCustomTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white" />
+                      <input type="text" name="destination" value={customFormData.destination} onChange={handleCustomTopLevelChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border bg-white" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
-                      <ReactQuill theme="snow" value={customFormData.overview} onChange={(val) => setCustomFormData(p => ({...p, overview: val}))} modules={quillModules} formats={quillFormats} className="bg-white rounded-md overflow-hidden" />
+                      <ReactQuill 
+                        theme="snow"
+                        value={customFormData.overview} 
+                        onChange={(value) => setCustomFormData(p => ({...p, overview: value}))}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        className="bg-white rounded-md overflow-hidden"
+                      />
                     </div>
                   </div>
 
-                  {/* Pricing & Duration */}
+                  {/* Duration & Pricing */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-4 bg-gray-50 p-4 rounded-md">
-                      <h3 className="font-semibold text-gray-700">Duration</h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-xs text-gray-600">Days</label>
-                          <input type="number" value={customFormData.duration.days} onChange={(e) => handleCustomNestedChange('duration', 'days', e.target.value)} className="w-full rounded border p-2 bg-white" />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-600">Nights</label>
-                          <input type="number" value={customFormData.duration.nights} onChange={(e) => handleCustomNestedChange('duration', 'nights', e.target.value)} className="w-full rounded border p-2 bg-white" />
-                        </div>
+                    <div className="space-y-4 bg-gray-50 p-4 rounded-md border-l-4 border-purple-400">
+                      <h3 className="font-semibold text-purple-700">Duration</h3>
+                      <div>
+                        <label className="block text-sm text-gray-600">Days</label>
+                        <input type="number" value={customFormData.duration.days} onChange={(e) => handleCustomNestedChange('duration', 'days', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600">Nights</label>
+                        <input type="number" value={customFormData.duration.nights} onChange={(e) => handleCustomNestedChange('duration', 'nights', e.target.value)} className="w-full rounded border p-2 bg-white" />
                       </div>
                     </div>
-                    <div className="space-y-4 bg-gray-50 p-4 rounded-md">
-                      <h3 className="font-semibold text-gray-700">Pricing</h3>
+
+                    <div className="space-y-4 bg-gray-50 p-4 rounded-md border-l-4 border-purple-400">
+                      <h3 className="font-semibold text-purple-700">Pricing</h3>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-xs text-gray-600">Base Price</label>
+                          <label className="block text-sm text-gray-600">Currency</label>
+                          <input type="text" value={customFormData.pricing.currency} onChange={(e) => handleCustomNestedChange('pricing', 'currency', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-600">Base Price</label>
                           <input type="number" value={customFormData.pricing.basePrice} onChange={(e) => handleCustomNestedChange('pricing', 'basePrice', e.target.value)} className="w-full rounded border p-2 bg-white" />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-600">Final Price</label>
-                          <input readOnly type="number" value={customFormData.pricing.finalPrice} className="w-full rounded border p-2 bg-gray-200" />
+                          <label className="block text-sm text-gray-600">Discount %</label>
+                          <input type="number" value={customFormData.pricing.discountPercentage} onChange={(e) => handleCustomNestedChange('pricing', 'discountPercentage', e.target.value)} className="w-full rounded border p-2 bg-white" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-bold text-purple-800">Final Price (Auto)</label>
+                          <input readOnly type="number" value={customFormData.pricing.finalPrice} className="w-full rounded border p-2 bg-purple-100 font-bold" />
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Media */}
-                  <div className="space-y-4 bg-gray-50 p-4 rounded-md">
-                    <h3 className="font-semibold text-gray-700">Media</h3>
+                  <div className="space-y-4 bg-gray-50 p-4 rounded-md border-l-4 border-purple-400">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-semibold text-purple-700">Media</h3>
+                      {uploading && <span className="text-xs text-purple-600 animate-pulse font-medium">Uploading...</span>}
+                    </div>
+                    
                     <div>
                       <label className="block text-sm text-gray-600">Thumbnail URL</label>
                       <div className="flex gap-2">
-                        <input type="text" value={customFormData.media.thumbnailUrl} onChange={(e) => handleCustomNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white" />
-                        <label className="cursor-pointer flex items-center justify-center px-3 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600">
+                        <input type="text" value={customFormData.media.thumbnailUrl} onChange={(e) => handleCustomNestedChange('media', 'thumbnailUrl', e.target.value)} className="flex-1 rounded border p-2 bg-white text-sm" placeholder="https://..." />
+                        <label className="cursor-pointer flex items-center justify-center px-3 border border-purple-200 rounded bg-white hover:bg-purple-50 text-purple-600">
                           <Upload size={18} />
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleCustomImageUpload(e, 'thumbnail', null, customMediaContexts.thumbnail)} disabled={uploading} />
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleCustomImageUpload(e, 'thumbnail', null, '')} disabled={uploading} />
                         </label>
                       </div>
                     </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-1 mt-4">
+                        <label className="block text-sm text-gray-600">Gallery URLs</label>
+                        <button type="button" onClick={() => addCustomArrayItem('galleryUrls')} className="text-purple-600 hover:text-purple-800"><Plus size={16}/></button>
+                      </div>
+                      {customFormData.media.galleryUrls.map((url, idx) => (
+                        <div key={idx} className="flex gap-2 mb-2">
+                          <input type="text" value={url} onChange={(e) => handleCustomArrayChange('galleryUrls', idx, e.target.value)} className="flex-1 rounded border p-2 bg-white text-sm" placeholder="https://..." />
+                          <label className="cursor-pointer flex items-center justify-center px-3 border border-purple-200 rounded bg-white hover:bg-purple-50 text-purple-600">
+                            <Upload size={16} />
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleCustomImageUpload(e, 'gallery', idx, '')} disabled={uploading} />
+                          </label>
+                          <button type="button" onClick={() => removeCustomArrayItem('galleryUrls', idx)} className="bg-red-500 text-white p-2 rounded"><X size={16}/></button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-600 mt-2">Alt Text</label>
+                      <input type="text" value={customFormData.media.altText} onChange={(e) => handleCustomNestedChange('media', 'altText', e.target.value)} className="w-full rounded border p-2 bg-white text-sm" />
+                    </div>
                   </div>
 
-                  {/* Itinerary */}
-                  <div className="bg-gray-50 p-4 rounded-md">
+                  {/* Inclusions & Exclusions */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-md border-l-4 border-green-400">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold text-green-700 text-sm">Inclusions</h3>
+                        <button type="button" onClick={() => addCustomArrayItem('inclusions')} className="text-green-600 hover:text-green-800"><Plus size={16}/></button>
+                      </div>
+                      {customFormData.inclusions.map((item, idx) => (
+                        <div key={idx} className="flex mb-2">
+                          <input type="text" value={item} onChange={(e) => handleCustomArrayChange('inclusions', idx, e.target.value)} className="flex-1 rounded-l border p-1 bg-white text-sm" />
+                          <button type="button" onClick={() => removeCustomArrayItem('inclusions', idx)} className="bg-red-500 text-white p-1 rounded-r"><X size={16}/></button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-md border-l-4 border-red-400">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold text-red-700 text-sm">Exclusions</h3>
+                        <button type="button" onClick={() => addCustomArrayItem('exclusions')} className="text-red-600 hover:text-red-800"><Plus size={16}/></button>
+                      </div>
+                      {customFormData.exclusions.map((item, idx) => (
+                        <div key={idx} className="flex mb-2">
+                          <input type="text" value={item} onChange={(e) => handleCustomArrayChange('exclusions', idx, e.target.value)} className="flex-1 rounded-l border p-1 bg-white text-sm" />
+                          <button type="button" onClick={() => removeCustomArrayItem('exclusions', idx)} className="bg-red-500 text-white p-1 rounded-r"><X size={16}/></button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Itinerary with Drag-and-Drop */}
+                  <div className="bg-gray-50 p-4 rounded-md border-l-4 border-purple-500">
                     <div className="flex justify-between items-center mb-4 border-b pb-2">
-                      <h3 className="font-semibold text-gray-700">Itinerary</h3>
+                      <div>
+                        <h3 className="font-semibold text-purple-700">Itinerary</h3>
+                        {customFormData.itinerary.length > 1 && (
+                          <p className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1">
+                            <GripVertical size={10} /> Drag handle to reorder
+                          </p>
+                        )}
+                      </div>
                       <button type="button" onClick={addCustomItineraryDay} className="flex items-center text-sm text-purple-600 hover:text-purple-800 font-medium">
                         <Plus size={16} className="mr-1"/> Add Day
                       </button>
                     </div>
                     <div className="space-y-3">
                       {customFormData.itinerary.map((day, idx) => (
-                        <div key={idx} className="border border-gray-200 bg-white rounded-lg p-3">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-bold text-gray-800 text-sm">Day {day.day}</span>
-                            <button type="button" onClick={() => removeCustomItineraryDay(idx)} className="text-red-400 hover:text-red-600"><X size={15}/></button>
+                        <div
+                          key={idx}
+                          draggable
+                          onDragStart={() => { customDragIndexRef.current = idx; }}
+                          onDragEnd={() => { customDragIndexRef.current = null; setCustomDragOverIndex(null); }}
+                          onDragOver={e => { e.preventDefault(); if (customDragIndexRef.current !== idx) setCustomDragOverIndex(idx); }}
+                          onDragLeave={() => setCustomDragOverIndex(null)}
+                          onDrop={e => {
+                            e.preventDefault();
+                            const from = customDragIndexRef.current;
+                            const to = idx;
+                            if (from === null || from === to) { setCustomDragOverIndex(null); return; }
+                            const reordered = [...customFormData.itinerary];
+                            const [moved] = reordered.splice(from, 1);
+                            reordered.splice(to, 0, moved);
+                            const renumbered = reordered.map((d, i) => ({ ...d, day: i + 1 }));
+                            setCustomFormData(p => ({ ...p, itinerary: renumbered }));
+                            customDragIndexRef.current = null;
+                            setCustomDragOverIndex(null);
+                          }}
+                          style={{
+                            borderTop: customDragOverIndex === idx ? '3px solid #9333ea' : '3px solid transparent',
+                            opacity: customDragIndexRef.current === idx ? 0.45 : 1,
+                            transition: 'border-color 0.12s ease, opacity 0.12s ease',
+                          }}
+                          className="border border-gray-200 bg-white rounded-lg"
+                        >
+                          <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-gray-100 select-none" style={{ cursor: 'grab' }}>
+                            <GripVertical size={16} className="text-gray-300 flex-shrink-0" />
+                            <span className="flex-1 font-bold text-gray-800 text-sm">Day {day.day}</span>
+                            <button type="button" onClick={() => removeCustomItineraryDay(idx)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded" onMouseDown={e => e.stopPropagation()}>
+                              <X size={15}/>
+                            </button>
                           </div>
-                          <input type="text" placeholder="Title" value={day.title} onChange={(e) => handleCustomItineraryChange(idx, 'title', e.target.value)} className="w-full mb-2 p-2 border rounded text-sm" />
-                          <ReactQuill theme="snow" value={day.activities} onChange={(val) => handleCustomItineraryChange(idx, 'activities', val)} modules={quillModules} formats={quillFormats} className="bg-white rounded border text-sm" />
+                          <div className="p-3">
+                            <input type="text" placeholder="Title" value={day.title} onChange={(e) => handleCustomItineraryChange(idx, 'title', e.target.value)} className="w-full mb-2 p-2 border rounded text-sm" />
+                            <ReactQuill theme="snow" value={day.activities} onChange={(val) => handleCustomItineraryChange(idx, 'activities', val)} modules={quillModules} formats={quillFormats} className="bg-white rounded border text-sm" />
+                          </div>
                         </div>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Special Notes */}
+                  <div className="bg-gray-50 p-4 rounded-md border-l-4 border-red-500">
+                    <h3 className="font-semibold text-red-700 mb-2">Special Notes / Conditions</h3>
+                    <ReactQuill 
+                      theme="snow" 
+                      value={customFormData.specialNotes} 
+                      onChange={(val) => setCustomFormData(p => ({...p, specialNotes: val}))} 
+                      modules={quillModules} 
+                      formats={quillFormats} 
+                      className="bg-white rounded-md overflow-hidden" 
+                    />
                   </div>
 
                   <div className="flex justify-end gap-3 border-t pt-4">
@@ -1450,6 +1621,7 @@ const Admin = () => {
                         <div className="mt-1 text-xs font-semibold text-purple-600">{pkg.pricing?.currency} {formatCurrency(pkg.pricing?.finalPrice)}</div>
                       </div>
                       <div className="flex flex-col gap-2">
+                        <button onClick={() => handleOpenSendModal(pkg, true)} className="text-purple-500 p-1.5 rounded hover:bg-purple-50" title="Send to Customer"><Mail size={15} /></button>
                         <button onClick={() => handleCustomEdit(pkg)} className="text-blue-500 p-1.5 rounded hover:bg-blue-50"><Edit2 size={15} /></button>
                         <button onClick={() => handleCustomDelete(pkg.id)} className="text-red-500 p-1.5 rounded hover:bg-red-50"><Trash2 size={15} /></button>
                       </div>
@@ -1462,6 +1634,130 @@ const Admin = () => {
           
         </div>
       </main>
+      {/* Send to Customer Modal */}
+      {showSendModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between p-6 border-b bg-purple-600 text-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Mail size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Send Itinerary to Customer</h3>
+                  <p className="text-xs text-purple-100 opacity-90 truncate max-w-[300px]">
+                    {sendPackage?.packageCode}: {sendPackage?.title}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowSendModal(false)} className="text-white/80 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSendSubmit} className="p-6 space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">First Name *</label>
+                  <div className="relative">
+                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      required
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                      value={sendForm.firstName}
+                      onChange={(e) => setSendForm({...sendForm, firstName: e.target.value})}
+                      placeholder="John"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Last Name</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.lastName}
+                    onChange={(e) => setSendForm({...sendForm, lastName: e.target.value})}
+                    placeholder="Doe"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Email Address *</label>
+                <div className="relative">
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.email}
+                    onChange={(e) => setSendForm({...sendForm, email: e.target.value})}
+                    placeholder="customer@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Phone Number *</label>
+                <div className="relative">
+                  <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="tel"
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.phone}
+                    onChange={(e) => setSendForm({...sendForm, phone: e.target.value})}
+                    placeholder="+91 98765 43210"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Location/City *</label>
+                <div className="relative">
+                  <MapPinIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.location}
+                    onChange={(e) => setSendForm({...sendForm, location: e.target.value})}
+                    placeholder="Mumbai, India"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSendModal(false)}
+                  className="flex-1 px-6 py-3 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendLoading}
+                  className="flex-[2] bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {sendLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      Send Itinerary
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

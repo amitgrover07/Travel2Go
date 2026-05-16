@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft, X, Loader2 } from 'lucide-react';
+import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft, X, Loader2, Mail, User, Phone, MapPinIcon, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import SEO from '../components/SEO';
@@ -39,6 +39,38 @@ const PackageDetails = () => {
     location: ''
   });
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Admin Send to Customer state
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
+  const [sendForm, setSendForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    location: ''
+  });
+
+  const getTokenPayload = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const payload = getTokenPayload();
+    setIsAdmin(payload?.role === 'ADMIN');
+  }, []);
 
   useEffect(() => {
     const fetchPackageDetails = async () => {
@@ -180,6 +212,28 @@ const PackageDetails = () => {
       toast.error(error.response?.data?.error || 'Failed to submit booking. Please try again.');
     } finally {
       setBookingLoading(false);
+    }
+  const handleSendSubmit = async (e) => {
+    e.preventDefault();
+    if (!sendForm.firstName || !sendForm.email || !sendForm.phone || !sendForm.location) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    setSendLoading(true);
+    try {
+      await api.post('/bookings', {
+        ...sendForm,
+        packageId: id,
+        packageTitle: pkg.title,
+        isCustom: pkg.packageType === 'Custom'
+      });
+      toast.success('Itinerary PDF sent successfully!');
+      setShowSendModal(false);
+      setSendForm({ firstName: '', lastName: '', email: '', phone: '', location: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to send package');
+    } finally {
+      setSendLoading(false);
     }
   };
 
@@ -336,6 +390,16 @@ const PackageDetails = () => {
                 >
                   Book Now
                 </button>
+
+                {isAdmin && (
+                  <button 
+                    onClick={() => setShowSendModal(true)}
+                    className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    <Mail size={18} />
+                    Send to Customer
+                  </button>
+                )}
               </div>
             </div>
 
@@ -531,6 +595,130 @@ const PackageDetails = () => {
                 <p className="text-center text-xs text-gray-500 mt-3">
                   By clicking confirm, you agree to our Terms & Conditions.
                 </p>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Send to Customer Modal (Admin Only) */}
+      {isAdmin && showSendModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between p-6 border-b bg-purple-600 text-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Mail size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Send Itinerary to Customer</h3>
+                  <p className="text-xs text-purple-100 opacity-90 truncate max-w-[300px]">
+                    {pkg?.packageCode}: {pkg?.title}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowSendModal(false)} className="text-white/80 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSendSubmit} className="p-6 space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">First Name *</label>
+                  <div className="relative">
+                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      required
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                      value={sendForm.firstName}
+                      onChange={(e) => setSendForm({...sendForm, firstName: e.target.value})}
+                      placeholder="John"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Last Name</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.lastName}
+                    onChange={(e) => setSendForm({...sendForm, lastName: e.target.value})}
+                    placeholder="Doe"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Email Address *</label>
+                <div className="relative">
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.email}
+                    onChange={(e) => setSendForm({...sendForm, email: e.target.value})}
+                    placeholder="customer@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Phone Number *</label>
+                <div className="relative">
+                  <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="tel"
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.phone}
+                    onChange={(e) => setSendForm({...sendForm, phone: e.target.value})}
+                    placeholder="+91 98765 43210"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Location/City *</label>
+                <div className="relative">
+                  <MapPinIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.location}
+                    onChange={(e) => setSendForm({...sendForm, location: e.target.value})}
+                    placeholder="Mumbai, India"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSendModal(false)}
+                  className="flex-1 px-6 py-3 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendLoading}
+                  className="flex-[2] bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {sendLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      Send Itinerary
+                    </>
+                  )}
+                </button>
               </div>
             </form>
           </div>

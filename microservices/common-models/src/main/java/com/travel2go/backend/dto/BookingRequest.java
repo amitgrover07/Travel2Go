@@ -17,4 +17,5 @@ public class BookingRequest {
     private String location;
     private String packageId;
     private String packageTitle;
+    private boolean isCustom;
 }

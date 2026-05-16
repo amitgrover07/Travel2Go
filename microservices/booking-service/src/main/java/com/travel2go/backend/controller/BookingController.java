@@ -58,14 +58,38 @@ public class BookingController {
             bookingRepository.save(booking).block();
 
             // Fetch package details for the PDF via Feign
-            HolidayPackage pkg = packageClient.getPackageById(request.getPackageId());
+            HolidayPackage pkg;
+            if (request.isCustom()) {
+                com.travel2go.backend.model.CustomPackage cp = packageClient.getCustomPackageById(request.getPackageId());
+                // Map CustomPackage to HolidayPackage for the notification service
+                pkg = HolidayPackage.builder()
+                    .id(cp.getId())
+                    .packageCode(cp.getPackageCode())
+                    .title(cp.getTitle())
+                    .destination(cp.getDestination())
+                    .status(cp.getStatus())
+                    .packageType(cp.getPackageType())
+                    .overview(cp.getOverview())
+                    .specialNotes(cp.getSpecialNotes())
+                    .duration(cp.getDuration())
+                    .pricing(cp.getPricing())
+                    .media(cp.getMedia())
+                    .inclusions(cp.getInclusions())
+                    .exclusions(cp.getExclusions())
+                    .itinerary(cp.getItinerary())
+                    .audit(cp.getAudit())
+                    .build();
+            } else {
+                pkg = packageClient.getPackageById(request.getPackageId());
+            }
+
             GlobalSettings settings = settingsClient.getSettingsById("global");
 
             // Send notification request to Notification Service
             NotificationClient.NotificationRequest notifReq = new NotificationClient.NotificationRequest(request, pkg, settings, booking);
             notificationClient.sendBookingConfirmation(notifReq);
             
-            return ResponseEntity.ok(Map.of("message", "Booking submitted successfully! A confirmation email with the itinerary has been sent."));
+            return ResponseEntity.ok(Map.of("message", "Package sent successfully! Check email for the PDF itinerary."));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to process booking: " + e.getMessage()));
