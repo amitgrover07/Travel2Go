@@ -44,7 +44,12 @@ public class AuthController {
             );
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String role = userDetails.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+            
+            // Prioritize ADMIN role if present
+            List<String> authorities = userDetails.getAuthorities().stream()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .toList();
+            String role = authorities.contains("ADMIN") ? "ADMIN" : authorities.get(0);
             
             User user = userRepository.findByEmail(userDetails.getUsername()).block();
             String name = user != null && user.getName() != null ? user.getName() : "";

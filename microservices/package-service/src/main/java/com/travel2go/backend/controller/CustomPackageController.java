@@ -42,7 +42,10 @@ public class CustomPackageController {
 
     @GetMapping("/all")
     public Flux<CustomPackage> getAllPackages() {
-        return repository.findAll();
+        System.out.println("Fetching all custom packages from repository...");
+        return repository.findAll()
+                .doOnComplete(() -> System.out.println("Completed fetching custom packages"))
+                .doOnError(e -> System.err.println("Error fetching custom packages: " + e.getMessage()));
     }
 
     @GetMapping("/{id}")
