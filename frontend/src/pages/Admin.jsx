@@ -197,7 +197,8 @@ const Admin = () => {
       console.error('Error fetching custom packages:', error);
       const profile = getTokenPayload();
       const is401 = error.response && error.response.status === 401;
-      const debugInfo = profile ? ` | User: ${profile.sub} | Role: ${profile.role}` : ' | No token payload';
+      const iat = profile && profile.iat ? new Date(profile.iat * 1000).toLocaleString() : 'Unknown';
+      const debugInfo = profile ? ` | User: ${profile.sub} | Role: ${profile.role} | Token Issued: ${iat}` : ' | No token payload';
       const msg = is401 ? 'Session Expired! Please log out and log in again.' : (error.response ? `Failed: ${error.response.status} - ${JSON.stringify(error.response.data)}` : error.message);
       toast.error(`Failed to load custom packages: ${msg}${debugInfo}`);
       return [];
