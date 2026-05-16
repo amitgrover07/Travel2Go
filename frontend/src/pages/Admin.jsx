@@ -47,35 +47,22 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mediaContexts, setMediaContexts] = useState({ thumbnail: '', gallery: {} });
-  const [view, setView] = useState('packages');
+  const [view, setView] = useState('packages'); // 'packages' or 'settings'
   const [globalTerms, setGlobalTerms] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
   const navigate = useNavigate();
 
-  // Clone-from-package state (standard)
+  // Clone-from-package state
   const [clonePanelOpen, setClonePanelOpen] = useState(false);
   const [cloneCode, setCloneCode] = useState('');
   const [cloneFetching, setCloneFetching] = useState(false);
-  const [cloneStatus, setCloneStatus] = useState(null);
-
-  // Custom package state
-  const [isCustomPackage, setIsCustomPackage] = useState(false);
-  const [customFetchCode, setCustomFetchCode] = useState('');
-  const [customFetching, setCustomFetching] = useState(false);
-  const [customFetchStatus, setCustomFetchStatus] = useState(null);
-  const [customFetchPanelOpen, setCustomFetchPanelOpen] = useState(false);
-
-  // Send PDF to client state
-  const defaultClientInfo = { firstName: '', lastName: '', email: '', phone: '', location: '' };
-  const [clientInfo, setClientInfo] = useState(defaultClientInfo);
-  const [sendPdfPanelOpen, setSendPdfPanelOpen] = useState(false);
-  const [sendingPdf, setSendingPdf] = useState(false);
+  const [cloneStatus, setCloneStatus] = useState(null); // null | 'success' | 'error'
 
   // Package list search
   const [packageSearch, setPackageSearch] = useState('');
 
   // Itinerary drag-and-drop
-  const dragIndexRef = React.useRef(null);
+  const dragIndexRef = React.useRef(null);      // index being dragged
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
   const getTokenPayload = () => {
@@ -105,120 +92,6 @@ const Admin = () => {
       }
     });
     return `PKG-${String(maxNumber + 1).padStart(3, '0')}`;
-  };
-
-  const getNextCustomPackageCode = (currentPackages) => {
-    if (!currentPackages || currentPackages.length === 0) return 'CUSPKG-001';
-    let maxNumber = 0;
-    currentPackages.forEach(pkg => {
-      const match = pkg.packageCode?.match(/^CUSPKG-(\d+)$/i);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNumber) maxNumber = num;
-      }
-    });
-    return `CUSPKG-${String(maxNumber + 1).padStart(3, '0')}`;
-  };
-
-  const handleToggleCustomPackage = (enable) => {
-    setIsCustomPackage(enable);
-    setCustomFetchCode('');
-    setCustomFetchStatus(null);
-    setCustomFetchPanelOpen(false);
-    setSendPdfPanelOpen(false);
-    setClientInfo(defaultClientInfo);
-    if (!editingId) {
-      const newCode = enable
-        ? getNextCustomPackageCode(packages)
-        : getNextPackageCode(packages);
-      setFormData(prev => ({ ...prev, packageCode: newCode }));
-    }
-  };
-
-  const handleSendPdf = async () => {
-    // Validate client info
-    if (!clientInfo.firstName.trim()) { toast.error('First name is required.'); return; }
-    if (!clientInfo.email.trim() || !/^[A-Za-z0-9+_.-]+@(.+)$/.test(clientInfo.email)) {
-      toast.error('A valid email address is required.'); return;
-    }
-    if (!clientInfo.phone.trim() || clientInfo.phone.trim().length < 10) {
-      toast.error('A valid phone number (min 10 digits) is required.'); return;
-    }
-    if (!clientInfo.location.trim()) { toast.error('Location is required.'); return; }
-
-    // The package must be saved first (we need its id)
-    if (!formData.id && !editingId) {
-      toast.error('Please save the custom package first before sending the PDF.');
-      return;
-    }
-    const pkgId = editingId || formData.id;
-
-    setSendingPdf(true);
-    try {
-      await api.post('/bookings', {
-        firstName: clientInfo.firstName.trim(),
-        lastName: clientInfo.lastName.trim(),
-        email: clientInfo.email.trim(),
-        phone: clientInfo.phone.trim(),
-        location: clientInfo.location.trim(),
-        packageId: pkgId,
-        packageTitle: formData.title,
-      });
-      toast.success(`📧 Package PDF sent to ${clientInfo.email}!`);
-      setClientInfo(defaultClientInfo);
-      setSendPdfPanelOpen(false);
-    } catch (err) {
-      console.error('Send PDF error:', err);
-      toast.error(err.response?.data?.error || 'Failed to send PDF. Please try again.');
-    } finally {
-      setSendingPdf(false);
-    }
-  };
-
-  const handleCustomFetch = async () => {
-    const code = customFetchCode.trim().toUpperCase();
-    if (!code) { toast.error('Please enter a package code.'); return; }
-    setCustomFetching(true);
-    setCustomFetchStatus(null);
-    try {
-      let source = packages.find(p => p.packageCode?.toUpperCase() === code);
-      if (!source) {
-        const freshList = await fetchPackages();
-        source = freshList.find(p => p.packageCode?.toUpperCase() === code);
-      }
-      if (!source) {
-        setCustomFetchStatus('error');
-        toast.error(`No package found with code "${code}"`);
-        return;
-      }
-      const latestPackages = packages.length > 0 ? packages : await fetchPackages();
-      const newCode = getNextCustomPackageCode(latestPackages);
-      setFormData({
-        ...defaultForm,
-        ...source,
-        packageCode: newCode,
-        status: 'ACTIVE',
-        duration: source.duration || defaultForm.duration,
-        pricing: source.pricing || defaultForm.pricing,
-        media: source.media || defaultForm.media,
-        inclusions: source.inclusions ? [...source.inclusions] : [],
-        exclusions: source.exclusions ? [...source.exclusions] : [],
-        itinerary: source.itinerary ? source.itinerary.map(d => ({ ...d })) : [],
-        specialNotes: source.specialNotes || '',
-        version: 0,
-        id: undefined,
-      });
-      setEditingId(null);
-      setMediaContexts({ thumbnail: '', gallery: {} });
-      setCustomFetchStatus('success');
-      toast.success(`Details fetched from "${source.title}" — assigned code ${newCode}`);
-    } catch (err) {
-      console.error('Custom fetch error:', err);
-      setCustomFetchStatus('error');
-      toast.error('Failed to fetch source package.');
-    } finally {
-      setCustomFetching(false);
-    }
   };
 
   useEffect(() => {
@@ -611,40 +484,13 @@ const Admin = () => {
           {view === 'packages' && (
             <>
               {/* Form Section */}
-              <div className={`lg:w-1/2 bg-white p-6 rounded-lg shadow-sm border overflow-y-auto max-h-[calc(100vh-8rem)] ${
-                isCustomPackage ? 'border-purple-300 ring-1 ring-purple-200' : 'border-gray-200'
-              }`}>
-                <div className="flex items-center justify-between mb-4 border-b pb-3">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {editingId ? 'Edit Package' : (isCustomPackage ? '✦ Custom Package' : 'Add New Package')}
-                  </h2>
-                  {!editingId && (
-                    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleCustomPackage(false)}
-                        className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                          !isCustomPackage ? 'bg-white text-blue-700 shadow' : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                      >Standard</button>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleCustomPackage(true)}
-                        className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                          isCustomPackage ? 'bg-purple-600 text-white shadow' : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                      >✦ Custom</button>
-                    </div>
-                  )}
-                </div>
-                {isCustomPackage && !editingId && (
-                  <div className="mb-4 rounded-lg border border-dashed border-purple-300 bg-purple-50 text-purple-800 px-4 py-2 text-xs">
-                    This package will receive a unique <span className="font-bold font-mono">CUSPKG-XXX</span> code and will be listed alongside standard packages.
-                  </div>
-                )}
+              <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-y-auto max-h-[calc(100vh-8rem)]">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                  {editingId ? 'Edit Package' : 'Add New Package'}
+                </h2>
 
-                {/* ── Clone / Fetch panel (Standard mode) ── */}
-                {!editingId && !isCustomPackage && (
+                {/* ── Clone from existing package panel ── */}
+                {!editingId && (
                   <div className="mb-6 rounded-lg border border-dashed border-blue-300 bg-blue-50 overflow-hidden">
                     <button
                       type="button"
@@ -657,9 +503,12 @@ const Admin = () => {
                       </span>
                       {clonePanelOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
+
                     {clonePanelOpen && (
                       <div className="px-4 pb-4 pt-2 border-t border-blue-200">
-                        <p className="text-xs text-blue-600 mb-3">Enter the source package code. All fields will be pre-filled; save as a new package.</p>
+                        <p className="text-xs text-blue-600 mb-3">
+                          Enter the source package code below. All fields will be pre-filled so you can make adjustments before saving as a new package.
+                        </p>
                         <div className="flex gap-2">
                           <input
                             id="clone-code-input"
@@ -681,61 +530,23 @@ const Admin = () => {
                             disabled={cloneFetching || !cloneCode.trim()}
                             className="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:bg-blue-300 transition-colors whitespace-nowrap"
                           >
-                            {cloneFetching ? <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Search size={15} />}
+                            {cloneFetching
+                              ? <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                              : <Search size={15} />}
                             {cloneFetching ? 'Fetching…' : 'Fetch & Clone'}
                           </button>
                         </div>
-                        {cloneStatus === 'success' && <p className="mt-2 text-xs text-green-700 font-medium">✅ Fields populated! Review and save below.</p>}
-                        {cloneStatus === 'error' && <p className="mt-2 text-xs text-red-600 font-medium">❌ Package not found. Check the code and try again.</p>}
-                      </div>
-                    )}
-                  </div>
-                )}
 
-                {/* ── Fetch from existing (Custom mode) ── */}
-                {!editingId && isCustomPackage && (
-                  <div className="mb-6 rounded-lg border border-dashed border-purple-300 bg-purple-50 overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => { setCustomFetchPanelOpen(o => !o); setCustomFetchStatus(null); }}
-                      className="w-full flex items-center justify-between px-4 py-3 text-purple-700 hover:bg-purple-100 transition-colors"
-                    >
-                      <span className="flex items-center gap-2 font-semibold text-sm">
-                        <Copy size={16} />
-                        Fetch Details from an Existing Package
-                      </span>
-                      {customFetchPanelOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </button>
-                    {customFetchPanelOpen && (
-                      <div className="px-4 pb-4 pt-2 border-t border-purple-200">
-                        <p className="text-xs text-purple-600 mb-3">Enter any existing package code (e.g. <span className="font-mono font-bold">PKG-002</span>). Fields will be pre-filled and a new <span className="font-mono font-bold">CUSPKG-XXX</span> code will be assigned.</p>
-                        <div className="flex gap-2">
-                          <input
-                            id="custom-fetch-code-input"
-                            type="text"
-                            value={customFetchCode}
-                            onChange={e => { setCustomFetchCode(e.target.value.toUpperCase()); setCustomFetchStatus(null); }}
-                            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleCustomFetch())}
-                            placeholder="e.g. PKG-002 or CUSPKG-001"
-                            className={`flex-1 rounded border p-2 text-sm font-mono uppercase tracking-wider bg-white focus:outline-none focus:ring-2 ${
-                              customFetchStatus === 'success' ? 'border-green-400 focus:ring-green-300' :
-                              customFetchStatus === 'error'   ? 'border-red-400 focus:ring-red-300' :
-                              'border-purple-300 focus:ring-purple-300'
-                            }`}
-                          />
-                          <button
-                            id="custom-fetch-btn"
-                            type="button"
-                            onClick={handleCustomFetch}
-                            disabled={customFetching || !customFetchCode.trim()}
-                            className="flex items-center gap-2 px-4 py-2 rounded bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 disabled:bg-purple-300 transition-colors whitespace-nowrap"
-                          >
-                            {customFetching ? <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Search size={15} />}
-                            {customFetching ? 'Fetching…' : 'Fetch Details'}
-                          </button>
-                        </div>
-                        {customFetchStatus === 'success' && <p className="mt-2 text-xs text-green-700 font-medium">✅ Details loaded! A new CUSPKG code has been assigned. Review and save below.</p>}
-                        {customFetchStatus === 'error' && <p className="mt-2 text-xs text-red-600 font-medium">❌ Package not found. Please check the code and try again.</p>}
+                        {cloneStatus === 'success' && (
+                          <p className="mt-2 text-xs text-green-700 font-medium flex items-center gap-1">
+                            ✅ Fields populated! A new package code has been assigned. Review and save below.
+                          </p>
+                        )}
+                        {cloneStatus === 'error' && (
+                          <p className="mt-2 text-xs text-red-600 font-medium flex items-center gap-1">
+                            ❌ Package not found. Please check the code and try again.
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -744,12 +555,12 @@ const Admin = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   
                   {/* Basic Info */}
-                  <div className={`space-y-4 p-4 rounded-md ${ isCustomPackage ? 'bg-purple-50' : 'bg-gray-50' }`}>
-                    <h3 className={`font-semibold ${ isCustomPackage ? 'text-purple-700' : 'text-gray-700' }`}>Basic Info</h3>
+                  <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                    <h3 className="font-semibold text-gray-700">Basic Info</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Package Code (Auto)</label>
-                        <input readOnly type="text" name="packageCode" value={formData.packageCode} onChange={handleTopLevelChange} className={`mt-1 block w-full rounded-md shadow-sm p-2 border cursor-not-allowed font-mono ${ isCustomPackage ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-gray-200 text-gray-600' }`} placeholder="e.g. PKG-001" />
+                        <input readOnly type="text" name="packageCode" value={formData.packageCode} onChange={handleTopLevelChange} className="mt-1 block w-full rounded-md shadow-sm p-2 border bg-gray-200 text-gray-600 cursor-not-allowed" placeholder="e.g. PKG-001" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Status</label>
@@ -993,115 +804,15 @@ const Admin = () => {
                     />
                   </div>
 
-                  {/* Send PDF to Client — only in Custom Package mode */}
-                  {isCustomPackage && (
-                    <div className="rounded-xl border border-dashed border-indigo-300 bg-indigo-50 overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => setSendPdfPanelOpen(o => !o)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-indigo-700 hover:bg-indigo-100 transition-colors"
-                      >
-                        <span className="flex items-center gap-2 font-semibold text-sm">
-                          <FileText size={16} />
-                          📧 Send Package PDF to Client
-                        </span>
-                        {sendPdfPanelOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                      </button>
-
-                      {sendPdfPanelOpen && (
-                        <div className="px-4 pb-5 pt-2 border-t border-indigo-200 space-y-3">
-                          <p className="text-xs text-indigo-600">
-                            Fill in the client details below. The package PDF will be generated and emailed to them directly.
-                            <span className="block mt-1 font-semibold text-indigo-700">⚠ Save the custom package first before sending.</span>
-                          </p>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-semibold text-gray-600 mb-1">First Name <span className="text-red-500">*</span></label>
-                              <input
-                                id="client-first-name"
-                                type="text"
-                                value={clientInfo.firstName}
-                                onChange={e => setClientInfo(p => ({ ...p, firstName: e.target.value }))}
-                                placeholder="Rahul"
-                                className="w-full rounded border border-indigo-200 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-semibold text-gray-600 mb-1">Last Name</label>
-                              <input
-                                id="client-last-name"
-                                type="text"
-                                value={clientInfo.lastName}
-                                onChange={e => setClientInfo(p => ({ ...p, lastName: e.target.value }))}
-                                placeholder="Sharma"
-                                className="w-full rounded border border-indigo-200 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1">Email Address <span className="text-red-500">*</span></label>
-                            <input
-                              id="client-email"
-                              type="email"
-                              value={clientInfo.email}
-                              onChange={e => setClientInfo(p => ({ ...p, email: e.target.value }))}
-                              placeholder="rahul@example.com"
-                              className="w-full rounded border border-indigo-200 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-semibold text-gray-600 mb-1">Phone <span className="text-red-500">*</span></label>
-                              <input
-                                id="client-phone"
-                                type="tel"
-                                value={clientInfo.phone}
-                                onChange={e => setClientInfo(p => ({ ...p, phone: e.target.value }))}
-                                placeholder="9876543210"
-                                className="w-full rounded border border-indigo-200 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-semibold text-gray-600 mb-1">Location / City <span className="text-red-500">*</span></label>
-                              <input
-                                id="client-location"
-                                type="text"
-                                value={clientInfo.location}
-                                onChange={e => setClientInfo(p => ({ ...p, location: e.target.value }))}
-                                placeholder="Mumbai"
-                                className="w-full rounded border border-indigo-200 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                              />
-                            </div>
-                          </div>
-
-                          <button
-                            id="send-pdf-btn"
-                            type="button"
-                            onClick={handleSendPdf}
-                            disabled={sendingPdf}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                          >
-                            {sendingPdf
-                              ? <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Sending PDF…</>
-                              : <><FileText size={15} /> Send PDF via Email</>}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {/* Submit */}
                   <div className="flex justify-end gap-3 border-t pt-4">
                     {editingId && (
-                      <button type="button" onClick={() => { setEditingId(null); setIsCustomPackage(false); setFormData({ ...defaultForm, packageCode: getNextPackageCode(packages) }); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                      <button type="button" onClick={() => { setEditingId(null); setFormData({ ...defaultForm, packageCode: getNextPackageCode(packages) }); }} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Cancel
                       </button>
                     )}
-                    <button type="submit" disabled={uploading || saving} className={`flex items-center px-6 py-2 border border-transparent rounded-md text-white shadow-sm font-medium disabled:opacity-50 ${ isCustomPackage ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700' }`}>
-                      {saving ? 'Saving...' : (editingId ? 'Update Package' : (isCustomPackage ? '✦ Save Custom Package' : 'Save Package'))}
+                    <button type="submit" disabled={uploading || saving} className="flex items-center px-6 py-2 border border-transparent rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm font-medium disabled:bg-blue-400">
+                      {saving ? 'Saving...' : (editingId ? 'Update Package' : 'Save Package')}
                     </button>
                   </div>
                 </form>
@@ -1216,9 +927,8 @@ const Admin = () => {
                         <div className="flex-1 min-w-0 flex flex-col justify-center px-4 pr-20">
                           {/* Badges row */}
                           <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded tracking-wide font-mono ${ pkg.packageCode?.startsWith('CUSPKG') ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-500' }`}>
+                            <span className="text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-500 tracking-wide">
                               {pkg.packageCode}
-                              {pkg.packageCode?.startsWith('CUSPKG') && <span className="ml-1">✦</span>}
                             </span>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${pkg.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                               {pkg.status}
