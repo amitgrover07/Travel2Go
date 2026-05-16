@@ -43,6 +43,12 @@ api.interceptors.response.use(
     const isAuthEndpoint = error.config && error.config.url && error.config.url.includes('/auth/');
     
     if (!isAuthEndpoint && error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Don't trigger logout if the error is from the new custom-packages endpoint (to prevent logout loops during dev/deploy)
+      const isCustomPkgEndpoint = error.config.url.includes('/custom-packages');
+      if (isCustomPkgEndpoint && error.response.status === 403) {
+        return Promise.reject(error);
+      }
+
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
