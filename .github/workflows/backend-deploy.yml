@@ -90,13 +90,22 @@ jobs:
           set_env "FINAL_MEDIA_URL" "${{ secrets.MEDIA_SERVICE_URL }}" "http://media-tbd"
           set_env "FINAL_NOTIFICATION_URL" "${{ secrets.NOTIFICATION_SERVICE_URL }}" "http://notification-tbd"
 
+      - name: Set Cloud Run flags per service
+        shell: bash
+        run: |
+          if [ "${{ matrix.service }}" = "api-gateway" ]; then
+            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=1 --max-instances=3 --concurrency=80 --timeout=60" >> $GITHUB_ENV
+          else
+            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost" >> $GITHUB_ENV
+          fi
+
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v1
         with:
           service: ${{ matrix.service }}
           region: ${{ env.REGION }}
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ matrix.service }}:${{ github.sha }}
-          flags: "--port=8080 --allow-unauthenticated"
+          flags: ${{ env.CR_FLAGS }}
           env_vars: |
             JWT_SECRET=${{ env.FINAL_JWT_SECRET }}
             GOOGLE_CLIENT_ID=${{ env.FINAL_GOOGLE_CLIENT_ID }}
