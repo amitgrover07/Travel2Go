@@ -43,12 +43,16 @@ api.interceptors.response.use(
     const isAuthEndpoint = error.config && error.config.url && error.config.url.includes('/auth/');
     
     if (!isAuthEndpoint && error.response && (error.response.status === 401 || error.response.status === 403)) {
-      // Don't trigger logout if the error is from the new custom-packages endpoint (to prevent logout loops during dev/deploy)
-      const isCustomPkgEndpoint = error.config.url.includes('/custom-packages');
-      if (isCustomPkgEndpoint && error.response.status === 403) {
+      const url = error.config.url || '';
+      console.warn(`Auth error (${error.response.status}) at ${url}`);
+      
+      // Stop the logout loop for all package-related endpoints during stabilization
+      if (url.includes('/packages') || url.includes('/custom-packages')) {
+        console.log('Safe-ignoring auth error for package endpoint to prevent logout loop');
         return Promise.reject(error);
       }
 
+      console.error('Forcing logout due to auth error at:', url);
       localStorage.removeItem('token');
       window.location.href = '/login';
     }

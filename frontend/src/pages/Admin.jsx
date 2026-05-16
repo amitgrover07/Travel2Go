@@ -151,7 +151,7 @@ const Admin = () => {
       }));
       return response.data;
     } catch (error) {
-      if (error.response && error.response.status === 403) handleLogout();
+      console.error('Error fetching custom packages:', error);
       return [];
     }
   };
@@ -184,7 +184,6 @@ const Admin = () => {
       setCustomEditingId(null);
     } catch (error) {
       if (error.response?.status === 409) toast.error(error.response.data.message || 'Package code already exists.');
-      else if (error.response?.status === 403) handleLogout();
       else toast.error(`Failed to save: ${error.response?.data?.message || error.message}`);
     } finally {
       setCustomSaving(false);
@@ -217,8 +216,7 @@ const Admin = () => {
       fetchCustomPackages();
     } catch (error) {
       setCustomPackages(prev);
-      if (error.response?.status === 403) handleLogout();
-      else toast.error('Failed to delete custom package');
+      toast.error('Failed to delete custom package');
     }
   };
 
@@ -277,7 +275,9 @@ const Admin = () => {
       return;
     }
     
+    console.log('Admin Mount - User Profile:', userProfile);
     if (userProfile.role !== 'ADMIN') {
+      console.warn('Access denied: Role is', userProfile.role);
       toast.error('You do not have permission to access the admin dashboard');
       navigate('/');
       return;
@@ -320,9 +320,7 @@ const Admin = () => {
       }));
       return response.data;
     } catch (error) {
-      if (error.response && error.response.status === 403) {
-        handleLogout();
-      }
+      console.error('Error fetching packages:', error);
       return [];
     }
   };
@@ -614,7 +612,7 @@ const Admin = () => {
       if (error.response && error.response.status === 409) {
         toast.error(error.response.data.message || 'This package code already exists.');
       } else if (error.response && error.response.status === 403) {
-        handleLogout();
+        console.error('Forbidden access to packages');
       } else {
         const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to save package';
         toast.error(`Failed to save package: ${errorMessage}`);
@@ -651,7 +649,7 @@ const Admin = () => {
         setPackages(previousPackages);
         console.error('Error deleting package', error);
         if (error.response && error.response.status === 403) {
-          handleLogout();
+          console.error('Forbidden access to delete package');
         } else {
           toast.error('Failed to delete package');
         }
