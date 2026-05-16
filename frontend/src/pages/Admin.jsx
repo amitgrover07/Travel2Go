@@ -183,15 +183,19 @@ const Admin = () => {
 
   const fetchCustomPackages = async () => {
     try {
+      console.log('Fetching all custom packages...');
       const response = await api.get('/custom-packages/all');
-      setCustomPackages(response.data);
+      console.log('Custom packages response:', response.data);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setCustomPackages(data);
       setCustomFormData(prev => ({
         ...prev,
-        packageCode: customEditingId ? prev.packageCode : getNextCustomPackageCode(response.data)
+        packageCode: customEditingId ? prev.packageCode : getNextCustomPackageCode(data)
       }));
-      return response.data;
+      return data;
     } catch (error) {
       console.error('Error fetching custom packages:', error);
+      toast.error('Failed to load custom packages');
       return [];
     }
   };
@@ -212,6 +216,7 @@ const Admin = () => {
     };
     setCustomSaving(true);
     try {
+      console.log('Saving custom package payload:', payload);
       if (customEditingId) {
         await api.put(`/custom-packages/${customEditingId}`, payload);
         toast.success('Custom package updated successfully');
@@ -223,6 +228,7 @@ const Admin = () => {
       setCustomFormData({ ...defaultCustomForm, packageCode: getNextCustomPackageCode(fresh) });
       setCustomEditingId(null);
     } catch (error) {
+      console.error('Save custom package error:', error);
       if (error.response?.status === 409) toast.error(error.response.data.message || 'Package code already exists.');
       else toast.error(`Failed to save: ${error.response?.data?.message || error.message}`);
     } finally {

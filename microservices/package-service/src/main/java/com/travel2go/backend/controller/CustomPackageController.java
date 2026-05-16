@@ -95,6 +95,7 @@ public class CustomPackageController {
         existingPackage.setTitle(customPackageDetails.getTitle());
         existingPackage.setDestination(customPackageDetails.getDestination());
         existingPackage.setStatus(customPackageDetails.getStatus());
+        existingPackage.setPackageType(customPackageDetails.getPackageType() != null ? customPackageDetails.getPackageType() : "Custom");
         existingPackage.setOverview(customPackageDetails.getOverview());
         existingPackage.setSpecialNotes(customPackageDetails.getSpecialNotes());
 

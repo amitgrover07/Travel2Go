@@ -38,20 +38,33 @@ const Home = () => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
+        console.log('Home Mount - isAdmin:', isAdmin);
+        
         const [regRes, custRes] = await Promise.allSettled([
           api.get('/packages'),
           isAdmin ? api.get('/custom-packages/all') : Promise.resolve({ data: [] })
         ]);
 
+        if (regRes.status === 'rejected') {
+          console.error('Error fetching regular packages:', regRes.reason);
+        }
+        if (custRes.status === 'rejected') {
+          console.error('Error fetching custom packages:', custRes.reason);
+        }
+
         const regularPkgs = regRes.status === 'fulfilled' ? regRes.value.data : [];
-        const customPkgs = custRes.status === 'fulfilled' ? custRes.value.data : [];
+        const customPkgs = (custRes.status === 'fulfilled' && custRes.value && custRes.value.data) ? custRes.value.data : [];
+        
+        console.log('Fetched Packages - Regular:', regularPkgs.length, 'Custom:', customPkgs.length);
         
         // Ensure custom packages have the correct type for filtering
-        const processedCustom = customPkgs.map(p => ({ ...p, packageType: 'Custom' }));
+        const processedCustom = Array.isArray(customPkgs) 
+          ? customPkgs.map(p => ({ ...p, packageType: 'Custom' }))
+          : [];
         
         setPackages([...regularPkgs, ...processedCustom]);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Critical error fetching data:', error);
       } finally {
         setLoading(false);
       }
