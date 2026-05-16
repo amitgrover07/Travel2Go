@@ -27,10 +27,16 @@ public class JwtUtil {
 
     private SecretKey getSigningKey() {
         String trimmedSecret = secret != null ? secret.trim() : "";
-        // Remove quotes if present
         if (trimmedSecret.startsWith("\"") && trimmedSecret.endsWith("\"")) {
             trimmedSecret = trimmedSecret.substring(1, trimmedSecret.length() - 1);
         }
+        
+        if (trimmedSecret.length() > 4) {
+            System.out.println("JWT Secret Fingerprint: " + trimmedSecret.substring(0, 4) + "... (Length: " + trimmedSecret.length() + ")");
+        } else {
+            System.out.println("JWT Secret is too short! Length: " + trimmedSecret.length());
+        }
+
         byte[] keyBytes = trimmedSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }

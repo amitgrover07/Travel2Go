@@ -195,8 +195,10 @@ const Admin = () => {
       return data;
     } catch (error) {
       console.error('Error fetching custom packages:', error);
+      const profile = getTokenPayload();
+      const debugInfo = profile ? ` | User: ${profile.sub} | Role: ${profile.role}` : ' | No token payload';
       const msg = error.response ? `Failed: ${error.response.status} - ${JSON.stringify(error.response.data)}` : error.message;
-      toast.error(`Failed to load custom packages: ${msg}`);
+      toast.error(`Failed to load custom packages: ${msg}${debugInfo}`);
       return [];
     }
   };
