@@ -213,6 +213,8 @@ const PackageDetails = () => {
     } finally {
       setBookingLoading(false);
     }
+  };
+
   const handleSendSubmit = async (e) => {
     e.preventDefault();
     if (!sendForm.firstName || !sendForm.email || !sendForm.phone || !sendForm.location) {

@@ -1268,7 +1268,7 @@ const Admin = () => {
                           </div>
                         </div>
 
-                        {/* Action buttons — vertically centred on the right */}
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1.5">
                           <button
                             onClick={() => handleOpenSendModal(pkg, false)}
                             className="text-purple-500 hover:text-white hover:bg-purple-500 p-1.5 rounded-md border border-purple-200 hover:border-purple-500"
