@@ -113,7 +113,14 @@ public class JwtUtil {
     }
 
     private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        Date expiration = extractExpiration(token);
+        Date now = new Date();
+        // Allow for a 5-minute clock skew grace period
+        long gracePeriodMillis = 5 * 60 * 1000;
+        boolean expired = expiration.before(new Date(now.getTime() - gracePeriodMillis));
+        
+        System.out.println("Checking token expiration. Token Exp: " + expiration + " | Server Now: " + now + " | Expired: " + expired);
+        return expired;
     }
 
     private Date extractExpiration(String token) {
