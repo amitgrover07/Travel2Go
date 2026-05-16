@@ -33,6 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String username;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("No Bearer token found in request to: " + request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
@@ -40,10 +41,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
         try {
             username = jwtUtil.extractUsername(jwt);
+            System.out.println("Extracted username: " + username + " from token for URI: " + request.getRequestURI());
+            
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                 
-                org.springframework.security.core.userdetails.User userDetails = new org.springframework.security.core.userdetails.User(username, "", jwtUtil.extractRoles(jwt));
+                java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> roles = jwtUtil.extractRoles(jwt);
+                System.out.println("Extracted roles: " + roles);
+                
+                org.springframework.security.core.userdetails.User userDetails = new org.springframework.security.core.userdetails.User(username, "", roles);
                 if (jwtUtil.validateToken(jwt, userDetails)) {
+                    System.out.println("Token validated successfully for user: " + username);
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
@@ -51,10 +57,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    System.out.println("Token validation failed for user: " + username);
                 }
             }
         } catch (Exception e) {
-            // Token validation failed
+            System.err.println("JWT Authentication Error: " + e.getMessage());
+            e.printStackTrace();
         }
         filterChain.doFilter(request, response);
     }
