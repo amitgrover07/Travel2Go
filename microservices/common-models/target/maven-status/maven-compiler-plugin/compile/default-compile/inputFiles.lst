@@ -7,3 +7,4 @@
 /Users/amitgrover/Desktop/Travel2Go/microservices/common-models/src/main/java/com/travel2go/backend/model/CustomPackage.java
 /Users/amitgrover/Desktop/Travel2Go/microservices/common-models/src/main/java/com/travel2go/backend/model/Booking.java
 /Users/amitgrover/Desktop/Travel2Go/microservices/common-models/src/main/java/com/travel2go/backend/model/VerificationCode.java
+/Users/amitgrover/Desktop/Travel2Go/microservices/common-models/src/main/java/com/travel2go/backend/model/LeadAuditLog.java

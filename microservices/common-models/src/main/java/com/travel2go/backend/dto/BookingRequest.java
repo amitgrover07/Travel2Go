@@ -19,4 +19,5 @@ public class BookingRequest {
     private String packageTitle;
     private boolean isCustom;
     private String bestTimeToReach;
+    private String leadId; // Optional: If sending from an existing lead
 }

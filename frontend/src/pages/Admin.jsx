@@ -780,7 +780,7 @@ const Admin = () => {
           {/* Settings Section */}
           {view === 'leads' && (
             <div className="w-full bg-white p-6 sm:p-8 rounded-lg shadow-sm border border-gray-200">
-              <AdminLeads />
+              <AdminLeads packages={packages} customPackages={customPackages} />
             </div>
           )}
           

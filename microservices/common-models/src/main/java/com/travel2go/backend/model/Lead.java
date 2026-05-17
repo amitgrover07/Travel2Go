@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import com.google.cloud.firestore.annotation.DocumentId;
 import com.google.cloud.spring.data.firestore.Document;
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
 
 @Data
 @NoArgsConstructor
@@ -16,6 +18,9 @@ import java.util.Date;
 public class Lead {
     @DocumentId
     private String id;
+    
+    private String leadIdentifier;
+    private Integer mailSentCount;
     
     // Customer Info
     private String firstName;
@@ -40,4 +45,5 @@ public class Lead {
     private String source; // e.g., EMAIL_SENT, ADMIN_CREATED
     private String bestTimeToReach;
     private String notes;
+    private List<LeadAuditLog> auditLogs;
 }

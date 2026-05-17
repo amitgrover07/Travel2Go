@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.UUID;
+import com.travel2go.backend.model.LeadAuditLog;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -86,27 +90,50 @@ public class BookingController {
                 pkg = packageClient.getPackageById(request.getPackageId());
             }
 
-            // Create a Lead when package is sent
-            Lead lead = Lead.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .location(request.getLocation())
-                .packageId(pkg.getId())
-                .packageTitle(pkg.getTitle())
-                .packageCode(pkg.getPackageCode())
-                .basePrice(pkg.getPricing() != null ? pkg.getPricing().getBasePrice() : 0.0)
-                .discountPercentage(pkg.getPricing() != null ? pkg.getPricing().getDiscountPercentage() : 0.0)
-                .finalPrice(pkg.getPricing() != null ? pkg.getPricing().getFinalPrice() : 0.0)
-                .leadDate(new java.util.Date())
-                .status("NEW")
-                .source("EMAIL_SENT")
-                .bestTimeToReach(request.getBestTimeToReach())
-                .notes("")
-                .build();
+            // Create or update Lead when package is sent
+            Lead lead;
+            if (request.getLeadId() != null && !request.getLeadId().trim().isEmpty()) {
+                lead = leadRepository.findById(request.getLeadId()).block();
+                if (lead != null) {
+                    lead.setMailSentCount(lead.getMailSentCount() != null ? lead.getMailSentCount() + 1 : 1);
+                    if (lead.getAuditLogs() == null) lead.setAuditLogs(new ArrayList<>());
+                    lead.getAuditLogs().add(LeadAuditLog.builder()
+                        .adminName("System/Admin")
+                        .action("EMAIL_SENT")
+                        .details("Sent package " + pkg.getPackageCode() + " via Email")
+                        .timestamp(new java.util.Date())
+                        .build());
+                }
+            } else {
+                lead = Lead.builder()
+                    .leadIdentifier("LID-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase())
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .email(request.getEmail())
+                    .phone(request.getPhone())
+                    .location(request.getLocation())
+                    .packageId(pkg.getId())
+                    .packageTitle(pkg.getTitle())
+                    .packageCode(pkg.getPackageCode())
+                    .basePrice(pkg.getPricing() != null ? pkg.getPricing().getBasePrice() : 0.0)
+                    .discountPercentage(pkg.getPricing() != null ? pkg.getPricing().getDiscountPercentage() : 0.0)
+                    .finalPrice(pkg.getPricing() != null ? pkg.getPricing().getFinalPrice() : 0.0)
+                    .leadDate(new java.util.Date())
+                    .status("NEW")
+                    .source("EMAIL_SENT")
+                    .bestTimeToReach(request.getBestTimeToReach())
+                    .notes("")
+                    .mailSentCount(1)
+                    .auditLogs(new ArrayList<>(List.of(LeadAuditLog.builder()
+                        .adminName("System/Admin")
+                        .action("INITIAL_CONTACT")
+                        .details("Lead captured from package email")
+                        .timestamp(new java.util.Date())
+                        .build())))
+                    .build();
+            }
                 
-            leadRepository.save(lead).block();
+            if (lead != null) leadRepository.save(lead).block();
 
             GlobalSettings settings = settingsClient.getSettingsById("global");
 
