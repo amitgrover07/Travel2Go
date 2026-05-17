@@ -382,21 +382,23 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                   {(!selectedLead.auditLogs || selectedLead.auditLogs.length === 0) ? (
                     <div className="text-sm text-gray-400 italic text-center py-8">No history recorded</div>
                   ) : (
-                    <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                    <div className="relative pl-6 border-l-2 border-gray-200 ml-3 space-y-5">
                       {selectedLead.auditLogs.slice().reverse().map((log, idx) => (
-                        <div key={idx} className="relative flex items-start justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                          {/* Icon */}
-                          <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-white bg-blue-500 text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 mt-1">
+                        <div key={idx} className="relative">
+                          {/* Timeline dot/icon */}
+                          <div className="absolute -left-[35px] top-1 flex items-center justify-center w-5 h-5 rounded-full border-2 border-white bg-blue-500 text-white shadow shrink-0 z-10">
                             <History size={10} />
                           </div>
                           {/* Card */}
-                          <div className="w-[calc(100%-2rem)] md:w-[calc(50%-1.5rem)] bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="font-bold text-gray-900 text-xs">{log.action.replace('_', ' ')}</div>
-                              <div className="text-[9px] text-gray-500">{new Date(log.timestamp).toLocaleDateString()} {new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                          <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:shadow transition-shadow">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2 pb-1.5 border-b border-gray-100">
+                              <span className="font-bold text-gray-800 text-[10px] uppercase tracking-wider bg-gray-50 px-1.5 py-0.5 rounded shrink-0 w-max">{log.action.replace('_', ' ')}</span>
+                              <span className="text-[9px] text-gray-400 font-medium whitespace-nowrap">{new Date(log.timestamp).toLocaleDateString()} {new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                             </div>
-                            <div className="text-xs text-gray-600 leading-snug">{log.details}</div>
-                            <div className="text-[10px] text-gray-400 mt-2 font-medium">By: {log.adminName}</div>
+                            <div className="text-xs text-gray-600 leading-snug mb-2 font-normal">{log.details}</div>
+                            <div className="text-[10px] text-gray-400 font-semibold border-t border-gray-50 pt-1.5 flex items-center justify-between">
+                              <span>By: <span className="text-gray-600">{log.adminName}</span></span>
+                            </div>
                           </div>
                         </div>
                       ))}
