@@ -18,4 +18,5 @@ public class BookingRequest {
     private String packageId;
     private String packageTitle;
     private boolean isCustom;
+    private String bestTimeToReach;
 }

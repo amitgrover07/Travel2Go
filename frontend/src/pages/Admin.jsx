@@ -1,12 +1,13 @@
 // redeploy: 2026-05-16
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatUtils';
+import AdminLeads from '../components/AdminLeads';
 
 const quillModules = {
   toolbar: [
@@ -48,7 +49,7 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mediaContexts, setMediaContexts] = useState({ thumbnail: '', gallery: {} });
-  const [view, setView] = useState('packages'); // 'packages' | 'settings' | 'customPackages'
+  const [view, setView] = useState('packages'); // 'packages' | 'settings' | 'customPackages' | 'leads'
   const [globalTerms, setGlobalTerms] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
   const navigate = useNavigate();
@@ -739,6 +740,15 @@ const Admin = () => {
               >
                 <Star className="h-5 w-5" />
               </button>
+              <button
+                onClick={() => setView('leads')}
+                title="Leads CRM"
+                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                  view === 'leads' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
+                }`}
+              >
+                <Users className="h-5 w-5" />
+              </button>
               <button 
                 onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
                 title="Global Terms"
@@ -768,6 +778,12 @@ const Admin = () => {
         <div className="flex flex-col lg:flex-row gap-6">
           
           {/* Settings Section */}
+          {view === 'leads' && (
+            <div className="w-full bg-white p-6 sm:p-8 rounded-lg shadow-sm border border-gray-200">
+              <AdminLeads />
+            </div>
+          )}
+          
           {view === 'settings' && (
             <div className="w-full bg-white p-8 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center gap-3 mb-6 border-b pb-4">

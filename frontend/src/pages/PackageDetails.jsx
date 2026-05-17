@@ -36,7 +36,8 @@ const PackageDetails = () => {
     lastName: '',
     email: '',
     phone: '',
-    location: ''
+    location: '',
+    bestTimeToReach: ''
   });
   const [bookingLoading, setBookingLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -49,7 +50,8 @@ const PackageDetails = () => {
     lastName: '',
     email: '',
     phone: '',
-    location: ''
+    location: '',
+    bestTimeToReach: ''
   });
 
   const getTokenPayload = () => {
@@ -205,7 +207,8 @@ const PackageDetails = () => {
         lastName: '',
         email: '',
         phone: '',
-        location: ''
+        location: '',
+        bestTimeToReach: ''
       });
     } catch (error) {
       console.error('Booking error:', error);
@@ -231,7 +234,7 @@ const PackageDetails = () => {
       });
       toast.success('Itinerary PDF sent successfully!');
       setShowSendModal(false);
-      setSendForm({ firstName: '', lastName: '', email: '', phone: '', location: '' });
+      setSendForm({ firstName: '', lastName: '', email: '', phone: '', location: '', bestTimeToReach: '' });
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to send package');
     } finally {
@@ -579,6 +582,17 @@ const PackageDetails = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Best time to reach (Optional)</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={bookingForm.bestTimeToReach}
+                  onChange={(e) => setBookingForm({...bookingForm, bestTimeToReach: e.target.value})}
+                  placeholder="e.g. 5 PM - 7 PM"
+                />
+              </div>
+
               <div className="pt-4">
                 <button
                   type="submit"
@@ -692,6 +706,20 @@ const PackageDetails = () => {
                     value={sendForm.location}
                     onChange={(e) => setSendForm({...sendForm, location: e.target.value})}
                     placeholder="Mumbai, India"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Best time to reach (Optional)</label>
+                <div className="relative">
+                  <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.bestTimeToReach}
+                    onChange={(e) => setSendForm({...sendForm, bestTimeToReach: e.target.value})}
+                    placeholder="e.g. 5 PM - 7 PM"
                   />
                 </div>
               </div>

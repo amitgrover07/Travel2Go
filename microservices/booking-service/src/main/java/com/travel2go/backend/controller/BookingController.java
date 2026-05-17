@@ -4,7 +4,9 @@ import com.travel2go.backend.dto.BookingRequest;
 import com.travel2go.backend.model.Booking;
 import com.travel2go.backend.model.GlobalSettings;
 import com.travel2go.backend.model.HolidayPackage;
+import com.travel2go.backend.model.Lead;
 import com.travel2go.backend.repository.BookingRepository;
+import com.travel2go.backend.repository.LeadRepository;
 import com.travel2go.backend.client.PackageClient;
 import com.travel2go.backend.client.SettingsClient;
 import com.travel2go.backend.client.NotificationClient;
@@ -24,6 +26,7 @@ public class BookingController {
     private final PackageClient packageClient;
     private final SettingsClient settingsClient;
     private final BookingRepository bookingRepository;
+    private final LeadRepository leadRepository;
 
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
@@ -82,6 +85,28 @@ public class BookingController {
             } else {
                 pkg = packageClient.getPackageById(request.getPackageId());
             }
+
+            // Create a Lead when package is sent
+            Lead lead = Lead.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .location(request.getLocation())
+                .packageId(pkg.getId())
+                .packageTitle(pkg.getTitle())
+                .packageCode(pkg.getPackageCode())
+                .basePrice(pkg.getPricing() != null ? pkg.getPricing().getBasePrice() : 0.0)
+                .discountPercentage(pkg.getPricing() != null ? pkg.getPricing().getDiscountPercentage() : 0.0)
+                .finalPrice(pkg.getPricing() != null ? pkg.getPricing().getFinalPrice() : 0.0)
+                .leadDate(new java.util.Date())
+                .status("NEW")
+                .source("EMAIL_SENT")
+                .bestTimeToReach(request.getBestTimeToReach())
+                .notes("")
+                .build();
+                
+            leadRepository.save(lead).block();
 
             GlobalSettings settings = settingsClient.getSettingsById("global");
 
