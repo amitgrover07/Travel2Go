@@ -16,9 +16,15 @@ public class FeignConfig implements RequestInterceptor {
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
             String authorizationHeader = request.getHeader("Authorization");
+            System.out.println("[FeignConfig] Incoming Request Auth Header: " + (authorizationHeader != null ? "PRESENT" : "NULL"));
             if (authorizationHeader != null) {
                 template.header("Authorization", authorizationHeader);
+                System.out.println("[FeignConfig] Propagated Authorization Header to Feign Request: " + template.url());
+            } else {
+                System.err.println("[FeignConfig] WARNING: No Authorization header found on incoming request!");
             }
+        } else {
+            System.err.println("[FeignConfig] WARNING: RequestContextHolder returned null attributes!");
         }
     }
 }
