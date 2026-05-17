@@ -1,7 +1,7 @@
 // redeploy: 2026-05-16
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -713,37 +713,40 @@ const Admin = () => {
       <nav className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-              <Link to="/" className="text-blue-600 hover:text-blue-800 text-sm font-medium hidden sm:block">
-                View Website
+            <div className="flex items-center space-x-2">
+              <h1 className="text-xl font-bold text-gray-900 mr-2 sm:mr-4">Admin Dashboard</h1>
+              <Link to="/" title="View Website" className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors hidden sm:flex items-center justify-center">
+                <Globe className="h-5 w-5" />
               </Link>
-              <Link to="/admin/images" className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium hidden sm:block">
-                <Image className="h-4 w-4 mr-1" /> Media Gallery
+              <Link to="/admin/images" title="Media Gallery" className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors hidden sm:flex items-center justify-center">
+                <Image className="h-5 w-5" />
               </Link>
               <button
                 onClick={() => setView('packages')}
-                className={`flex items-center text-sm font-medium ${
-                  view === 'packages' ? 'text-blue-700 font-bold underline underline-offset-2' : 'text-blue-600 hover:text-blue-800'
+                title="Packages"
+                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                  view === 'packages' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
                 }`}
               >
-                Packages
+                <Package className="h-5 w-5" />
               </button>
               <button
                 onClick={() => { setView('customPackages'); fetchCustomPackages(); }}
-                className={`flex items-center text-sm font-medium ${
-                  view === 'customPackages' ? 'text-purple-700 font-bold underline underline-offset-2' : 'text-purple-600 hover:text-purple-800'
+                title="Custom Packages"
+                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                  view === 'customPackages' ? 'text-purple-700 bg-purple-100' : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
                 }`}
               >
-                Custom Package
+                <Star className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
-                className={`flex items-center text-sm font-medium ${
-                  view === 'settings' ? 'text-blue-700 font-bold underline underline-offset-2' : 'text-blue-600 hover:text-blue-800'
+                title="Global Terms"
+                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                  view === 'settings' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
                 }`}
               >
-                <Settings className="h-4 w-4 mr-1" /> Global Terms
+                <Settings className="h-5 w-5" />
               </button>
             </div>
             <div className="flex items-center space-x-4">
