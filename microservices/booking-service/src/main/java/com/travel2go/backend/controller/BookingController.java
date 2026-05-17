@@ -95,12 +95,22 @@ public class BookingController {
             if (request.getLeadId() != null && !request.getLeadId().trim().isEmpty()) {
                 lead = leadRepository.findById(request.getLeadId()).block();
                 if (lead != null) {
+                    String oldCode = lead.getPackageCode() != null ? lead.getPackageCode() : "NONE";
                     lead.setMailSentCount(lead.getMailSentCount() != null ? lead.getMailSentCount() + 1 : 1);
+                    
+                    // Update lead package details
+                    lead.setPackageId(pkg.getId());
+                    lead.setPackageTitle(pkg.getTitle());
+                    lead.setPackageCode(pkg.getPackageCode());
+                    lead.setBasePrice(pkg.getPricing() != null ? pkg.getPricing().getBasePrice() : 0.0);
+                    lead.setDiscountPercentage(pkg.getPricing() != null ? pkg.getPricing().getDiscountPercentage() : 0.0);
+                    lead.setFinalPrice(pkg.getPricing() != null ? pkg.getPricing().getFinalPrice() : 0.0);
+
                     if (lead.getAuditLogs() == null) lead.setAuditLogs(new ArrayList<>());
                     lead.getAuditLogs().add(LeadAuditLog.builder()
                         .adminName("System/Admin")
                         .action("EMAIL_SENT")
-                        .details("Sent package " + pkg.getPackageCode() + " via Email")
+                        .details("Switched package from " + oldCode + " to " + pkg.getPackageCode() + " and sent via Email")
                         .timestamp(new java.util.Date())
                         .build());
                 }

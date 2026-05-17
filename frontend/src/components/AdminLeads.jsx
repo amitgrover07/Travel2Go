@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, Clock, Edit3, X, Save, CheckCircle2, DollarSign, Package, History, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Edit3, X, Save, CheckCircle2, DollarSign, Package, History, Send, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatUtils';
@@ -32,10 +32,22 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
   // Send Email State
   const [selectedPackageId, setSelectedPackageId] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [packageSearchQuery, setPackageSearchQuery] = useState('');
+  const [showPackageDropdown, setShowPackageDropdown] = useState(false);
 
   useEffect(() => {
     fetchLeads();
   }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (showPackageDropdown && !e.target.closest('.searchable-package-dropdown')) {
+        setShowPackageDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showPackageDropdown]);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -113,6 +125,8 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
       bestTimeToReach: lead.bestTimeToReach || ''
     });
     setSelectedPackageId('');
+    setPackageSearchQuery('');
+    setShowPackageDropdown(false);
   };
 
   const handleSaveNotes = () => {
@@ -159,6 +173,9 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
       // Update selected lead to reflect changes if modal is open
       const refreshedLead = (await api.get('/bookings/leads')).data.find(l => l.id === selectedLead.id);
       if (refreshedLead) setSelectedLead(refreshedLead);
+      setSelectedPackageId('');
+      setPackageSearchQuery('');
+      setShowPackageDropdown(false);
     } catch (error) {
       toast.error('Failed to send email. Check console.');
       console.error(error);
@@ -174,6 +191,10 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
   }
 
   const allAvailablePackages = [...packages, ...customPackages];
+  const filteredPackages = allAvailablePackages.filter(pkg => 
+    pkg.title.toLowerCase().includes(packageSearchQuery.toLowerCase()) || 
+    pkg.packageCode.toLowerCase().includes(packageSearchQuery.toLowerCase())
+  );
 
   return (
     <div className="w-full">
@@ -323,19 +344,74 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Send Email Package</h4>
                     <div className="bg-purple-50 rounded-xl p-4 space-y-3 border border-purple-100">
                       <p className="text-xs text-purple-800">Send another itinerary directly to this lead. It will increment the mail count.</p>
-                      <select 
-                        className="w-full px-3 py-2 border border-purple-200 rounded text-sm focus:ring-2 focus:ring-purple-500 bg-white"
-                        value={selectedPackageId}
-                        onChange={(e) => setSelectedPackageId(e.target.value)}
-                      >
-                        <option value="">-- Select a Package to Send --</option>
-                        {allAvailablePackages.map(pkg => (
-                          <option key={pkg.id} value={pkg.id}>[{pkg.packageCode}] {pkg.title}</option>
-                        ))}
-                      </select>
+                      
+                      {/* Searchable Dropdown */}
+                      <div className="searchable-package-dropdown relative">
+                        <div className="relative">
+                          <input 
+                            type="text"
+                            className="w-full px-3 py-2 border border-purple-200 rounded text-sm focus:ring-2 focus:ring-purple-500 bg-white pr-8 font-medium"
+                            placeholder="Search package code or title..."
+                            value={packageSearchQuery}
+                            onChange={(e) => {
+                              setPackageSearchQuery(e.target.value);
+                              setShowPackageDropdown(true);
+                            }}
+                            onFocus={() => setShowPackageDropdown(true)}
+                          />
+                          <Search size={14} className="absolute right-2.5 top-3 text-purple-400 pointer-events-none" />
+                        </div>
+                        
+                        {showPackageDropdown && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border border-purple-100 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            {filteredPackages.length > 0 ? (
+                              filteredPackages.map(pkg => (
+                                <button
+                                  key={pkg.id}
+                                  type="button"
+                                  className="w-full text-left px-3 py-2 text-xs hover:bg-purple-50 text-gray-700 flex justify-between items-center border-b border-gray-50 last:border-0"
+                                  onClick={() => {
+                                    setSelectedPackageId(pkg.id);
+                                    setPackageSearchQuery(`[${pkg.packageCode}] ${pkg.title}`);
+                                    setShowPackageDropdown(false);
+                                  }}
+                                >
+                                  <span className="font-semibold truncate mr-2">{pkg.title}</span>
+                                  <span className="text-[9px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-black shrink-0">{pkg.packageCode}</span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="p-3 text-center text-xs text-gray-400 italic">No packages found</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Selected Package Preview Card */}
+                      {selectedPackageId && (() => {
+                        const pkg = allAvailablePackages.find(p => p.id === selectedPackageId);
+                        if (!pkg) return null;
+                        return (
+                          <div className="bg-white border border-purple-100 rounded-xl p-3 space-y-2 shadow-sm text-xs mt-2 relative animate-in fade-in zoom-in-95 duration-200">
+                            <div className="flex justify-between items-start">
+                              <h5 className="font-bold text-gray-900 pr-4">{pkg.title}</h5>
+                              <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0">{pkg.packageCode}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1 text-[10px] text-gray-600 border-t border-purple-50 pt-2">
+                              <div><span className="font-semibold text-gray-400">Dest:</span> {pkg.destination || 'N/A'}</div>
+                              <div><span className="font-semibold text-gray-400">Duration:</span> {pkg.duration?.days ? `${pkg.duration.days}D / ${pkg.duration.nights}N` : 'Custom'}</div>
+                            </div>
+                            <div className="flex justify-between items-center border-t border-purple-50 pt-1.5 text-[10px]">
+                              <span className="font-semibold text-gray-500 font-medium">Final Price:</span>
+                              <span className="font-bold text-purple-700 text-[11px]">{formatCurrency(pkg.pricing?.finalPrice || 0)} INR</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       <button 
                         onClick={handleSendEmail}
-                        disabled={sendingEmail}
+                        disabled={sendingEmail || !selectedPackageId}
                         className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white font-medium py-2 rounded transition-colors flex justify-center items-center gap-2 text-sm"
                       >
                         {sendingEmail ? 'Sending...' : <><Send size={14} /> Send Email</>}
