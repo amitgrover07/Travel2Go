@@ -47,8 +47,8 @@ api.interceptors.response.use(
       console.warn(`Auth error (${error.response.status}) at ${url}`);
       
       // Stop the logout loop for all package-related endpoints during stabilization
-      if (url.includes('/packages') || url.includes('/custom-packages')) {
-        console.log('Safe-ignoring auth error for package endpoint to prevent logout loop');
+      if (url.includes('/packages') || url.includes('/custom-packages') || url.includes('/bookings/leads')) {
+        console.log('Safe-ignoring auth error for endpoint to prevent logout loop');
         return Promise.reject(error);
       }
 

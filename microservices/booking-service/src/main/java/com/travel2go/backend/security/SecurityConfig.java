@@ -40,17 +40,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
-                        .requestMatchers("/api/bookings/leads/**").hasRole("ADMIN")
+                        .requestMatchers("/api/bookings/leads/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/packages/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/settings/**").permitAll()
-                        .requestMatchers("/api/packages/**").hasRole("ADMIN")
-                        .requestMatchers("/api/settings/**").hasRole("ADMIN")
-                        .requestMatchers("/api/media/**").hasRole("ADMIN")
+                        .requestMatchers("/api/packages/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/settings/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/media/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
 
