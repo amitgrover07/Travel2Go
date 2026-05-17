@@ -45,5 +45,6 @@ public class Lead {
     private String source; // e.g., EMAIL_SENT, ADMIN_CREATED
     private String bestTimeToReach;
     private String notes;
+    private List<LeadActivity> activities;
     private List<LeadAuditLog> auditLogs;
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, Clock, Edit3, X, Save, CheckCircle2, DollarSign, Package, History, Send, Search } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Edit3, X, Save, CheckCircle2, DollarSign, Package, History, Send, Search, Plus, MessageSquare, Calendar, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatUtils';
@@ -23,11 +23,20 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
 
   // Modal for viewing/editing a lead
   const [selectedLead, setSelectedLead] = useState(null);
-  const [editNotes, setEditNotes] = useState('');
   
   // Edit Customer Info
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [editDetails, setEditDetails] = useState({});
+
+  // Call Time Editing
+  const [isEditingCallTime, setIsEditingCallTime] = useState(false);
+  const [editCallTime, setEditCallTime] = useState('');
+
+  // Activity Log State
+  const [selectedActivity, setSelectedActivity] = useState(null);
+  const [newActivityType, setNewActivityType] = useState('Call');
+  const [newActivityContent, setNewActivityContent] = useState('');
+  const [savingActivity, setSavingActivity] = useState(false);
 
   // Send Email State
   const [selectedPackageId, setSelectedPackageId] = useState('');
@@ -114,31 +123,75 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
 
   const handleOpenLead = (lead) => {
     setSelectedLead(lead);
-    setEditNotes(lead.notes || '');
     setIsEditingDetails(false);
+    setIsEditingCallTime(false);
+    setEditCallTime(lead.bestTimeToReach || '');
+    setNewActivityType('Call');
+    setNewActivityContent('');
     setEditDetails({
       firstName: lead.firstName || '',
       lastName: lead.lastName || '',
       email: lead.email || '',
       phone: lead.phone || '',
-      location: lead.location || '',
-      bestTimeToReach: lead.bestTimeToReach || ''
+      location: lead.location || ''
     });
     setSelectedPackageId('');
     setPackageSearchQuery('');
     setShowPackageDropdown(false);
   };
 
-  const handleSaveNotes = () => {
-    if (selectedLead) {
-      updateLead(selectedLead.id, { ...selectedLead, notes: editNotes });
-    }
-  };
-
   const handleSaveDetails = async () => {
     if (selectedLead) {
       await updateLead(selectedLead.id, { ...selectedLead, ...editDetails });
       setIsEditingDetails(false);
+    }
+  };
+
+  const handleSaveCallTime = async () => {
+    if (selectedLead) {
+      try {
+        await updateLead(selectedLead.id, { ...selectedLead, bestTimeToReach: editCallTime });
+        setIsEditingCallTime(false);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+
+  const handleCreateActivity = async () => {
+    if (!newActivityContent.trim()) {
+      toast.error('Activity details cannot be empty');
+      return;
+    }
+    setSavingActivity(true);
+    try {
+      const response = await api.post(`/bookings/leads/${selectedLead.id}/activities`, {
+        type: newActivityType,
+        content: newActivityContent
+      });
+      
+      // Sync local state
+      setLeads(leads.map(lead => lead.id === selectedLead.id ? response.data : lead));
+      setSelectedLead(response.data);
+      
+      setNewActivityContent('');
+      toast.success('Activity logged successfully');
+    } catch (error) {
+      console.error('Error logging activity:', error);
+      toast.error('Failed to log activity');
+    } finally {
+      setSavingActivity(false);
+    }
+  };
+
+  const formatCallTime = (timeStr) => {
+    if (!timeStr) return 'Not specified';
+    try {
+      const d = new Date(timeStr);
+      if (isNaN(d.getTime())) return timeStr;
+      return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    } catch (e) {
+      return timeStr;
     }
   };
 
@@ -188,7 +241,7 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
   const getLeadsByStatus = (status) => leads.filter(l => (l.status || 'NEW') === status);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-gray-500">Loading Leads CRM...</div>;
+    return <div className="flex items-center justify-center h-64 text-gray-500 font-medium">Loading Leads CRM...</div>;
   }
 
   const allAvailablePackages = [...packages, ...customPackages];
@@ -203,7 +256,7 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
         <h2 className="text-2xl font-bold text-gray-900 flex items-center">
           <DollarSign className="mr-2 text-blue-600" /> Leads CRM
         </h2>
-        <div className="text-sm text-gray-500">Total Leads: {leads.length}</div>
+        <div className="text-sm text-gray-500 font-semibold">Total Leads: {leads.length}</div>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-6 h-[calc(100vh-200px)] items-start">
@@ -242,11 +295,11 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                     </div>
                     <div className="text-xs text-gray-600 space-y-1 mb-3">
                       <div className="flex items-center gap-1.5 truncate"><Package size={12} className="shrink-0 text-gray-400" /> {lead.packageCode}</div>
-                      {lead.bestTimeToReach && <div className="flex items-center gap-1.5 truncate text-orange-600 font-medium"><Clock size={12} className="shrink-0"/> {lead.bestTimeToReach}</div>}
+                      {lead.bestTimeToReach && <div className="flex items-center gap-1.5 truncate text-orange-600 font-semibold"><Clock size={12} className="shrink-0"/> {formatCallTime(lead.bestTimeToReach)}</div>}
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-gray-100">
                       <span className="text-xs font-semibold text-gray-800">{formatCurrency(lead.finalPrice)}</span>
-                      <span className="text-[10px] text-gray-400">{lead.source}</span>
+                      <span className="text-[10px] text-gray-400 font-medium">{lead.source}</span>
                     </div>
                   </div>
                 ))}
@@ -302,14 +355,13 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                     )}
                   </div>
                   
-                  <div className="bg-gray-50 rounded-xl p-4 text-sm">
+                  <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-4 border border-gray-150">
                     {!isEditingDetails ? (
                       <div className="space-y-3">
-                        <div className="flex items-start gap-2"><div className="font-semibold w-20 shrink-0 text-gray-500">Name:</div> <div className="font-medium">{selectedLead.firstName} {selectedLead.lastName}</div></div>
+                        <div className="flex items-start gap-2"><div className="font-semibold w-20 shrink-0 text-gray-500">Name:</div> <div className="font-bold text-gray-800">{selectedLead.firstName} {selectedLead.lastName}</div></div>
                         <div className="flex items-start gap-2"><div className="font-semibold w-20 shrink-0 text-gray-500">Email:</div> <a href={`mailto:${selectedLead.email}`} className="text-blue-600 hover:underline break-all">{selectedLead.email}</a></div>
                         <div className="flex items-start gap-2"><div className="font-semibold w-20 shrink-0 text-gray-500">Phone:</div> <a href={`tel:${selectedLead.phone}`} className="text-blue-600 hover:underline">{selectedLead.phone}</a></div>
-                        <div className="flex items-start gap-2"><div className="font-semibold w-20 shrink-0 text-gray-500">Location:</div> <div>{selectedLead.location}</div></div>
-                        <div className="flex items-start gap-2 text-orange-600"><div className="font-semibold w-20 shrink-0">Call Time:</div> <div>{selectedLead.bestTimeToReach || 'Not specified'}</div></div>
+                        <div className="flex items-start gap-2"><div className="font-semibold w-20 shrink-0 text-gray-500">Location:</div> <div className="font-medium text-gray-800">{selectedLead.location}</div></div>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -320,20 +372,57 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                         <input type="email" value={editDetails.email} onChange={e=>setEditDetails({...editDetails, email: e.target.value})} className="w-full px-2 py-1 border rounded text-sm" placeholder="Email" />
                         <input type="text" value={editDetails.phone} onChange={e=>setEditDetails({...editDetails, phone: e.target.value})} className="w-full px-2 py-1 border rounded text-sm" placeholder="Phone" />
                         <input type="text" value={editDetails.location} onChange={e=>setEditDetails({...editDetails, location: e.target.value})} className="w-full px-2 py-1 border rounded text-sm" placeholder="Location" />
-                        <input type="text" value={editDetails.bestTimeToReach} onChange={e=>setEditDetails({...editDetails, bestTimeToReach: e.target.value})} className="w-full px-2 py-1 border rounded text-sm" placeholder="Best Time to Reach" />
-                        <button onClick={handleSaveDetails} className="w-full bg-blue-600 text-white font-medium py-1.5 rounded text-sm hover:bg-blue-700">Save Details</button>
+                        <button onClick={handleSaveDetails} className="w-full bg-blue-600 text-white font-bold py-1.5 rounded text-sm hover:bg-blue-700">Save Details</button>
                       </div>
                     )}
+
+                    {/* Separate Call Time Section */}
+                    <div className="border-t border-gray-200/60 pt-3 mt-3">
+                      {!isEditingCallTime ? (
+                        <div className="flex items-center justify-between text-orange-700">
+                          <div className="flex items-start gap-2">
+                            <Clock size={16} className="shrink-0 mt-0.5" />
+                            <div>
+                              <div className="font-bold text-xs uppercase tracking-wider text-orange-500">Scheduled Call Time</div>
+                              <div className="font-bold text-sm">{formatCallTime(selectedLead.bestTimeToReach)}</div>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              setEditCallTime(selectedLead.bestTimeToReach || '');
+                              setIsEditingCallTime(true);
+                            }}
+                            className="text-xs font-bold text-orange-600 hover:text-orange-850 underline"
+                          >
+                            Set Time
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 animate-in fade-in duration-200">
+                          <label className="block text-[10px] font-bold text-orange-600 uppercase tracking-wider">Select Call Date & Time</label>
+                          <input 
+                            type="datetime-local" 
+                            value={editCallTime} 
+                            onChange={e => setEditCallTime(e.target.value)} 
+                            className="w-full px-3 py-1.5 border border-orange-200 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 bg-white font-bold" 
+                          />
+                          <div className="flex gap-2">
+                            <button onClick={handleSaveCallTime} className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-1 rounded text-xs transition-colors">Save</button>
+                            <button onClick={() => setIsEditingCallTime(false)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-1 rounded text-xs transition-colors">Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 <div>
                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Package Information</h4>
-                  <div className="bg-blue-50 rounded-xl p-4 space-y-3 text-sm text-blue-900 border border-blue-100">
+                  <div className="bg-blue-50 rounded-xl p-4 space-y-3 text-sm text-blue-900 border border-blue-100 shadow-sm">
                     <div className="font-bold text-base mb-1">{selectedLead.packageTitle} </div>
-                    <div className="text-xs font-medium text-blue-700 mb-2">Code: {selectedLead.packageCode}</div>
+                    <div className="text-xs font-bold text-blue-700 mb-2">Code: {selectedLead.packageCode}</div>
                     <div className="flex justify-between items-center pt-2 border-t border-blue-200/50">
-                      <span>Final Price:</span>
+                      <span className="font-semibold text-blue-800">Final Price:</span>
                       <span className="font-bold text-base">{formatCurrency(selectedLead.finalPrice)} INR</span>
                     </div>
                   </div>
@@ -343,15 +432,15 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                 {selectedLead.status !== 'NEW' && (
                   <div>
                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Send Email Package</h4>
-                    <div className="bg-purple-50 rounded-xl p-4 space-y-3 border border-purple-100">
-                      <p className="text-xs text-purple-800">Send another itinerary directly to this lead. It will increment the mail count.</p>
+                    <div className="bg-purple-50 rounded-xl p-4 space-y-3 border border-purple-100 shadow-sm">
+                      <p className="text-xs text-purple-800 font-medium">Send another itinerary directly to this lead. It will increment the mail count.</p>
                       
                       {/* Searchable Dropdown */}
                       <div className="searchable-package-dropdown relative">
                         <div className="relative">
                           <input 
                             type="text"
-                            className="w-full px-3 py-2 border border-purple-200 rounded text-sm focus:ring-2 focus:ring-purple-500 bg-white pr-8 font-medium"
+                            className="w-full px-3 py-2 border border-purple-200 rounded text-sm focus:ring-2 focus:ring-purple-500 bg-white pr-8 font-semibold"
                             placeholder="Search package code or title..."
                             value={packageSearchQuery}
                             onChange={(e) => {
@@ -364,7 +453,7 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                         </div>
                         
                         {showPackageDropdown && (
-                          <div className="absolute z-50 w-full mt-1 bg-white border border-purple-100 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                           <div className="absolute z-50 w-full mt-1 bg-white border border-purple-100 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                             {filteredPackages.length > 0 ? (
                               filteredPackages.map(pkg => (
                                 <button
@@ -398,13 +487,13 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                               <h5 className="font-bold text-gray-900 pr-4">{pkg.title}</h5>
                               <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0">{pkg.packageCode}</span>
                             </div>
-                            <div className="grid grid-cols-2 gap-1 text-[10px] text-gray-600 border-t border-purple-50 pt-2">
-                              <div><span className="font-semibold text-gray-400">Dest:</span> {pkg.destination || 'N/A'}</div>
-                              <div><span className="font-semibold text-gray-400">Duration:</span> {pkg.duration?.days ? `${pkg.duration.days}D / ${pkg.duration.nights}N` : 'Custom'}</div>
+                            <div className="grid grid-cols-2 gap-1 text-[10px] text-gray-600 border-t border-purple-50 pt-2 font-medium">
+                              <div><span className="font-bold text-gray-400">Dest:</span> {pkg.destination || 'N/A'}</div>
+                              <div><span className="font-bold text-gray-400">Duration:</span> {pkg.duration?.days ? `${pkg.duration.days}D / ${pkg.duration.nights}N` : 'Custom'}</div>
                             </div>
                             <div className="flex justify-between items-center border-t border-purple-50 pt-1.5 text-[10px]">
-                              <span className="font-semibold text-gray-500 font-medium">Final Price:</span>
-                              <span className="font-bold text-purple-700 text-[11px]">{formatCurrency(pkg.pricing?.finalPrice || 0)} INR</span>
+                              <span className="font-bold text-gray-500">Final Price:</span>
+                              <span className="font-black text-purple-700 text-[11px]">{formatCurrency(pkg.pricing?.finalPrice || 0)} INR</span>
                             </div>
                           </div>
                         );
@@ -413,7 +502,7 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                       <button 
                         onClick={handleSendEmail}
                         disabled={sendingEmail || !selectedPackageId}
-                        className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white font-medium py-2 rounded transition-colors flex justify-center items-center gap-2 text-sm"
+                        className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white font-bold py-2 rounded transition-colors flex justify-center items-center gap-2 text-sm shadow-sm"
                       >
                         {sendingEmail ? 'Sending...' : <><Send size={14} /> Send Email</>}
                       </button>
@@ -423,11 +512,11 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
               </div>
 
               {/* Middle Column */}
-              <div className="space-y-6 lg:col-span-1">
-                <div>
+              <div className="space-y-6 lg:col-span-1 flex flex-col h-full">
+                <div className="shrink-0">
                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Status Management</h4>
                   <select 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 font-semibold shadow-sm bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 font-bold shadow-sm bg-white"
                     value={selectedLead.status || 'NEW'}
                     onChange={(e) => updateLead(selectedLead.id, { ...selectedLead, status: e.target.value })}
                   >
@@ -435,29 +524,96 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                   </select>
                 </div>
 
-                <div>
-                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Admin Notes</h4>
-                  <textarea 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 h-64 resize-none text-sm shadow-sm bg-white"
-                    value={editNotes}
-                    onChange={(e) => setEditNotes(e.target.value)}
-                    placeholder="Record your calls, follow-ups, and requirements here..."
-                  ></textarea>
-                  <button 
-                    onClick={handleSaveNotes}
-                    className="mt-3 w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl transition-colors flex justify-center items-center gap-2 shadow-sm"
-                  >
-                    <Save size={18} /> Save Notes
-                  </button>
+                {/* Lead Activities Panel (replacing notes) */}
+                <div className="flex-1 flex flex-col min-h-[350px]">
+                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Lead Activities</h4>
+                  
+                  {/* Log new activity */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3 mb-4 shadow-sm shrink-0">
+                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Log New Activity</div>
+                    
+                    {/* Activity Type Buttons */}
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {[
+                        { type: 'Call', icon: Phone, color: 'hover:bg-blue-50 hover:text-blue-600 border-blue-100 text-blue-700 bg-blue-50/30' },
+                        { type: 'Email', icon: Mail, color: 'hover:bg-purple-50 hover:text-purple-600 border-purple-100 text-purple-700 bg-purple-50/30' },
+                        { type: 'Note', icon: MessageSquare, color: 'hover:bg-green-50 hover:text-green-600 border-green-100 text-green-700 bg-green-50/30' },
+                        { type: 'Meeting', icon: Calendar, color: 'hover:bg-orange-50 hover:text-orange-600 border-orange-100 text-orange-700 bg-orange-50/30' }
+                      ].map(item => {
+                        const Icon = item.icon;
+                        const isSelected = newActivityType === item.type;
+                        return (
+                          <button
+                            key={item.type}
+                            type="button"
+                            onClick={() => setNewActivityType(item.type)}
+                            className={`flex flex-col items-center justify-center py-1.5 px-1 border rounded-lg transition-all text-[10px] font-bold ${
+                              isSelected 
+                                ? 'bg-gray-900 border-gray-900 text-white shadow-sm scale-105' 
+                                : `border-gray-200 text-gray-600 bg-white ${item.color}`
+                            }`}
+                          >
+                            <Icon size={14} className="mb-1 shrink-0" />
+                            {item.type}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <textarea
+                      value={newActivityContent}
+                      onChange={e => setNewActivityContent(e.target.value)}
+                      placeholder={`Enter details of the ${newActivityType.toLowerCase()}...`}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs h-20 resize-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
+                    />
+
+                    <button
+                      onClick={handleCreateActivity}
+                      disabled={savingActivity || !newActivityContent.trim()}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-xs font-bold py-2 rounded-lg transition-colors flex justify-center items-center gap-1.5 shadow-sm"
+                    >
+                      <Plus size={14} /> Log {newActivityType}
+                    </button>
+                  </div>
+
+                  {/* Activities List */}
+                  <div className="flex-1 overflow-y-auto space-y-2 border border-gray-200 rounded-xl p-2 bg-gray-50/40 max-h-[300px]">
+                    {(!selectedLead.activities || selectedLead.activities.length === 0) ? (
+                      <div className="text-center text-xs text-gray-400 italic py-12 bg-white rounded-lg border border-dashed border-gray-150 font-medium">No activities logged yet</div>
+                    ) : (
+                      selectedLead.activities.slice().reverse().map((act) => {
+                        const Icon = act.type === 'Call' ? Phone : act.type === 'Email' ? Mail : act.type === 'Meeting' ? Calendar : MessageSquare;
+                        return (
+                          <div
+                            key={act.activityId}
+                            onClick={() => setSelectedActivity(act)}
+                            className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:border-blue-300 hover:shadow transition-all cursor-pointer flex items-start gap-2.5 relative group"
+                          >
+                            <div className="p-1.5 rounded-lg bg-gray-50 text-gray-600 shrink-0 mt-0.5 border border-gray-100">
+                              <Icon size={14} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-[10px] font-black text-blue-600">{act.activityId}</span>
+                                <span className="text-[9px] text-gray-400 font-semibold">{new Date(act.timestamp).toLocaleDateString()} {new Date(act.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                              </div>
+                              <div className="text-xs font-bold text-gray-800 mb-0.5">{act.type} Logged</div>
+                              <div className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed font-medium">{act.content}</div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Right Column: Audit Trail */}
               <div className="space-y-4 lg:col-span-1 flex flex-col h-full">
                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Audit Trail</h4>
-                <div className="bg-gray-50 rounded-xl p-4 flex-1 overflow-y-auto border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-4 flex-1 overflow-y-auto border border-gray-200 max-h-[600px]">
                   {(!selectedLead.auditLogs || selectedLead.auditLogs.length === 0) ? (
-                    <div className="text-sm text-gray-400 italic text-center py-8">No history recorded</div>
+                    <div className="text-sm text-gray-400 italic text-center py-8 font-medium">No history recorded</div>
                   ) : (
                     <div className="relative pl-6 border-l-2 border-gray-200 ml-3 space-y-5">
                       {selectedLead.auditLogs.slice().reverse().map((log, idx) => (
@@ -469,12 +625,12 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                           {/* Card */}
                           <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:shadow transition-shadow">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2 pb-1.5 border-b border-gray-100">
-                              <span className="font-bold text-gray-800 text-[10px] uppercase tracking-wider bg-gray-50 px-1.5 py-0.5 rounded shrink-0 w-max">{log.action.replace('_', ' ')}</span>
-                              <span className="text-[9px] text-gray-400 font-medium whitespace-nowrap">{new Date(log.timestamp).toLocaleDateString()} {new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                              <span className="font-bold text-gray-850 text-[10px] uppercase tracking-wider bg-gray-50 px-1.5 py-0.5 rounded shrink-0 w-max">{log.action.replace(/_/g, ' ')}</span>
+                              <span className="text-[9px] text-gray-400 font-semibold whitespace-nowrap">{new Date(log.timestamp).toLocaleDateString()} {new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                             </div>
-                            <div className="text-xs text-gray-600 leading-snug mb-2 font-normal">{log.details}</div>
-                            <div className="text-[10px] text-gray-400 font-semibold border-t border-gray-50 pt-1.5 flex items-center justify-between">
-                              <span>By: <span className="text-gray-600">{log.adminName}</span></span>
+                            <div className="text-xs text-gray-650 leading-snug mb-2 font-medium">{log.details}</div>
+                            <div className="text-[10px] text-gray-450 font-bold border-t border-gray-50 pt-1.5 flex items-center justify-between">
+                              <span>By: <span className="text-gray-600 font-bold">{log.adminName}</span></span>
                             </div>
                           </div>
                         </div>
@@ -484,6 +640,61 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                 </div>
               </div>
               
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Details Viewer Modal */}
+      {selectedActivity && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-150">
+            {/* Header */}
+            <div className="px-5 py-4 border-b bg-gray-50 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded tracking-wide">{selectedActivity.activityId}</span>
+                <span className="text-sm font-bold text-gray-800">{selectedActivity.type} Activity Details</span>
+              </div>
+              <button onClick={() => setSelectedActivity(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-xs bg-gray-50 rounded-xl p-3 border border-gray-150">
+                <div>
+                  <span className="block text-gray-400 font-bold mb-0.5">Logged By</span>
+                  <span className="font-bold text-gray-800">{selectedActivity.adminName}</span>
+                </div>
+                <div>
+                  <span className="block text-gray-400 font-bold mb-0.5">Date & Time</span>
+                  <span className="font-bold text-gray-800">{new Date(selectedActivity.timestamp).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Activity Details</label>
+                <div className="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs text-gray-700 min-h-[120px] max-h-[220px] overflow-y-auto leading-relaxed whitespace-pre-wrap font-semibold">
+                  {selectedActivity.content}
+                </div>
+              </div>
+
+              {/* Security Warning Badge */}
+              <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold bg-gray-50 p-2.5 rounded-lg border border-gray-150">
+                <ShieldCheck size={14} className="text-green-500 shrink-0" />
+                <span>🔒 Immutable Record — This logged activity cannot be edited or deleted.</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 border-t bg-gray-50 flex justify-end">
+              <button 
+                onClick={() => setSelectedActivity(null)} 
+                className="px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-colors"
+              >
+                Close Activity
+              </button>
             </div>
           </div>
         </div>
