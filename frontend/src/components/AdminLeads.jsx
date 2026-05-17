@@ -177,7 +177,8 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
       setPackageSearchQuery('');
       setShowPackageDropdown(false);
     } catch (error) {
-      toast.error('Failed to send email. Check console.');
+      const errMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to send email';
+      toast.error(`Failed to send email: ${errMsg}`);
       console.error(error);
     } finally {
       setSendingEmail(false);
