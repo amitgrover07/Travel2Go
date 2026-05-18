@@ -46,13 +46,20 @@ public class CustomPackageController {
                 .then(id != null ? redisTemplate.opsForValue().delete("custom-package:" + id) : Mono.empty())
                 .then()
                 .doOnSuccess(v -> System.out.println("Evicted custom cache keys successfully"))
-                .doOnError(e -> System.err.println("Custom cache eviction failed: " + e.getMessage()));
+                .onErrorResume(e -> {
+                    System.err.println("Custom cache eviction failed (Redis offline?), bypassing: " + e.getMessage());
+                    return Mono.empty(); // Fail-safe
+                });
     }
 
     @GetMapping
     public Flux<CustomPackage> getActivePackages() {
         String cacheKey = "custom-packages:active";
         return redisTemplate.opsForValue().get(cacheKey)
+                .onErrorResume(e -> {
+                    System.err.println("Redis connection failed on getActivePackages, bypassing cache: " + e.getMessage());
+                    return Mono.empty(); // Bypasses the cache and falls back to database
+                })
                 .flatMapMany(json -> {
                     try {
                         CustomPackage[] pkgs = objectMapper.readValue(json, CustomPackage[].class);
@@ -71,6 +78,10 @@ public class CustomPackageController {
                                         String json = objectMapper.writeValueAsString(list);
                                         System.out.println("Cache MISS: active custom packages loaded from DB and cached");
                                         return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(1))
+                                                .onErrorResume(err -> {
+                                                    System.err.println("Failed to write to Redis (getActivePackages): " + err.getMessage());
+                                                    return Mono.just(true); // Ignore write error and proceed
+                                                })
                                                 .thenReturn(list);
                                     } catch (Exception e) {
                                         System.err.println("Failed to cache active custom packages: " + e.getMessage());
@@ -86,6 +97,10 @@ public class CustomPackageController {
         String cacheKey = "custom-packages:all";
         System.out.println("Fetching custom packages with Redis support...");
         return redisTemplate.opsForValue().get(cacheKey)
+                .onErrorResume(e -> {
+                    System.err.println("Redis connection failed on getAllPackages, bypassing cache: " + e.getMessage());
+                    return Mono.empty(); // Fail-safe
+                })
                 .flatMapMany(json -> {
                     try {
                         CustomPackage[] pkgs = objectMapper.readValue(json, CustomPackage[].class);
@@ -104,6 +119,10 @@ public class CustomPackageController {
                                         String json = objectMapper.writeValueAsString(list);
                                         System.out.println("Cache MISS: all custom packages loaded from DB and cached");
                                         return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(1))
+                                                .onErrorResume(err -> {
+                                                    System.err.println("Failed to write to Redis (getAllPackages): " + err.getMessage());
+                                                    return Mono.just(true); // Ignore write error and proceed
+                                                })
                                                 .thenReturn(list);
                                     } catch (Exception e) {
                                         System.err.println("Failed to cache all custom packages: " + e.getMessage());
@@ -118,6 +137,10 @@ public class CustomPackageController {
     public Mono<ResponseEntity<CustomPackage>> getPackageById(@PathVariable String id) {
         String cacheKey = "custom-package:" + id;
         return redisTemplate.opsForValue().get(cacheKey)
+                .onErrorResume(e -> {
+                    System.err.println("Redis connection failed on getPackageById, bypassing cache: " + e.getMessage());
+                    return Mono.empty(); // Fail-safe
+                })
                 .flatMap(json -> {
                     try {
                         CustomPackage pkg = objectMapper.readValue(json, CustomPackage.class);
@@ -135,6 +158,10 @@ public class CustomPackageController {
                                         String json = objectMapper.writeValueAsString(pkg);
                                         System.out.println("Cache MISS: custom package " + id + " loaded from DB and cached");
                                         return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(6))
+                                                .onErrorResume(err -> {
+                                                    System.err.println("Failed to write to Redis (getPackageById): " + err.getMessage());
+                                                    return Mono.just(true); // Ignore write error and proceed
+                                                })
                                                 .thenReturn(ResponseEntity.ok(pkg));
                                     } catch (Exception e) {
                                         System.err.println("Failed to cache custom package: " + e.getMessage());

@@ -45,13 +45,20 @@ public class HolidayPackageController {
                 .then(id != null ? redisTemplate.opsForValue().delete("package:" + id) : Mono.empty())
                 .then()
                 .doOnSuccess(v -> System.out.println("Evicted cache keys successfully"))
-                .doOnError(e -> System.err.println("Cache eviction failed: " + e.getMessage()));
+                .onErrorResume(e -> {
+                    System.err.println("Cache eviction failed (Redis offline?), bypassing: " + e.getMessage());
+                    return Mono.empty(); // Fail-safe
+                });
     }
 
     @GetMapping
     public Flux<HolidayPackage> getActivePackages() {
         String cacheKey = "packages:active";
         return redisTemplate.opsForValue().get(cacheKey)
+                .onErrorResume(e -> {
+                    System.err.println("Redis connection failed on getActivePackages, bypassing cache: " + e.getMessage());
+                    return Mono.empty(); // Bypasses the cache and falls back to database
+                })
                 .flatMapMany(json -> {
                     try {
                         HolidayPackage[] pkgs = objectMapper.readValue(json, HolidayPackage[].class);
@@ -70,6 +77,10 @@ public class HolidayPackageController {
                                         String json = objectMapper.writeValueAsString(list);
                                         System.out.println("Cache MISS: active packages loaded from DB and cached");
                                         return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(1))
+                                                .onErrorResume(err -> {
+                                                    System.err.println("Failed to write to Redis (getActivePackages): " + err.getMessage());
+                                                    return Mono.just(true); // Ignore write error and proceed
+                                                })
                                                 .thenReturn(list);
                                     } catch (Exception e) {
                                         System.err.println("Failed to cache active packages: " + e.getMessage());
@@ -84,6 +95,10 @@ public class HolidayPackageController {
     public Flux<HolidayPackage> getAllPackages() {
         String cacheKey = "packages:all";
         return redisTemplate.opsForValue().get(cacheKey)
+                .onErrorResume(e -> {
+                    System.err.println("Redis connection failed on getAllPackages, bypassing cache: " + e.getMessage());
+                    return Mono.empty(); // Fail-safe
+                })
                 .flatMapMany(json -> {
                     try {
                         HolidayPackage[] pkgs = objectMapper.readValue(json, HolidayPackage[].class);
@@ -102,6 +117,10 @@ public class HolidayPackageController {
                                         String json = objectMapper.writeValueAsString(list);
                                         System.out.println("Cache MISS: all packages loaded from DB and cached");
                                         return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(1))
+                                                .onErrorResume(err -> {
+                                                    System.err.println("Failed to write to Redis (getAllPackages): " + err.getMessage());
+                                                    return Mono.just(true); // Ignore write error and proceed
+                                                })
                                                 .thenReturn(list);
                                     } catch (Exception e) {
                                         System.err.println("Failed to cache all packages: " + e.getMessage());
@@ -116,6 +135,10 @@ public class HolidayPackageController {
     public Mono<ResponseEntity<HolidayPackage>> getPackageById(@PathVariable String id) {
         String cacheKey = "package:" + id;
         return redisTemplate.opsForValue().get(cacheKey)
+                .onErrorResume(e -> {
+                    System.err.println("Redis connection failed on getPackageById, bypassing cache: " + e.getMessage());
+                    return Mono.empty(); // Fail-safe
+                })
                 .flatMap(json -> {
                     try {
                         HolidayPackage pkg = objectMapper.readValue(json, HolidayPackage.class);
@@ -133,6 +156,10 @@ public class HolidayPackageController {
                                         String json = objectMapper.writeValueAsString(pkg);
                                         System.out.println("Cache MISS: package " + id + " loaded from DB and cached");
                                         return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(6))
+                                                .onErrorResume(err -> {
+                                                    System.err.println("Failed to write to Redis (getPackageById): " + err.getMessage());
+                                                    return Mono.just(true); // Ignore write error and proceed
+                                                })
                                                 .thenReturn(ResponseEntity.ok(pkg));
                                     } catch (Exception e) {
                                         System.err.println("Failed to cache package: " + e.getMessage());
