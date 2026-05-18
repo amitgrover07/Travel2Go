@@ -1,44 +1,52 @@
 package com.travel2go.backend.security;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Mono;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter implements WebFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    
 
     @Override
-    @NonNull
-    public Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull WebFilterChain chain) {
-        final String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
-        final String requestPath = exchange.getRequest().getURI().getPath();
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+        final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String username;
 
         if (authHeader == null || !authHeader.toLowerCase().startsWith("bearer ")) {
-            System.out.println("No valid Authorization header found for URI: " + requestPath + 
+            System.out.println("No valid Authorization header found for URI: " + request.getRequestURI() + 
                                " (Header present: " + (authHeader != null) + ")");
-            return chain.filter(exchange);
+            filterChain.doFilter(request, response);
+            return;
         }
 
         jwt = authHeader.substring(7).trim();
-        System.out.println("Processing token for URI: " + requestPath + " (Token length: " + jwt.length() + ")");
+        System.out.println("Processing token for URI: " + request.getRequestURI() + " (Token length: " + jwt.length() + ")");
         
         try {
             username = jwtUtil.extractUsername(jwt);
             System.out.println("Checking token for user: " + username);
             
-            if (username != null) {
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> roles = jwtUtil.extractRoles(jwt);
                 System.out.println("Extracted roles: " + roles);
                 
@@ -48,7 +56,7 @@ public class JwtAuthenticationFilter implements WebFilter {
                     roles.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
                 }
 
-                User userDetails = new User(username, "", roles);
+                org.springframework.security.core.userdetails.User userDetails = new org.springframework.security.core.userdetails.User(username, "", roles);
                 if (jwtUtil.validateToken(jwt, userDetails)) {
                     System.out.println("Authentication SUCCESS for user: " + username + " with authorities: " + roles);
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -56,26 +64,24 @@ public class JwtAuthenticationFilter implements WebFilter {
                             null,
                             userDetails.getAuthorities()
                     );
-                    
-                    return chain.filter(exchange)
-                            .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authToken));
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
                 } else {
                     System.out.println("Authentication FAILED (Validation) for user: " + username);
                 }
             }
         } catch (Exception e) {
-            System.err.println("JWT Filter Exception for " + requestPath + ": " + e.getMessage());
+            System.err.println("JWT Filter Exception for " + request.getRequestURI() + ": " + e.getMessage());
             // Fail-safe for known Admin user during stabilization
-            if (jwt != null && jwt.contains("QURNSU4") && requestPath.contains("custom-packages")) {
+            if (jwt != null && jwt.contains("QURNSU4") && request.getRequestURI().contains("custom-packages")) {
                 System.out.println("Applying Emergency Admin bypass for known token pattern");
                 java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> authorities = 
                     java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
-                User user = new User("admin", "", authorities);
+                org.springframework.security.core.userdetails.User user = new org.springframework.security.core.userdetails.User("admin", "", authorities);
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null, authorities);
-                return chain.filter(exchange)
-                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }
-        return chain.filter(exchange);
+        filterChain.doFilter(request, response);
     }
 }

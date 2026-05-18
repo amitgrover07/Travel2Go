@@ -11,7 +11,6 @@ import com.travel2go.backend.client.PackageClient;
 import com.travel2go.backend.client.SettingsClient;
 import com.travel2go.backend.client.NotificationClient;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +26,7 @@ import com.travel2go.backend.model.LeadAuditLog;
 @RequiredArgsConstructor
 public class BookingController {
 
-    private final RabbitTemplate rabbitTemplate;
+    private final NotificationClient notificationClient;
     private final PackageClient packageClient;
     private final SettingsClient settingsClient;
     private final BookingRepository bookingRepository;
@@ -148,9 +147,9 @@ public class BookingController {
 
             GlobalSettings settings = settingsClient.getSettingsById("global");
 
-            // Send notification request asynchronously via RabbitMQ
+            // Send notification request to Notification Service
             NotificationClient.NotificationRequest notifReq = new NotificationClient.NotificationRequest(request, pkg, settings, booking);
-            rabbitTemplate.convertAndSend("booking.exchange", "booking.created", notifReq);
+            notificationClient.sendBookingConfirmation(notifReq);
             
             return ResponseEntity.ok(Map.of("message", "Package sent successfully! Check email for the PDF itinerary."));
         } catch (Exception e) {
