@@ -6,10 +6,10 @@ import com.travel2go.backend.repository.CustomPackageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.Map;
@@ -21,8 +21,7 @@ public class CustomPackageController {
 
     private final CustomPackageRepository repository;
 
-    private String getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    private String getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
             return "system";
         }
@@ -49,17 +48,15 @@ public class CustomPackageController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CustomPackage> getPackageById(@PathVariable String id) {
-        CustomPackage pkg = repository.findById(id).block();
-        if (pkg != null) {
-            return ResponseEntity.ok(pkg);
-        }
-        return ResponseEntity.notFound().build();
+    public Mono<ResponseEntity<CustomPackage>> getPackageById(@PathVariable String id) {
+        return repository.findById(id)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<?> createPackage(@RequestBody CustomPackage customPackage) {
-        String currentUser = getCurrentUser();
+    public Mono<ResponseEntity<?>> createPackage(@RequestBody CustomPackage customPackage, Authentication authentication) {
+        String currentUser = getCurrentUser(authentication);
         HolidayPackage.Audit audit = HolidayPackage.Audit.builder()
                 .createdBy(currentUser)
                 .createdAt(Instant.now())
@@ -68,65 +65,67 @@ public class CustomPackageController {
                 .build();
         customPackage.setAudit(audit);
 
-        Boolean exists = repository.findByPackageCode(customPackage.getPackageCode()).hasElements().block();
-        if (Boolean.TRUE.equals(exists)) {
-            return ResponseEntity.status(409).body(Map.of("message", "Package code already exists"));
-        }
-        CustomPackage saved = repository.save(customPackage).block();
-        return ResponseEntity.ok(saved);
+        return repository.findByPackageCode(customPackage.getPackageCode())
+                .hasElements()
+                .flatMap(exists -> {
+                    if (exists) {
+                        return Mono.just(ResponseEntity.status(409).body(Map.of("message", "Package code already exists")));
+                    }
+                    return repository.save(customPackage)
+                            .map(ResponseEntity::ok);
+                });
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePackage(@PathVariable String id, @RequestBody CustomPackage customPackageDetails) {
-        String currentUser = getCurrentUser();
+    public Mono<ResponseEntity<?>> updatePackage(@PathVariable String id, @RequestBody CustomPackage customPackageDetails, Authentication authentication) {
+        String currentUser = getCurrentUser(authentication);
         
-        CustomPackage existingPackage = repository.findById(id).block();
-        if (existingPackage == null) {
-            return ResponseEntity.notFound().build();
-        }
+        return repository.findById(id)
+                .flatMap(existingPackage -> {
+                    return repository.findByPackageCode(customPackageDetails.getPackageCode())
+                            .filter(pkg -> !pkg.getId().equals(id))
+                            .hasElements()
+                            .flatMap(codeExists -> {
+                                if (codeExists) {
+                                    return Mono.just(ResponseEntity.status(409).body(Map.of("message", "Package code already exists")));
+                                }
+                                
+                                existingPackage.setPackageCode(customPackageDetails.getPackageCode());
+                                existingPackage.setTitle(customPackageDetails.getTitle());
+                                existingPackage.setDestination(customPackageDetails.getDestination());
+                                existingPackage.setStatus(customPackageDetails.getStatus());
+                                existingPackage.setPackageType(customPackageDetails.getPackageType() != null ? customPackageDetails.getPackageType() : "Custom");
+                                existingPackage.setOverview(customPackageDetails.getOverview());
+                                existingPackage.setSpecialNotes(customPackageDetails.getSpecialNotes());
 
-        Boolean codeExists = repository.findByPackageCode(customPackageDetails.getPackageCode())
-                .filter(pkg -> !pkg.getId().equals(id))
-                .hasElements()
-                .block();
+                                existingPackage.setDuration(customPackageDetails.getDuration());
+                                existingPackage.setPricing(customPackageDetails.getPricing());
+                                existingPackage.setMedia(customPackageDetails.getMedia());
 
-        if (Boolean.TRUE.equals(codeExists)) {
-            return ResponseEntity.status(409).body(Map.of("message", "Package code already exists"));
-        }
-        
-        existingPackage.setPackageCode(customPackageDetails.getPackageCode());
-        existingPackage.setTitle(customPackageDetails.getTitle());
-        existingPackage.setDestination(customPackageDetails.getDestination());
-        existingPackage.setStatus(customPackageDetails.getStatus());
-        existingPackage.setPackageType(customPackageDetails.getPackageType() != null ? customPackageDetails.getPackageType() : "Custom");
-        existingPackage.setOverview(customPackageDetails.getOverview());
-        existingPackage.setSpecialNotes(customPackageDetails.getSpecialNotes());
+                                existingPackage.setInclusions(customPackageDetails.getInclusions());
+                                existingPackage.setExclusions(customPackageDetails.getExclusions());
+                                existingPackage.setItinerary(customPackageDetails.getItinerary());
 
-        existingPackage.setDuration(customPackageDetails.getDuration());
-        existingPackage.setPricing(customPackageDetails.getPricing());
-        existingPackage.setMedia(customPackageDetails.getMedia());
+                                if (existingPackage.getAudit() == null) {
+                                    existingPackage.setAudit(new HolidayPackage.Audit());
+                                }
+                                existingPackage.getAudit().setUpdatedBy(currentUser);
+                                existingPackage.getAudit().setUpdatedAt(Instant.now());
 
-        existingPackage.setInclusions(customPackageDetails.getInclusions());
-        existingPackage.setExclusions(customPackageDetails.getExclusions());
-        existingPackage.setItinerary(customPackageDetails.getItinerary());
-
-        if (existingPackage.getAudit() == null) {
-            existingPackage.setAudit(new HolidayPackage.Audit());
-        }
-        existingPackage.getAudit().setUpdatedBy(currentUser);
-        existingPackage.getAudit().setUpdatedAt(Instant.now());
-
-        CustomPackage saved = repository.save(existingPackage).block();
-        return ResponseEntity.ok(saved);
+                                return repository.save(existingPackage)
+                                        .map(ResponseEntity::ok);
+                            });
+                })
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePackage(@PathVariable String id) {
-        CustomPackage existingPackage = repository.findById(id).block();
-        if (existingPackage != null) {
-            repository.delete(existingPackage).block();
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    public Mono<ResponseEntity<Void>> deletePackage(@PathVariable String id) {
+        return repository.findById(id)
+                .flatMap(existingPackage -> 
+                    repository.delete(existingPackage)
+                            .then(Mono.just(ResponseEntity.noContent().<Void>build()))
+                )
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }

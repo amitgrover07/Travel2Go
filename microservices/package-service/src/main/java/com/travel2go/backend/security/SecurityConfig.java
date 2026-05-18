@@ -4,24 +4,29 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebFluxSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -33,42 +38,39 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/packages/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/settings/**").permitAll()
-                        .requestMatchers("/api/custom-packages/all").permitAll()
-                        .requestMatchers("/api/packages/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/api/custom-packages/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/api/settings/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/api/media/**").hasAuthority("ROLE_ADMIN")
-                        .anyRequest().authenticated()
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/packages/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/settings/**").permitAll()
+                        .pathMatchers("/api/custom-packages/all").permitAll()
+                        .pathMatchers("/api/packages/**").hasAuthority("ROLE_ADMIN")
+                        .pathMatchers("/api/custom-packages/**").hasAuthority("ROLE_ADMIN")
+                        .pathMatchers("/api/settings/**").hasAuthority("ROLE_ADMIN")
+                        .pathMatchers("/api/media/**").hasAuthority("ROLE_ADMIN")
+                        .anyExchange().authenticated()
                 )
-
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(401);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\": \"Unauthorized\"}");
-                        })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(403);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\": \"Forbidden\"}");
-                        })
+                        .authenticationEntryPoint((exchange, authException) -> Mono.fromRunnable(() -> {
+                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                            exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                        }).then(Mono.defer(() -> {
+                            DataBuffer buffer = exchange.getResponse().bufferFactory().wrap("{\"error\": \"Unauthorized\"}".getBytes());
+                            return exchange.getResponse().writeWith(Mono.just(buffer));
+                        })))
+                        .accessDeniedHandler((exchange, accessDeniedException) -> Mono.fromRunnable(() -> {
+                            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                            exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                        }).then(Mono.defer(() -> {
+                            DataBuffer buffer = exchange.getResponse().bufferFactory().wrap("{\"error\": \"Forbidden\"}".getBytes());
+                            return exchange.getResponse().writeWith(Mono.just(buffer));
+                        })))
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, SecurityWebFiltersOrder.AUTHENTICATION);
 
         return http.build();
     }
