@@ -1,9 +1,11 @@
 package com.travel2go.backend.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.travel2go.backend.model.CustomPackage;
 import com.travel2go.backend.model.HolidayPackage;
 import com.travel2go.backend.repository.CustomPackageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
@@ -20,6 +23,8 @@ import java.util.Map;
 public class CustomPackageController {
 
     private final CustomPackageRepository repository;
+    private final ReactiveStringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     private String getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
@@ -34,23 +39,109 @@ public class CustomPackageController {
         return principal.toString();
     }
 
+    private Mono<Void> evictCache(String id) {
+        System.out.println("Evicting Redis cache for custom packages...");
+        return redisTemplate.opsForValue().delete("custom-packages:active")
+                .then(redisTemplate.opsForValue().delete("custom-packages:all"))
+                .then(id != null ? redisTemplate.opsForValue().delete("custom-package:" + id) : Mono.empty())
+                .then()
+                .doOnSuccess(v -> System.out.println("Evicted custom cache keys successfully"))
+                .doOnError(e -> System.err.println("Custom cache eviction failed: " + e.getMessage()));
+    }
+
     @GetMapping
     public Flux<CustomPackage> getActivePackages() {
-        return repository.findByStatus("ACTIVE");
+        String cacheKey = "custom-packages:active";
+        return redisTemplate.opsForValue().get(cacheKey)
+                .flatMapMany(json -> {
+                    try {
+                        CustomPackage[] pkgs = objectMapper.readValue(json, CustomPackage[].class);
+                        System.out.println("Cache HIT: active custom packages retrieved from Redis");
+                        return Flux.fromArray(pkgs);
+                    } catch (Exception e) {
+                        System.err.println("Failed to parse cached active custom packages: " + e.getMessage());
+                        return Flux.empty();
+                    }
+                })
+                .switchIfEmpty(
+                        repository.findByStatus("ACTIVE")
+                                .collectList()
+                                .flatMap(list -> {
+                                    try {
+                                        String json = objectMapper.writeValueAsString(list);
+                                        System.out.println("Cache MISS: active custom packages loaded from DB and cached");
+                                        return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(1))
+                                                .thenReturn(list);
+                                    } catch (Exception e) {
+                                        System.err.println("Failed to cache active custom packages: " + e.getMessage());
+                                        return Mono.just(list);
+                                    }
+                                })
+                                .flatMapMany(Flux::fromIterable)
+                );
     }
 
     @GetMapping("/all")
     public Flux<CustomPackage> getAllPackages() {
-        System.out.println("Fetching all custom packages from repository...");
-        return repository.findAll()
-                .doOnComplete(() -> System.out.println("Completed fetching custom packages"))
-                .doOnError(e -> System.err.println("Error fetching custom packages: " + e.getMessage()));
+        String cacheKey = "custom-packages:all";
+        System.out.println("Fetching custom packages with Redis support...");
+        return redisTemplate.opsForValue().get(cacheKey)
+                .flatMapMany(json -> {
+                    try {
+                        CustomPackage[] pkgs = objectMapper.readValue(json, CustomPackage[].class);
+                        System.out.println("Cache HIT: all custom packages retrieved from Redis");
+                        return Flux.fromArray(pkgs);
+                    } catch (Exception e) {
+                        System.err.println("Failed to parse cached all custom packages: " + e.getMessage());
+                        return Flux.empty();
+                    }
+                })
+                .switchIfEmpty(
+                        repository.findAll()
+                                .collectList()
+                                .flatMap(list -> {
+                                    try {
+                                        String json = objectMapper.writeValueAsString(list);
+                                        System.out.println("Cache MISS: all custom packages loaded from DB and cached");
+                                        return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(1))
+                                                .thenReturn(list);
+                                    } catch (Exception e) {
+                                        System.err.println("Failed to cache all custom packages: " + e.getMessage());
+                                        return Mono.just(list);
+                                    }
+                                })
+                                .flatMapMany(Flux::fromIterable)
+                );
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<CustomPackage>> getPackageById(@PathVariable String id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
+        String cacheKey = "custom-package:" + id;
+        return redisTemplate.opsForValue().get(cacheKey)
+                .flatMap(json -> {
+                    try {
+                        CustomPackage pkg = objectMapper.readValue(json, CustomPackage.class);
+                        System.out.println("Cache HIT: custom package " + id + " retrieved from Redis");
+                        return Mono.just(ResponseEntity.ok(pkg));
+                    } catch (Exception e) {
+                        System.err.println("Failed to parse cached custom package: " + e.getMessage());
+                        return Mono.empty();
+                    }
+                })
+                .switchIfEmpty(
+                        repository.findById(id)
+                                .flatMap(pkg -> {
+                                    try {
+                                        String json = objectMapper.writeValueAsString(pkg);
+                                        System.out.println("Cache MISS: custom package " + id + " loaded from DB and cached");
+                                        return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(6))
+                                                .thenReturn(ResponseEntity.ok(pkg));
+                                    } catch (Exception e) {
+                                        System.err.println("Failed to cache custom package: " + e.getMessage());
+                                        return Mono.just(ResponseEntity.ok(pkg));
+                                    }
+                                })
+                )
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
@@ -72,7 +163,7 @@ public class CustomPackageController {
                         return Mono.just(ResponseEntity.status(409).body(Map.of("message", "Package code already exists")));
                     }
                     return repository.save(customPackage)
-                            .map(ResponseEntity::ok);
+                            .flatMap(savedPkg -> evictCache(null).thenReturn(ResponseEntity.ok(savedPkg)));
                 });
     }
 
@@ -113,7 +204,7 @@ public class CustomPackageController {
                                 existingPackage.getAudit().setUpdatedAt(Instant.now());
 
                                 return repository.save(existingPackage)
-                                        .map(ResponseEntity::ok);
+                                        .flatMap(savedPkg -> evictCache(savedPkg.getId()).thenReturn(ResponseEntity.ok(savedPkg)));
                             });
                 })
                 .defaultIfEmpty(ResponseEntity.notFound().build());
@@ -124,6 +215,7 @@ public class CustomPackageController {
         return repository.findById(id)
                 .flatMap(existingPackage -> 
                     repository.delete(existingPackage)
+                            .then(evictCache(id))
                             .then(Mono.just(ResponseEntity.noContent().<Void>build()))
                 )
                 .defaultIfEmpty(ResponseEntity.notFound().build());

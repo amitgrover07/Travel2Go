@@ -1,8 +1,10 @@
 package com.travel2go.backend.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.travel2go.backend.model.HolidayPackage;
 import com.travel2go.backend.repository.HolidayPackageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
@@ -19,6 +22,8 @@ import java.util.Map;
 public class HolidayPackageController {
 
     private final HolidayPackageRepository repository;
+    private final ReactiveStringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     private String getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
@@ -33,20 +38,108 @@ public class HolidayPackageController {
         return principal.toString();
     }
 
+    private Mono<Void> evictCache(String id) {
+        System.out.println("Evicting Redis cache for holiday packages...");
+        return redisTemplate.opsForValue().delete("packages:active")
+                .then(redisTemplate.opsForValue().delete("packages:all"))
+                .then(id != null ? redisTemplate.opsForValue().delete("package:" + id) : Mono.empty())
+                .then()
+                .doOnSuccess(v -> System.out.println("Evicted cache keys successfully"))
+                .doOnError(e -> System.err.println("Cache eviction failed: " + e.getMessage()));
+    }
+
     @GetMapping
     public Flux<HolidayPackage> getActivePackages() {
-        return repository.findByStatus("ACTIVE");
+        String cacheKey = "packages:active";
+        return redisTemplate.opsForValue().get(cacheKey)
+                .flatMapMany(json -> {
+                    try {
+                        HolidayPackage[] pkgs = objectMapper.readValue(json, HolidayPackage[].class);
+                        System.out.println("Cache HIT: active packages retrieved from Redis");
+                        return Flux.fromArray(pkgs);
+                    } catch (Exception e) {
+                        System.err.println("Failed to parse cached active packages: " + e.getMessage());
+                        return Flux.empty();
+                    }
+                })
+                .switchIfEmpty(
+                        repository.findByStatus("ACTIVE")
+                                .collectList()
+                                .flatMap(list -> {
+                                    try {
+                                        String json = objectMapper.writeValueAsString(list);
+                                        System.out.println("Cache MISS: active packages loaded from DB and cached");
+                                        return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(1))
+                                                .thenReturn(list);
+                                    } catch (Exception e) {
+                                        System.err.println("Failed to cache active packages: " + e.getMessage());
+                                        return Mono.just(list);
+                                    }
+                                })
+                                .flatMapMany(Flux::fromIterable)
+                );
     }
 
     @GetMapping("/all")
     public Flux<HolidayPackage> getAllPackages() {
-        return repository.findAll();
+        String cacheKey = "packages:all";
+        return redisTemplate.opsForValue().get(cacheKey)
+                .flatMapMany(json -> {
+                    try {
+                        HolidayPackage[] pkgs = objectMapper.readValue(json, HolidayPackage[].class);
+                        System.out.println("Cache HIT: all packages retrieved from Redis");
+                        return Flux.fromArray(pkgs);
+                    } catch (Exception e) {
+                        System.err.println("Failed to parse cached all packages: " + e.getMessage());
+                        return Flux.empty();
+                    }
+                })
+                .switchIfEmpty(
+                        repository.findAll()
+                                .collectList()
+                                .flatMap(list -> {
+                                    try {
+                                        String json = objectMapper.writeValueAsString(list);
+                                        System.out.println("Cache MISS: all packages loaded from DB and cached");
+                                        return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(1))
+                                                .thenReturn(list);
+                                    } catch (Exception e) {
+                                        System.err.println("Failed to cache all packages: " + e.getMessage());
+                                        return Mono.just(list);
+                                    }
+                                })
+                                .flatMapMany(Flux::fromIterable)
+                );
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<HolidayPackage>> getPackageById(@PathVariable String id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
+        String cacheKey = "package:" + id;
+        return redisTemplate.opsForValue().get(cacheKey)
+                .flatMap(json -> {
+                    try {
+                        HolidayPackage pkg = objectMapper.readValue(json, HolidayPackage.class);
+                        System.out.println("Cache HIT: package " + id + " retrieved from Redis");
+                        return Mono.just(ResponseEntity.ok(pkg));
+                    } catch (Exception e) {
+                        System.err.println("Failed to parse cached package: " + e.getMessage());
+                        return Mono.empty();
+                    }
+                })
+                .switchIfEmpty(
+                        repository.findById(id)
+                                .flatMap(pkg -> {
+                                    try {
+                                        String json = objectMapper.writeValueAsString(pkg);
+                                        System.out.println("Cache MISS: package " + id + " loaded from DB and cached");
+                                        return redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(6))
+                                                .thenReturn(ResponseEntity.ok(pkg));
+                                    } catch (Exception e) {
+                                        System.err.println("Failed to cache package: " + e.getMessage());
+                                        return Mono.just(ResponseEntity.ok(pkg));
+                                    }
+                                })
+                )
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
@@ -68,7 +161,7 @@ public class HolidayPackageController {
                         return Mono.just(ResponseEntity.status(409).body(Map.of("message", "Package code already exists")));
                     }
                     return repository.save(holidayPackage)
-                            .map(ResponseEntity::ok);
+                            .flatMap(savedPkg -> evictCache(null).thenReturn(ResponseEntity.ok(savedPkg)));
                 });
     }
 
@@ -108,7 +201,7 @@ public class HolidayPackageController {
                                 existingPackage.getAudit().setUpdatedAt(Instant.now());
 
                                 return repository.save(existingPackage)
-                                        .map(ResponseEntity::ok);
+                                        .flatMap(savedPkg -> evictCache(savedPkg.getId()).thenReturn(ResponseEntity.ok(savedPkg)));
                             });
                 })
                 .defaultIfEmpty(ResponseEntity.notFound().build());
@@ -119,6 +212,7 @@ public class HolidayPackageController {
         return repository.findById(id)
                 .flatMap(existingPackage -> 
                     repository.delete(existingPackage)
+                            .then(evictCache(id))
                             .then(Mono.just(ResponseEntity.noContent().<Void>build()))
                 )
                 .defaultIfEmpty(ResponseEntity.notFound().build());

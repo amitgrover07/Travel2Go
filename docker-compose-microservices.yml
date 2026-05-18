@@ -35,8 +35,11 @@ services:
       - "8082:8082"
     networks:
       - travel2go-network
+    depends_on:
+      - redis
     environment:
       - SERVER_PORT=8082
+      - REDIS_HOST=redis
 
   booking-service:
     build: ./microservices/booking-service
@@ -44,11 +47,14 @@ services:
       - "8083:8083"
     networks:
       - travel2go-network
+    depends_on:
+      - rabbitmq
     environment:
       - SERVER_PORT=8083
       - PACKAGE_SERVICE_URL=http://package-service:8082
       - IDENTITY_SERVICE_URL=http://identity-service:8081
       - NOTIFICATION_SERVICE_URL=http://notification-service:8085
+      - RABBITMQ_HOST=rabbitmq
 
   media-service:
     build: ./microservices/media-service
@@ -65,8 +71,26 @@ services:
       - "8085:8085"
     networks:
       - travel2go-network
+    depends_on:
+      - rabbitmq
     environment:
       - SERVER_PORT=8085
+      - RABBITMQ_HOST=rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - travel2go-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - travel2go-network
 
   frontend:
     build: ./frontend
