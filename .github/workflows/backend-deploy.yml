@@ -103,6 +103,7 @@ jobs:
           set_env "FINAL_REDIS_HOST" "${{ secrets.SPRING_REDIS_HOST }}" "localhost"
           set_env "FINAL_REDIS_PORT" "${{ secrets.SPRING_REDIS_PORT }}" "6379"
           set_env "FINAL_REDIS_PASSWORD" "${{ secrets.SPRING_REDIS_PASSWORD }}" "none"
+          set_env "FINAL_REDIS_SSL_ENABLED" "${{ secrets.SPRING_REDIS_SSL_ENABLED }}" "false"
           set_env "FINAL_RABBITMQ_HOST" "${{ secrets.SPRING_RABBITMQ_HOST }}" "localhost"
           set_env "FINAL_RABBITMQ_PORT" "${{ secrets.SPRING_RABBITMQ_PORT }}" "5672"
           set_env "FINAL_RABBITMQ_USERNAME" "${{ secrets.SPRING_RABBITMQ_USERNAME }}" "guest"
@@ -143,6 +144,7 @@ jobs:
             SPRING_REDIS_HOST=${{ env.FINAL_REDIS_HOST }}
             SPRING_REDIS_PORT=${{ env.FINAL_REDIS_PORT }}
             SPRING_REDIS_PASSWORD=${{ env.FINAL_REDIS_PASSWORD }}
+            SPRING_REDIS_SSL_ENABLED=${{ env.FINAL_REDIS_SSL_ENABLED }}
             SPRING_RABBITMQ_HOST=${{ env.FINAL_RABBITMQ_HOST }}
             SPRING_RABBITMQ_PORT=${{ env.FINAL_RABBITMQ_PORT }}
             SPRING_RABBITMQ_USERNAME=${{ env.FINAL_RABBITMQ_USERNAME }}
