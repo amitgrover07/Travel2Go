@@ -109,7 +109,13 @@ jobs:
           set_env "FINAL_RABBITMQ_USERNAME" "${{ secrets.SPRING_RABBITMQ_USERNAME }}" "guest"
           set_env "FINAL_RABBITMQ_PASSWORD" "${{ secrets.SPRING_RABBITMQ_PASSWORD }}" "guest"
           set_env "FINAL_RABBITMQ_SSL_ENABLED" "${{ secrets.SPRING_RABBITMQ_SSL_ENABLED }}" "false"
-          set_env "FINAL_RABBITMQ_VIRTUAL_HOST" "${{ secrets.SPRING_RABBITMQ_VIRTUAL_HOST }}" "/"
+          if [ -n "${{ secrets.SPRING_RABBITMQ_VIRTUAL_HOST }}" ]; then
+            set_env "FINAL_RABBITMQ_VIRTUAL_HOST" "${{ secrets.SPRING_RABBITMQ_VIRTUAL_HOST }}" "/"
+          elif [ -n "${{ secrets.SPRING_RABBITMQ_USERNAME }}" ]; then
+            set_env "FINAL_RABBITMQ_VIRTUAL_HOST" "${{ secrets.SPRING_RABBITMQ_USERNAME }}" "/"
+          else
+            set_env "FINAL_RABBITMQ_VIRTUAL_HOST" "" "/"
+          fi
 
       - name: Set Cloud Run flags per service
         shell: bash

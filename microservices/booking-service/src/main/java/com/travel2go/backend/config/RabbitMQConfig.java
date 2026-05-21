@@ -4,8 +4,11 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +24,18 @@ public class RabbitMQConfig {
 
     @Value("${app.rabbitmq.routing-key}")
     private String routingKey;
+
+    @Autowired
+    public void configureVirtualHost(ConnectionFactory connectionFactory) {
+        if (connectionFactory instanceof CachingConnectionFactory) {
+            CachingConnectionFactory cachingFactory = (CachingConnectionFactory) connectionFactory;
+            if ("/".equals(cachingFactory.getVirtualHost()) && !"guest".equals(cachingFactory.getUsername())) {
+                System.out.println("Booking-Service: Overriding default virtual host '/' to '" 
+                        + cachingFactory.getUsername() + "' for CloudAMQP compatibility");
+                cachingFactory.setVirtualHost(cachingFactory.getUsername());
+            }
+        }
+    }
 
     @Bean
     public MessageConverter jsonMessageConverter() {
@@ -42,3 +57,4 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(bookingQueue()).to(bookingExchange()).with(routingKey);
     }
 }
+
