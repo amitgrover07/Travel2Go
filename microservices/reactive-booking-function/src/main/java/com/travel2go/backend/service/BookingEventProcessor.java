@@ -54,6 +54,9 @@ public class BookingEventProcessor {
                         })
                         .onErrorResume(e -> Mono.empty())
                 )
+                .retryWhen(reactor.util.retry.Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(2))
+                        .maxBackoff(Duration.ofSeconds(10))
+                        .doBeforeRetry(retrySignal -> log.warn("RabbitMQ connection lost/failed. Retrying in background... Error: {}", retrySignal.failure().getMessage())))
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe();
     }

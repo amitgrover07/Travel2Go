@@ -22,6 +22,8 @@ spring:
       simple:
         auto-startup: true
         acknowledge-mode: manual
+    admin:
+      auto-startup: false
 
 # Custom Business Properties
 app:
