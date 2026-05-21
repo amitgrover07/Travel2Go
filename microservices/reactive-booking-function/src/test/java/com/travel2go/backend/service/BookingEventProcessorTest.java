@@ -37,6 +37,18 @@ public class BookingEventProcessorTest {
     @Mock
     private ReactiveValueOperations<String, Object> reactiveValueOperations;
 
+    @Mock
+    private org.springframework.amqp.core.AmqpAdmin amqpAdmin;
+
+    @Mock
+    private org.springframework.amqp.core.Queue bookingQueue;
+
+    @Mock
+    private org.springframework.amqp.core.DirectExchange bookingExchange;
+
+    @Mock
+    private org.springframework.amqp.core.Binding bookingBinding;
+
     private ObjectMapper objectMapper = new ObjectMapper();
 
     private BookingEventProcessor bookingEventProcessor;
@@ -49,7 +61,11 @@ public class BookingEventProcessorTest {
                 receiver,
                 sender,
                 reactiveRedisTemplate,
-                objectMapper
+                objectMapper,
+                amqpAdmin,
+                bookingQueue,
+                bookingExchange,
+                bookingBinding
         );
         
         org.springframework.test.util.ReflectionTestUtils.setField(bookingEventProcessor, "queueName", "booking.events.queue");

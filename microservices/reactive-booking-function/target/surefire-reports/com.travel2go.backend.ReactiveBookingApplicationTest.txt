@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.travel2go.backend.ReactiveBookingApplicationTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.129 s -- in com.travel2go.backend.ReactiveBookingApplicationTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.107 s -- in com.travel2go.backend.ReactiveBookingApplicationTest

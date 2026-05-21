@@ -19,6 +19,10 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.amqp.core.AmqpAdmin;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Binding;
 import java.time.Duration;
 
 @Service
@@ -30,6 +34,10 @@ public class BookingEventProcessor implements CommandLineRunner {
     private final Sender sender;
     private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final AmqpAdmin amqpAdmin;
+    private final Queue bookingQueue;
+    private final DirectExchange bookingExchange;
+    private final Binding bookingBinding;
 
     @Value("${app.rabbitmq.queue}")
     private String queueName;
@@ -44,7 +52,21 @@ public class BookingEventProcessor implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        declareRabbitMQResources();
         startListening();
+    }
+
+    private void declareRabbitMQResources() {
+        try {
+            log.info("Declaring RabbitMQ resources: exchange={}, queue={}, binding={}", 
+                    bookingExchange.getName(), bookingQueue.getName(), bookingBinding.getRoutingKey());
+            amqpAdmin.declareExchange(bookingExchange);
+            amqpAdmin.declareQueue(bookingQueue);
+            amqpAdmin.declareBinding(bookingBinding);
+            log.info("Successfully declared RabbitMQ resources.");
+        } catch (Exception e) {
+            log.error("Failed to declare RabbitMQ resources: {}", e.getMessage(), e);
+        }
     }
 
     public void startListening() {
@@ -61,7 +83,7 @@ public class BookingEventProcessor implements CommandLineRunner {
                 )
                 .retryWhen(reactor.util.retry.Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(2))
                         .maxBackoff(Duration.ofSeconds(10))
-                        .doBeforeRetry(retrySignal -> log.warn("RabbitMQ connection lost/failed. Retrying in background... Error: {}", retrySignal.failure().getMessage())))
+                        .doBeforeRetry(retrySignal -> log.warn("RabbitMQ connection lost/failed. Retrying in background...", retrySignal.failure())))
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe();
     }

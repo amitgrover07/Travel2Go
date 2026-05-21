@@ -33,15 +33,23 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(bookingQueue()).to(bookingExchange()).with(routingKey);
     }
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RabbitMQConfig.class);
+
     @Bean
     public Sender reactiveSender(org.springframework.amqp.rabbit.connection.ConnectionFactory connectionFactory) {
         com.rabbitmq.client.ConnectionFactory nativeFactory = ((org.springframework.amqp.rabbit.connection.CachingConnectionFactory) connectionFactory).getRabbitConnectionFactory();
+        log.info("Configuring reactive RabbitMQ Sender: Host={}, Port={}, Username={}, VirtualHost={}, SSL={}",
+                nativeFactory.getHost(), nativeFactory.getPort(), nativeFactory.getUsername(),
+                nativeFactory.getVirtualHost(), nativeFactory.isSSL());
         return RabbitFlux.createSender(new SenderOptions().connectionFactory(nativeFactory));
     }
 
     @Bean
     public Receiver reactiveReceiver(org.springframework.amqp.rabbit.connection.ConnectionFactory connectionFactory) {
         com.rabbitmq.client.ConnectionFactory nativeFactory = ((org.springframework.amqp.rabbit.connection.CachingConnectionFactory) connectionFactory).getRabbitConnectionFactory();
+        log.info("Configuring reactive RabbitMQ Receiver: Host={}, Port={}, Username={}, VirtualHost={}, SSL={}",
+                nativeFactory.getHost(), nativeFactory.getPort(), nativeFactory.getUsername(),
+                nativeFactory.getVirtualHost(), nativeFactory.isSSL());
         return RabbitFlux.createReceiver(new ReceiverOptions().connectionFactory(nativeFactory));
     }
 }
