@@ -8,6 +8,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatUtils';
 import AdminLeads from '../components/AdminLeads';
+import AdminUsers from '../components/AdminUsers';
 
 const quillModules = {
   toolbar: [
@@ -749,6 +750,15 @@ const Admin = () => {
               >
                 <Users className="h-5 w-5" />
               </button>
+              <button
+                onClick={() => setView('users')}
+                title="User Management"
+                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                  view === 'users' ? 'text-teal-700 bg-teal-100' : 'text-teal-600 hover:text-teal-800 hover:bg-teal-50'
+                }`}
+              >
+                <User className="h-5 w-5" />
+              </button>
               <button 
                 onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
                 title="Global Terms"
@@ -781,6 +791,12 @@ const Admin = () => {
           {view === 'leads' && (
             <div className="w-full bg-white p-6 sm:p-8 rounded-lg shadow-sm border border-gray-200">
               <AdminLeads packages={packages} customPackages={customPackages} />
+            </div>
+          )}
+
+          {view === 'users' && (
+            <div className="w-full bg-white p-6 sm:p-8 rounded-lg shadow-sm border border-gray-200">
+              <AdminUsers />
             </div>
           )}
           
