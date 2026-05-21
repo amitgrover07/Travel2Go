@@ -27,8 +27,6 @@ jobs:
           - service: notification-service
           - service: api-gateway
           - service: reactive-booking-function
-          - service: redis
-          - service: rabbitmq
 
     steps:
       - name: Checkout repository
