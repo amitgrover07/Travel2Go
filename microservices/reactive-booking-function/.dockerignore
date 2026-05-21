@@ -1,5 +1,6 @@
-target/*
-!.mvn
-!mvnw
-!pom.xml
-!src
+.git
+.gitignore
+.mvn
+mvnw
+src/
+pom.xml
