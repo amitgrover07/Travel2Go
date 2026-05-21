@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
 import com.travel2go.backend.model.LeadAuditLog;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -31,6 +32,7 @@ public class BookingController {
     private final SettingsClient settingsClient;
     private final BookingRepository bookingRepository;
     private final LeadRepository leadRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
@@ -63,6 +65,20 @@ public class BookingController {
                 .build();
             
             bookingRepository.save(booking).block();
+
+            // Publish event to RabbitMQ
+            try {
+                java.util.Map<String, Object> eventPayload = java.util.Map.of(
+                    "eventId", UUID.randomUUID().toString(),
+                    "eventType", "BOOKING_INITIATED",
+                    "timestamp", System.currentTimeMillis(),
+                    "booking", booking
+                );
+                rabbitTemplate.convertAndSend("booking.exchange", "booking.initiated", eventPayload);
+                System.out.println("Published booking event to RabbitMQ for booking ID: " + booking.getId());
+            } catch (Exception amqpEx) {
+                System.err.println("Failed to publish booking event to RabbitMQ: " + amqpEx.getMessage());
+            }
 
             // Fetch package details for the PDF via Feign
             HolidayPackage pkg;

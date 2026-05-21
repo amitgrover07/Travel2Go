@@ -26,6 +26,9 @@ jobs:
           - service: media-service
           - service: notification-service
           - service: api-gateway
+          - service: reactive-booking-function
+          - service: redis
+          - service: rabbitmq
 
     steps:
       - name: Checkout repository
@@ -39,10 +42,20 @@ jobs:
           cache: maven
 
       - name: Build common-models
-        run: cd microservices/common-models && ./mvnw clean install
+        run: |
+          if [ -f "microservices/${{ matrix.service }}/pom.xml" ]; then
+            cd microservices/common-models && ./mvnw clean install
+          else
+            echo "Non-Java service. Skipping common-models build."
+          fi
 
       - name: Build Microservice
-        run: cd microservices/${{ matrix.service }} && ./mvnw clean package -DskipTests
+        run: |
+          if [ -f "microservices/${{ matrix.service }}/pom.xml" ]; then
+            cd microservices/${{ matrix.service }} && ./mvnw clean package -DskipTests
+          else
+            echo "No pom.xml found. Skipping Maven build for ${{ matrix.service }}."
+          fi
 
       - name: Google Auth
         id: auth
@@ -89,6 +102,13 @@ jobs:
           set_env "FINAL_BOOKING_URL" "${{ secrets.BOOKING_SERVICE_URL }}" "http://booking-tbd"
           set_env "FINAL_MEDIA_URL" "${{ secrets.MEDIA_SERVICE_URL }}" "http://media-tbd"
           set_env "FINAL_NOTIFICATION_URL" "${{ secrets.NOTIFICATION_SERVICE_URL }}" "http://notification-tbd"
+          set_env "FINAL_REDIS_HOST" "${{ secrets.SPRING_REDIS_HOST }}" "localhost"
+          set_env "FINAL_REDIS_PORT" "${{ secrets.SPRING_REDIS_PORT }}" "6379"
+          set_env "FINAL_REDIS_PASSWORD" "${{ secrets.SPRING_REDIS_PASSWORD }}" ""
+          set_env "FINAL_RABBITMQ_HOST" "${{ secrets.SPRING_RABBITMQ_HOST }}" "localhost"
+          set_env "FINAL_RABBITMQ_PORT" "${{ secrets.SPRING_RABBITMQ_PORT }}" "5672"
+          set_env "FINAL_RABBITMQ_USERNAME" "${{ secrets.SPRING_RABBITMQ_USERNAME }}" "guest"
+          set_env "FINAL_RABBITMQ_PASSWORD" "${{ secrets.SPRING_RABBITMQ_PASSWORD }}" "guest"
 
       - name: Set Cloud Run flags per service
         shell: bash
@@ -121,3 +141,10 @@ jobs:
             BOOKING_SERVICE_URL=${{ env.FINAL_BOOKING_URL }}
             MEDIA_SERVICE_URL=${{ env.FINAL_MEDIA_URL }}
             NOTIFICATION_SERVICE_URL=${{ env.FINAL_NOTIFICATION_URL }}
+            SPRING_REDIS_HOST=${{ env.FINAL_REDIS_HOST }}
+            SPRING_REDIS_PORT=${{ env.FINAL_REDIS_PORT }}
+            SPRING_REDIS_PASSWORD=${{ env.FINAL_REDIS_PASSWORD }}
+            SPRING_RABBITMQ_HOST=${{ env.FINAL_RABBITMQ_HOST }}
+            SPRING_RABBITMQ_PORT=${{ env.FINAL_RABBITMQ_PORT }}
+            SPRING_RABBITMQ_USERNAME=${{ env.FINAL_RABBITMQ_USERNAME }}
+            SPRING_RABBITMQ_PASSWORD=${{ env.FINAL_RABBITMQ_PASSWORD }}

@@ -49,6 +49,9 @@ services:
       - PACKAGE_SERVICE_URL=http://package-service:8082
       - IDENTITY_SERVICE_URL=http://identity-service:8081
       - NOTIFICATION_SERVICE_URL=http://notification-service:8085
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
 
   media-service:
     build: ./microservices/media-service
@@ -76,6 +79,36 @@ services:
       - travel2go-network
     depends_on:
       - api-gateway
+
+  redis:
+    image: redis:alpine
+    container_name: travel2go-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - travel2go-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: travel2go-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - travel2go-network
+
+  reactive-booking-function:
+    build: ./microservices/reactive-booking-function
+    ports:
+      - "8086:8080"
+    networks:
+      - travel2go-network
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      - SPRING_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
 
 networks:
   travel2go-network:
