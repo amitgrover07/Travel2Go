@@ -107,6 +107,7 @@ jobs:
           set_env "FINAL_RABBITMQ_PORT" "${{ secrets.SPRING_RABBITMQ_PORT }}" "5672"
           set_env "FINAL_RABBITMQ_USERNAME" "${{ secrets.SPRING_RABBITMQ_USERNAME }}" "guest"
           set_env "FINAL_RABBITMQ_PASSWORD" "${{ secrets.SPRING_RABBITMQ_PASSWORD }}" "guest"
+          set_env "FINAL_RABBITMQ_SSL_ENABLED" "${{ secrets.SPRING_RABBITMQ_SSL_ENABLED }}" "false"
 
       - name: Set Cloud Run flags per service
         shell: bash
@@ -146,3 +147,4 @@ jobs:
             SPRING_RABBITMQ_PORT=${{ env.FINAL_RABBITMQ_PORT }}
             SPRING_RABBITMQ_USERNAME=${{ env.FINAL_RABBITMQ_USERNAME }}
             SPRING_RABBITMQ_PASSWORD=${{ env.FINAL_RABBITMQ_PASSWORD }}
+            SPRING_RABBITMQ_SSL_ENABLED=${{ env.FINAL_RABBITMQ_SSL_ENABLED }}
