@@ -18,12 +18,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import org.springframework.boot.CommandLineRunner;
 import java.time.Duration;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class BookingEventProcessor {
+public class BookingEventProcessor implements CommandLineRunner {
 
     private final Receiver receiver;
     private final Sender sender;
@@ -41,7 +42,11 @@ public class BookingEventProcessor {
 
     private Disposable subscription;
 
-    @PostConstruct
+    @Override
+    public void run(String... args) throws Exception {
+        startListening();
+    }
+
     public void startListening() {
         log.info("Starting reactive RabbitMQ consumer on queue: {}", queueName);
         

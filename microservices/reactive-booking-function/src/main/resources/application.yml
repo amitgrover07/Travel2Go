@@ -20,8 +20,10 @@ spring:
     password: ${SPRING_RABBITMQ_PASSWORD:guest}
     listener:
       simple:
-        auto-startup: true
+        auto-startup: false
         acknowledge-mode: manual
+      direct:
+        auto-startup: false
     admin:
       auto-startup: false
 
