@@ -1,4 +1,12 @@
-{"type": "service_account", "project_id": "travel2go-495007", "private_key_id": "fake", "private_key": "-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9fake
------END PRIVATE KEY-----
-", "client_email": "fake@fake.iam.gserviceaccount.com", "client_id": "fake", "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token", "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs", "client_x509_cert_url": "fake"}
+{
+  "type": "service_account",
+  "project_id": "travel2go-495007",
+  "private_key_id": "fake",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCywu1L2cWzHT96\nkklwuCn5wiq+XIAJYcIQtNVjqCb9GC5euAf/Nw/tqhM36egkDVP9HW4J6rLya5os\nSANBHlmdxwn5eo21xgWQigU6YYfloWqn87s6pZ4IsktyI1zBgCXpmCqG0HpFZshx\nDehI6uttK9E5MIH/p0o9cT9MYABIPahHnkW5jk9KeeVtoAz+g3bB3QSoretw96XQ\nGLtCCcwKLy+vKT7V7pJgqNNFjqNS8BoaWRJmqH/bQfHiGHltDf64IssqNgyP7J4I\nbsyH858uXB17Cc2JzeBZjSjqcEhf3vMwI7DoUP7PsgLuxGG9Ep544EdM3nL0DIS1\nPVQQ//7hAgMBAAECggEAA585N2KY07+dlgZRhF4I5LF7U/rUEcyYJeZCFhg1vQZQ\nxzTHnbNQCG7cH5OG03ctKtleLceCe3C0cZ3+aeL7ahvarwI9jY+u9G4le7i27A9M\nlc1Vj3NEW9T//BatFhMagYyGnQ9rkM0rtcW0PYj7/uzmuvfJhIRvV8YcBBhEXTJQ\n7JsDEWNIgHOv0/NyFWLAjqNOzofsy3rWJ6zu5KfmdCCEjszT4gFT8ImiNJmx3Dhx\nfD9MsGBFRzjY0z/heKYGqy+w/zLSFihs5u2GpAB118YW6KfnMkIK9QNr3OrvvgZ3\n/hXNMBSZSx1ApBuwbWg4Xjr46IwIDhCIePl0EPbDaQKBgQDntfjfQsH1ylTxupUu\nFmtGDHeQPDjvHoYhMuvpTAI0MxvgkVqQCYS/fTZeCTzy0EaPx00Dl7Hr6eWu23GY\npV8fmdfTecIe2ooGv+dQ1mlEQQLb4PGxcTsFR+LOCw9Q/0Pk2UZsgZ6gdwHypO5c\n1SRD6uF91N49GvHpXNeCQVwN2QKBgQDFgArSeC0s2T+4RQcOdjAPFoo3RKxyNPg0\nGRjzGoffjW95kK8BiYwUIBbcPIHMSdPLNZ2smL+/cTpSYd+vJ72nuQh+AyV7DSBC\niFUOO2naGUslvqn7uXuCyOk0Oaq5vYmhFvhl2Ude6Gc8iUvg+v0fEItaDpSvxMu/\ntW7M71zsSQKBgQDDG2dEF2JbJNQB96pF9Hq/sR+8Q/ls37bxnX8oIuh4K9D9d2da\ngalV1IlDBWRc0SOZTah7rfATRhAw/HbaoeVHJrOlTpE2ia5PoKeWWfSplFRj8TWS\nxFV+TNmdxZJQEaGJwaqbE0oOtCbfuiE76f1vcwgMfIHl0hqA9bxB4ecxgQKBgCaY\nQgUlNPbJsZkJ7DoYQIYCSppIUkazMTnFGcoQCjNWiU1BR+HOBlC8gJsjO943IytX\n2+sponb/4nzM4ZBx/K71CsLNTJrCUuaNi8mPNL1JKhVDMCaf9ZH2PxRUnJdVgbq4\nKWyFzFuwoNQEpI5fne1fJ0w/AzFiDMr24qMrt4X5AoGBAIIrSRi/KEIWPzAr10nv\nQuvGtKUWl6uSZSa5CyItdmVyi/LzBi9/naSP/HS37U6TURFpFORQMM1N/BGRSDi+\n/NBobyfTE0y6HVeV34rMAqAACVjgv0bG1Ec5Q0uXFyU4iQ8Ix4deXi2mMFpmopWR\nLV/BWu5nqwyypEhlx62ZUG0w\n-----END PRIVATE KEY-----\n",
+  "client_email": "fake@fake.iam.gserviceaccount.com",
+  "client_id": "fake",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "fake"
+}
