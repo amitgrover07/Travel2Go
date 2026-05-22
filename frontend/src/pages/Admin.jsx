@@ -726,47 +726,52 @@ const Admin = () => {
               <button
                 onClick={() => setView('packages')}
                 title="Packages"
-                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
                   view === 'packages' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
                 }`}
               >
                 <Package className="h-5 w-5" />
+                <span className="text-sm font-semibold hidden md:inline">Packages</span>
               </button>
               <button
                 onClick={() => { setView('customPackages'); fetchCustomPackages(); }}
                 title="Custom Packages"
-                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
                   view === 'customPackages' ? 'text-purple-700 bg-purple-100' : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
                 }`}
               >
                 <Star className="h-5 w-5" />
+                <span className="text-sm font-semibold hidden md:inline">Custom Packages</span>
               </button>
               <button
                 onClick={() => setView('leads')}
                 title="Leads CRM"
-                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
                   view === 'leads' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
                 }`}
               >
                 <Users className="h-5 w-5" />
+                <span className="text-sm font-semibold hidden md:inline">Leads CRM</span>
               </button>
               <button
                 onClick={() => setView('users')}
                 title="User Management"
-                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
                   view === 'users' ? 'text-teal-700 bg-teal-100' : 'text-teal-600 hover:text-teal-800 hover:bg-teal-50'
                 }`}
               >
                 <User className="h-5 w-5" />
+                <span className="text-sm font-semibold hidden md:inline">User Management</span>
               </button>
               <button 
                 onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
                 title="Global Terms"
-                className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
                   view === 'settings' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
                 }`}
               >
                 <Settings className="h-5 w-5" />
+                <span className="text-sm font-semibold hidden md:inline">Global Terms</span>
               </button>
             </div>
             <div className="flex items-center space-x-4">
