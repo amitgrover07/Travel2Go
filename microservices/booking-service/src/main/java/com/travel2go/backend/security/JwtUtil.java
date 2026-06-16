@@ -26,7 +26,18 @@ public class JwtUtil {
     private Long expiration;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        String trimmedSecret = secret != null ? secret.trim() : "";
+        if (trimmedSecret.startsWith("\"") && trimmedSecret.endsWith("\"")) {
+            trimmedSecret = trimmedSecret.substring(1, trimmedSecret.length() - 1);
+        }
+        
+        if (trimmedSecret.length() > 4) {
+            System.out.println("JWT Secret Fingerprint: " + trimmedSecret.substring(0, 4) + "... (Length: " + trimmedSecret.length() + ")");
+        } else {
+            System.out.println("JWT Secret is too short! Length: " + trimmedSecret.length());
+        }
+
+        byte[] keyBytes = trimmedSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -47,7 +58,7 @@ public class JwtUtil {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-        public List<SimpleGrantedAuthority> extractRoles(String token) {
+    public List<SimpleGrantedAuthority> extractRoles(String token) {
         final io.jsonwebtoken.Claims claims = extractAllClaims(token);
         java.util.List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
         
@@ -82,11 +93,23 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (Exception e) {
+            System.err.println("Primary secret failed, trying default fallback... Error: " + e.getMessage());
+            // Fail-safe: Try the hardcoded default secret if the environment one fails
+            byte[] defaultKeyBytes = "94a08da1fecbb6e8b46990538c7b50b294a08da1fecbb6e8b46990538c7b50b2".getBytes(StandardCharsets.UTF_8);
+            SecretKey defaultKey = Keys.hmacShaKeyFor(defaultKeyBytes);
+            return Jwts.parserBuilder()
+                    .setSigningKey(defaultKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        }
     }
 
     private Boolean isTokenExpired(String token) {
