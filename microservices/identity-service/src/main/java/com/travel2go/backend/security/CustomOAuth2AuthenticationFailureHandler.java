@@ -17,9 +17,6 @@ import java.util.Enumeration;
 @Slf4j
 public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
-    @org.springframework.beans.factory.annotation.Value("${app.oauth2.redirect-uri}")
-    private String redirectUri;
-
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
         log.error("OAuth2 Authentication Failure: {}", exception.getMessage());
@@ -43,8 +40,7 @@ public class CustomOAuth2AuthenticationFailureHandler extends SimpleUrlAuthentic
             log.debug("No cookies found in request");
         }
 
-        String baseLoginUrl = redirectUri != null ? redirectUri.replace("/oauth2/redirect", "/login") : "https://travel2go.in/login";
-        String targetUrl = UriComponentsBuilder.fromUriString(baseLoginUrl)
+        String targetUrl = UriComponentsBuilder.fromUriString("https://travel2go.in/login")
                 .queryParam("error", true)
                 .queryParam("message", exception.getLocalizedMessage())
                 .build().toUriString();

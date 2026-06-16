@@ -18,17 +18,14 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username).block();
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email).block();
         if (user == null) {
-            user = userRepository.findByPhone(username).block();
-        }
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found with email or phone: " + username);
+            throw new UsernameNotFoundException("User not found with email: " + email);
         }
 
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail() != null ? user.getEmail() : user.getPhone(),
+                user.getEmail(),
                 user.getPassword() != null ? user.getPassword() : "", // OAuth2 users might not have a password
                 user.isEnabled(),
                 true,

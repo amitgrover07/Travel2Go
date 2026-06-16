@@ -12,7 +12,6 @@ import ImageGallery from './pages/ImageGallery';
 import PackageDetails from './pages/PackageDetails';
 
 import MainLayout from './components/MainLayout';
-import { SessionProvider } from './auth/SessionProvider';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -24,35 +23,33 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <SessionProvider>
-      <Router>
-        <Toaster position="top-right" />
-        <Routes>
-          <Route path="/" element={<MainLayout><Home /></MainLayout>} />
-          <Route path="/packages/:id" element={<MainLayout><PackageDetails /></MainLayout>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <Admin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/images"
-            element={
-              <ProtectedRoute>
-                <ImageGallery />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </Router>
-    </SessionProvider>
+    <Router>
+      <Toaster position="top-right" />
+      <Routes>
+        <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+        <Route path="/packages/:id" element={<MainLayout><PackageDetails /></MainLayout>} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/images"
+          element={
+            <ProtectedRoute>
+              <ImageGallery />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
