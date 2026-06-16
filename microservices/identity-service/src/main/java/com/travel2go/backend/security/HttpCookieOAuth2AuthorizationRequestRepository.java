@@ -38,10 +38,10 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
         }
 
         log.debug("Saving Authorization Request to cookie");
-        addCookie(response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME, serialize(authorizationRequest), cookieExpireSeconds);
+        addCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME, serialize(authorizationRequest), cookieExpireSeconds);
         String redirectUriAfterLogin = request.getParameter(REDIRECT_URI_PARAM_COOKIE_NAME);
         if (StringUtils.hasText(redirectUriAfterLogin)) {
-            addCookie(response, REDIRECT_URI_PARAM_COOKIE_NAME, redirectUriAfterLogin, cookieExpireSeconds);
+            addCookie(request, response, REDIRECT_URI_PARAM_COOKIE_NAME, redirectUriAfterLogin, cookieExpireSeconds);
         }
     }
 
@@ -63,24 +63,36 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
         return (OAuth2AuthorizationRequest) SerializationUtils.deserialize(Base64.getUrlDecoder().decode(cookie.getValue()));
     }
 
-    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+    private void addCookie(HttpServletRequest request, HttpServletResponse response, String name, String value, int maxAge) {
+        boolean isLocal = false;
+        String host = request.getHeader("Host");
+        if (host != null && (host.contains("localhost") || host.contains("127.0.0.1"))) {
+            isLocal = true;
+        }
+
         org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from(name, value)
                 .path("/")
                 .httpOnly(true)
                 .maxAge(maxAge)
-                .secure(true)
-                .sameSite("None")
+                .secure(!isLocal && request.isSecure())
+                .sameSite(isLocal ? "Lax" : "None")
                 .build();
         response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     private void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
+        boolean isLocal = false;
+        String host = request.getHeader("Host");
+        if (host != null && (host.contains("localhost") || host.contains("127.0.0.1"))) {
+            isLocal = true;
+        }
+
         org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from(name, "")
                 .path("/")
                 .maxAge(0)
                 .httpOnly(true)
-                .secure(true)
-                .sameSite("None")
+                .secure(!isLocal && request.isSecure())
+                .sameSite(isLocal ? "Lax" : "None")
                 .build();
         response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
     }
