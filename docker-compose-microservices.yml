@@ -28,6 +28,8 @@ services:
     environment:
       - SERVER_PORT=8081
       - NOTIFICATION_SERVICE_URL=http://notification-service:8085
+      - SPRING_CLOUD_GCP_FIRESTORE_EMULATOR_ENABLED=true
+      - SPRING_CLOUD_GCP_FIRESTORE_HOST_PORT=host.docker.internal:8089
 
   package-service:
     build: ./microservices/package-service
@@ -37,6 +39,8 @@ services:
       - travel2go-network
     environment:
       - SERVER_PORT=8082
+      - SPRING_CLOUD_GCP_FIRESTORE_EMULATOR_ENABLED=true
+      - SPRING_CLOUD_GCP_FIRESTORE_HOST_PORT=host.docker.internal:8089
 
   booking-service:
     build: ./microservices/booking-service
@@ -50,6 +54,8 @@ services:
       - IDENTITY_SERVICE_URL=http://identity-service:8081
       - NOTIFICATION_SERVICE_URL=http://notification-service:8085
       - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_CLOUD_GCP_FIRESTORE_EMULATOR_ENABLED=true
+      - SPRING_CLOUD_GCP_FIRESTORE_HOST_PORT=host.docker.internal:8089
     depends_on:
       - rabbitmq
 
@@ -70,6 +76,8 @@ services:
       - travel2go-network
     environment:
       - SERVER_PORT=8085
+      - SPRING_CLOUD_GCP_FIRESTORE_EMULATOR_ENABLED=true
+      - SPRING_CLOUD_GCP_FIRESTORE_HOST_PORT=host.docker.internal:8089
 
   frontend:
     build: ./frontend
