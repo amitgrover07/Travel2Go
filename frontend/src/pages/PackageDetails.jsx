@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import api from '../services/api';
 import SEO from '../components/SEO';
 import { formatCurrency, numberToWords, isHtmlEmpty, cleanHtmlForDisplay } from '../utils/formatUtils';
+import { PackageDetailsSkeleton } from '../components/Skeletons';
 
 const renderBulletPoints = (text) => {
   if (!text) return null;
@@ -283,7 +284,7 @@ const PackageDetails = () => {
   }, [pkg, location.state?.autoOpenBooking]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <PackageDetailsSkeleton />;
   }
 
   if (!pkg) {

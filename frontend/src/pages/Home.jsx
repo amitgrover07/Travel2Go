@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Clock } from 'lucide-react';
 import api from '../services/api';
 import { formatCurrency, numberToWords } from '../utils/formatUtils';
+import { PackageCardSkeleton } from '../components/Skeletons';
 
 const stripHtml = (html) => {
   if (!html) return "";
@@ -79,10 +80,6 @@ const Home = () => {
     return type === activeTab;
   });
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-
   return (
     <div className="bg-gray-50 flex-grow">
       <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -116,7 +113,11 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
-          {filteredPackages.length > 0 ? (
+          {loading ? (
+            Array.from({ length: 6 }).map((_, idx) => (
+              <PackageCardSkeleton key={idx} />
+            ))
+          ) : filteredPackages.length > 0 ? (
             filteredPackages.map((pkg) => (
               <Link
                 key={pkg.id}
