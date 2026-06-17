@@ -49,6 +49,18 @@ public class GcsStorageService {
             extension = originalFileName.substring(originalFileName.lastIndexOf("."));
         }
         
+        // Validate file extension
+        String ext = extension.toLowerCase();
+        if (!ext.equals(".png") && !ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".gif") && !ext.equals(".webp") && !ext.equals(".pdf")) {
+            throw new IllegalArgumentException("Unsupported file type: only images (PNG, JPG, GIF, WebP) and PDF files are allowed.");
+        }
+
+        // Validate content-type
+        String contentType = file.getContentType();
+        if (contentType == null || (!contentType.startsWith("image/") && !contentType.equals("application/pdf"))) {
+            throw new IllegalArgumentException("Invalid content type: only image and PDF formats are allowed.");
+        }
+
         String fileName = UUID.randomUUID().toString() + extension;
         BlobId blobId = BlobId.of(bucketName, fileName);
         BlobInfo.Builder blobInfoBuilder = BlobInfo.newBuilder(blobId)

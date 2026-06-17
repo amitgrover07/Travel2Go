@@ -51,13 +51,20 @@ public class BookingController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Location is required"));
             }
 
+            // Strip any HTML tags to prevent XSS injection in admin dashboards
+            String cleanFirstName = request.getFirstName().replaceAll("<[^>]*>", "").trim();
+            String cleanLastName = request.getLastName() != null ? request.getLastName().replaceAll("<[^>]*>", "").trim() : "";
+            String cleanEmail = request.getEmail().trim();
+            String cleanPhone = request.getPhone().trim();
+            String cleanLocation = request.getLocation().replaceAll("<[^>]*>", "").trim();
+
             // Save the booking to the database
             Booking booking = Booking.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .location(request.getLocation())
+                .firstName(cleanFirstName)
+                .lastName(cleanLastName)
+                .email(cleanEmail)
+                .phone(cleanPhone)
+                .location(cleanLocation)
                 .packageId(request.getPackageId())
                 .packageTitle(request.getPackageTitle())
                 .bookingDate(new java.util.Date())

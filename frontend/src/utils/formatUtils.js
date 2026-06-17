@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify';
+
 export const formatCurrency = (amount, currency = 'INR') => {
   if (amount === undefined || amount === null) return '';
   return new Intl.NumberFormat('en-IN', {
@@ -67,5 +69,5 @@ export const cleanHtmlForDisplay = (html) => {
   // 3. Replace any remaining <br> with a space
   clean = clean.replace(/<br\s*\/?>/gi, ' ');
   
-  return clean;
+  return DOMPurify.sanitize(clean);
 };

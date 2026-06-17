@@ -66,15 +66,23 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        if (userRepository.findByEmail(request.getEmail()).block() != null) {
+        if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            return ResponseEntity.badRequest().body("Valid email is required");
+        }
+        if (request.getPassword() == null || request.getPassword().length() < 8) {
+            return ResponseEntity.badRequest().body("Password must be at least 8 characters");
+        }
+
+        String cleanEmail = request.getEmail().trim().toLowerCase();
+        if (userRepository.findByEmail(cleanEmail).block() != null) {
             return ResponseEntity.badRequest().body("Email already exists");
         }
 
         User user = User.builder()
-                .email(request.getEmail())
+                .email(cleanEmail)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .provider("LOCAL")
-                .roles(List.of("USER")) // Or "ADMIN" depending on business logic
+                .roles(List.of("USER"))
                 .enabled(true)
                 .build();
 
@@ -84,7 +92,12 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).block();
+        if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            return ResponseEntity.badRequest().body("Valid email is required");
+        }
+
+        String cleanEmail = request.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmail(cleanEmail).block();
         if (user == null || !"LOCAL".equals(user.getProvider())) {
             return ResponseEntity.badRequest().body("User not found or is using social login");
         }
@@ -93,29 +106,42 @@ public class AuthController {
         String code = String.format("%06d", new Random().nextInt(999999));
         
         // Save or update code
-        verificationCodeRepository.deleteByEmail(request.getEmail()).block(); // Delete old codes
+        verificationCodeRepository.deleteByEmail(cleanEmail).block(); // Delete old codes
         VerificationCode verificationCode = VerificationCode.builder()
-                .email(request.getEmail())
+                .email(cleanEmail)
                 .code(code)
                 .expiryDate(new java.util.Date(System.currentTimeMillis() + 15 * 60 * 1000))
                 .build();
         verificationCodeRepository.save(verificationCode).block();
 
         // Send email via notification service
-        notificationClient.sendEmailOtp(request.getEmail(), code);
+        notificationClient.sendEmailOtp(cleanEmail, code);
 
         return ResponseEntity.ok("Verification code sent to email");
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        VerificationCode code = verificationCodeRepository.findByEmailAndCode(request.getEmail(), request.getCode()).block();
+        if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            return ResponseEntity.badRequest().body("Valid email is required");
+        }
+        if (request.getCode() == null || request.getCode().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Verification code is required");
+        }
+        if (request.getNewPassword() == null || request.getNewPassword().length() < 8) {
+            return ResponseEntity.badRequest().body("New password must be at least 8 characters");
+        }
+
+        String cleanEmail = request.getEmail().trim().toLowerCase();
+        String cleanCode = request.getCode().trim();
+
+        VerificationCode code = verificationCodeRepository.findByEmailAndCode(cleanEmail, cleanCode).block();
         
         if (code == null || code.isExpired()) {
             return ResponseEntity.badRequest().body("Invalid or expired verification code");
         }
 
-        User user = userRepository.findByEmail(request.getEmail()).block();
+        User user = userRepository.findByEmail(cleanEmail).block();
         if (user == null) {
             return ResponseEntity.badRequest().body("User not found");
         }
@@ -123,42 +149,53 @@ public class AuthController {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user).block();
         
-        verificationCodeRepository.deleteByEmail(request.getEmail()).block();
+        verificationCodeRepository.deleteByEmail(cleanEmail).block();
 
         return ResponseEntity.ok("Password reset successfully");
     }
 
     @PostMapping("/send-login-otp")
     public ResponseEntity<?> sendLoginOtp(@RequestBody PhoneAuthRequest request) {
-        if (request.getPhone() == null || request.getPhone().isEmpty()) {
-            return ResponseEntity.badRequest().body("Phone number is required");
+        if (request.getPhone() == null || request.getPhone().trim().length() < 10) {
+            return ResponseEntity.badRequest().body("Valid phone number is required (min 10 characters)");
         }
         
+        String cleanPhone = request.getPhone().replaceAll("[^0-9+]", "");
         String code = String.format("%06d", new Random().nextInt(999999));
         
-        verificationCodeRepository.deleteByPhone(request.getPhone()).block();
+        verificationCodeRepository.deleteByPhone(cleanPhone).block();
         VerificationCode verificationCode = VerificationCode.builder()
-                .phone(request.getPhone())
+                .phone(cleanPhone)
                 .code(code)
                 .expiryDate(new java.util.Date(System.currentTimeMillis() + 5 * 60 * 1000))
                 .build();
         verificationCodeRepository.save(verificationCode).block();
 
-        notificationClient.sendSmsOtp(request.getPhone(), code);
+        notificationClient.sendSmsOtp(cleanPhone, code);
         return ResponseEntity.ok("OTP sent to phone");
     }
 
     @PostMapping("/verify-login-otp")
     public ResponseEntity<?> verifyLoginOtp(@RequestBody VerifyOtpRequest request) {
-        VerificationCode code = verificationCodeRepository.findByPhoneAndCode(request.getPhone(), request.getOtp()).block();
+        if (request.getPhone() == null || request.getPhone().trim().length() < 10) {
+            return ResponseEntity.badRequest().body("Valid phone number is required");
+        }
+        if (request.getOtp() == null || request.getOtp().trim().length() != 6) {
+            return ResponseEntity.badRequest().body("OTP must be exactly 6 digits");
+        }
+
+        String cleanPhone = request.getPhone().replaceAll("[^0-9+]", "");
+        String cleanOtp = request.getOtp().trim();
+
+        VerificationCode code = verificationCodeRepository.findByPhoneAndCode(cleanPhone, cleanOtp).block();
         if (code == null || code.isExpired()) {
             return ResponseEntity.status(401).body("Invalid or expired OTP");
         }
 
-        User user = userRepository.findByPhone(request.getPhone()).block();
+        User user = userRepository.findByPhone(cleanPhone).block();
         if (user == null) {
             user = User.builder()
-                    .phone(request.getPhone())
+                    .phone(cleanPhone)
                     .provider("PHONE")
                     .roles(List.of("USER"))
                     .enabled(true)
@@ -167,12 +204,12 @@ public class AuthController {
         }
 
         String role = user.getRoles() != null && !user.getRoles().isEmpty() ? user.getRoles().get(0) : "USER";
-        String name = user.getName() != null ? user.getName() : request.getPhone();
+        String name = user.getName() != null ? user.getName() : cleanPhone;
         String picture = user.getPicture() != null ? user.getPicture() : "";
         
-        String token = jwtUtil.generateToken(request.getPhone(), role, name, picture);
+        String token = jwtUtil.generateToken(cleanPhone, role, name, picture);
         
-        verificationCodeRepository.deleteByPhone(request.getPhone()).block();
+        verificationCodeRepository.deleteByPhone(cleanPhone).block();
 
         return ResponseEntity.ok(new AuthResponse(token));
     }

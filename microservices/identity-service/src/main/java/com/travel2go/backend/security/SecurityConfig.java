@@ -30,6 +30,7 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final CustomOAuth2AuthenticationFailureHandler customOAuth2AuthenticationFailureHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -44,8 +45,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com; object-src 'none'; frame-ancestors 'self'"))
+                        .frameOptions(frame -> frame.sameOrigin())
+                        .referrerPolicy(referrer -> referrer.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .permissionsPolicy(permissions -> permissions.policy("camera=(), microphone=(), geolocation=()"))
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/packages/**").permitAll()
@@ -77,6 +83,7 @@ public class SecurityConfig {
                         })
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
