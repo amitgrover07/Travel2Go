@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Clock } from 'lucide-react';
 import api from '../services/api';
 import { formatCurrency, numberToWords } from '../utils/formatUtils';
+import { HomeSkeleton } from '../components/SkeletonLoader';
 
 const stripHtml = (html) => {
   if (!html) return "";
@@ -80,7 +81,7 @@ const Home = () => {
   });
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <HomeSkeleton />;
   }
 
   return (

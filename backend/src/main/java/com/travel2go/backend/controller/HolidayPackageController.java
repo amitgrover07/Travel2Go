@@ -64,6 +64,12 @@ public class HolidayPackageController {
                 .build();
         holidayPackage.setAudit(audit);
 
+        if (holidayPackage.getPricing() != null) {
+            double base = holidayPackage.getPricing().getBasePrice();
+            double disc = holidayPackage.getPricing().getDiscountPercentage();
+            holidayPackage.getPricing().setFinalPrice(Math.ceil(base - (base * (disc / 100.0))));
+        }
+
         Boolean exists = repository.findByPackageCode(holidayPackage.getPackageCode()).hasElements().block();
         if (Boolean.TRUE.equals(exists)) {
             return ResponseEntity.status(409).body(Map.of("message", "Package code already exists"));
@@ -98,6 +104,12 @@ public class HolidayPackageController {
         existingPackage.setSpecialNotes(holidayPackageDetails.getSpecialNotes());
 
         existingPackage.setDuration(holidayPackageDetails.getDuration());
+        
+        if (holidayPackageDetails.getPricing() != null) {
+            double base = holidayPackageDetails.getPricing().getBasePrice();
+            double disc = holidayPackageDetails.getPricing().getDiscountPercentage();
+            holidayPackageDetails.getPricing().setFinalPrice(Math.ceil(base - (base * (disc / 100.0))));
+        }
         existingPackage.setPricing(holidayPackageDetails.getPricing());
         existingPackage.setMedia(holidayPackageDetails.getMedia());
 

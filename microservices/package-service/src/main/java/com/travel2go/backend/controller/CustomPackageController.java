@@ -68,6 +68,12 @@ public class CustomPackageController {
                 .build();
         customPackage.setAudit(audit);
 
+        if (customPackage.getPricing() != null) {
+            double base = customPackage.getPricing().getBasePrice();
+            double disc = customPackage.getPricing().getDiscountPercentage();
+            customPackage.getPricing().setFinalPrice(Math.ceil(base - (base * (disc / 100.0))));
+        }
+
         Boolean exists = repository.findByPackageCode(customPackage.getPackageCode()).hasElements().block();
         if (Boolean.TRUE.equals(exists)) {
             return ResponseEntity.status(409).body(Map.of("message", "Package code already exists"));
@@ -103,6 +109,11 @@ public class CustomPackageController {
         existingPackage.setSpecialNotes(customPackageDetails.getSpecialNotes());
 
         existingPackage.setDuration(customPackageDetails.getDuration());
+        if (customPackageDetails.getPricing() != null) {
+            double base = customPackageDetails.getPricing().getBasePrice();
+            double disc = customPackageDetails.getPricing().getDiscountPercentage();
+            customPackageDetails.getPricing().setFinalPrice(Math.ceil(base - (base * (disc / 100.0))));
+        }
         existingPackage.setPricing(customPackageDetails.getPricing());
         existingPackage.setMedia(customPackageDetails.getMedia());
 

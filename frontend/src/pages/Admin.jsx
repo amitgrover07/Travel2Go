@@ -456,7 +456,7 @@ const Admin = () => {
     if (category === 'pricing' && (field === 'basePrice' || field === 'discountPercentage')) {
       const base = field === 'basePrice' ? Number(value) : Number(next.pricing.basePrice);
       const disc = field === 'discountPercentage' ? Number(value) : Number(next.pricing.discountPercentage);
-      if (!isNaN(base) && !isNaN(disc)) next.pricing.finalPrice = base - base * (disc / 100);
+      if (!isNaN(base) && !isNaN(disc)) next.pricing.finalPrice = Math.ceil(base - base * (disc / 100));
     }
     setCustomFormData(next);
   };
@@ -526,7 +526,7 @@ const Admin = () => {
       const base = field === 'basePrice' ? Number(value) : Number(newFormData.pricing.basePrice);
       const discount = field === 'discountPercentage' ? Number(value) : Number(newFormData.pricing.discountPercentage);
       if (!isNaN(base) && !isNaN(discount)) {
-        newFormData.pricing.finalPrice = base - (base * (discount / 100));
+        newFormData.pricing.finalPrice = Math.ceil(base - (base * (discount / 100)));
       }
     }
     setFormData(newFormData);

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Search, Copy, ExternalLink, ArrowLeft, Loader2, Image as ImageIcon, Tag, Calendar, Database, Trash2, Plus, X, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { GallerySkeleton } from '../components/SkeletonLoader';
 
 const ImageGallery = () => {
   const [images, setImages] = useState([]);
@@ -199,10 +200,7 @@ const ImageGallery = () => {
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-64 space-y-4">
-            <Loader2 className="animate-spin text-blue-600" size={48} />
-            <p className="text-gray-500 font-medium">Loading gallery...</p>
-          </div>
+          <GallerySkeleton />
         ) : filteredImages.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
              <ImageIcon size={48} className="text-gray-300 mx-auto mb-4" />
