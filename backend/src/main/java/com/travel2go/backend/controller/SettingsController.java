@@ -29,13 +29,16 @@ public class SettingsController {
     }
 
     @PutMapping("/terms")
-    public ResponseEntity<?> updateTerms(@RequestBody Map<String, String> payload) {
-        String terms = payload.get("termsAndConditions");
+    public ResponseEntity<?> updateTerms(@RequestBody GlobalSettings payload) {
         GlobalSettings settings = repository.findById(GLOBAL_ID).block();
         if (settings == null) {
             settings = GlobalSettings.builder().id(GLOBAL_ID).build();
         }
-        settings.setTermsAndConditions(terms);
+        settings.setTermsAndConditions(payload.getTermsAndConditions());
+        settings.setChildPriceFactor(payload.getChildPriceFactor());
+        settings.setExtraRoomSurcharge(payload.getExtraRoomSurcharge());
+        settings.setGroupDiscountRate(payload.getGroupDiscountRate());
+        settings.setMaxGroupDiscount(payload.getMaxGroupDiscount());
         GlobalSettings saved = repository.save(settings).block();
         return ResponseEntity.ok(saved);
     }

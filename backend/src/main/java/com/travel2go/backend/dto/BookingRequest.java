@@ -17,4 +17,9 @@ public class BookingRequest {
     private String location;
     private String packageId;
     private String packageTitle;
+    private Integer adults;
+    private Integer children;
+    private Double basePrice;
+    private Double discountPercentage;
+    private Double finalPrice;
 }

@@ -67,6 +67,11 @@ public class BookingController {
                 .location(cleanLocation)
                 .packageId(request.getPackageId())
                 .packageTitle(request.getPackageTitle())
+                .adults(request.getAdults())
+                .children(request.getChildren())
+                .basePrice(request.getBasePrice())
+                .discountPercentage(request.getDiscountPercentage())
+                .finalPrice(request.getFinalPrice())
                 .bookingDate(new java.util.Date())
                 .status("CONFIRMED")
                 .build();
@@ -125,9 +130,11 @@ public class BookingController {
                     lead.setPackageId(pkg.getId());
                     lead.setPackageTitle(pkg.getTitle());
                     lead.setPackageCode(pkg.getPackageCode());
-                    lead.setBasePrice(pkg.getPricing() != null ? pkg.getPricing().getBasePrice() : 0.0);
-                    lead.setDiscountPercentage(pkg.getPricing() != null ? pkg.getPricing().getDiscountPercentage() : 0.0);
-                    lead.setFinalPrice(pkg.getPricing() != null ? pkg.getPricing().getFinalPrice() : 0.0);
+                    lead.setAdults(request.getAdults());
+                    lead.setChildren(request.getChildren());
+                    lead.setBasePrice(request.getBasePrice() != null ? request.getBasePrice() : (pkg.getPricing() != null ? pkg.getPricing().getBasePrice() : 0.0));
+                    lead.setDiscountPercentage(request.getDiscountPercentage() != null ? request.getDiscountPercentage() : (pkg.getPricing() != null ? pkg.getPricing().getDiscountPercentage() : 0.0));
+                    lead.setFinalPrice(request.getFinalPrice() != null ? request.getFinalPrice() : (pkg.getPricing() != null ? pkg.getPricing().getFinalPrice() : 0.0));
 
                     if (lead.getAuditLogs() == null) lead.setAuditLogs(new ArrayList<>());
                     lead.getAuditLogs().add(LeadAuditLog.builder()
@@ -148,9 +155,11 @@ public class BookingController {
                     .packageId(pkg.getId())
                     .packageTitle(pkg.getTitle())
                     .packageCode(pkg.getPackageCode())
-                    .basePrice(pkg.getPricing() != null ? pkg.getPricing().getBasePrice() : 0.0)
-                    .discountPercentage(pkg.getPricing() != null ? pkg.getPricing().getDiscountPercentage() : 0.0)
-                    .finalPrice(pkg.getPricing() != null ? pkg.getPricing().getFinalPrice() : 0.0)
+                    .adults(request.getAdults())
+                    .children(request.getChildren())
+                    .basePrice(request.getBasePrice() != null ? request.getBasePrice() : (pkg.getPricing() != null ? pkg.getPricing().getBasePrice() : 0.0))
+                    .discountPercentage(request.getDiscountPercentage() != null ? request.getDiscountPercentage() : (pkg.getPricing() != null ? pkg.getPricing().getDiscountPercentage() : 0.0))
+                    .finalPrice(request.getFinalPrice() != null ? request.getFinalPrice() : (pkg.getPricing() != null ? pkg.getPricing().getFinalPrice() : 0.0))
                     .leadDate(new java.util.Date())
                     .status("NEW")
                     .source("EMAIL_SENT")

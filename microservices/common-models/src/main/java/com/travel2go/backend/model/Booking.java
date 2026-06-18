@@ -26,6 +26,12 @@ public class Booking {
     private String packageId;
     private String packageTitle;
     
+    private Integer adults;
+    private Integer children;
+    private Double basePrice;
+    private Double discountPercentage;
+    private Double finalPrice;
+    
     private Date bookingDate;
     private String status;
 }

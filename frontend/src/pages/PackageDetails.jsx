@@ -21,6 +21,54 @@ const renderBulletPoints = (text) => {
   );
 };
 
+const calculatePricing = (adults, children, packagePerPersonPrice, settings) => {
+  const childFactor = settings?.childPriceFactor ?? 0.7;
+  const extraRoomSurcharge = settings?.extraRoomSurcharge ?? 1500;
+  const discountRate = settings?.groupDiscountRate ?? 0.01;
+  const maxDiscount = settings?.maxGroupDiscount ?? 0.10;
+
+  const totalPeople = adults + children;
+  const adultsCost = adults * packagePerPersonPrice;
+  const childrenCost = children * packagePerPersonPrice * childFactor;
+  let basePrice = adultsCost + childrenCost;
+
+  let rooms = 0;
+  let hasSurcharge = false;
+  
+  if (adults === 2 && children === 1) {
+    rooms = 1;
+    hasSurcharge = false;
+  } else if (totalPeople % 2 === 0) {
+    rooms = totalPeople / 2;
+    hasSurcharge = false;
+  } else {
+    rooms = Math.floor(totalPeople / 2) + 1;
+    hasSurcharge = totalPeople > 0;
+  }
+
+  const surchargeAmount = hasSurcharge ? extraRoomSurcharge : 0;
+  basePrice += surchargeAmount;
+
+  const discountPercentage = totalPeople > 1 
+    ? Math.min(maxDiscount, (totalPeople - 1) * discountRate) 
+    : 0;
+
+  const discountAmount = basePrice * discountPercentage;
+  const finalPrice = Math.round(basePrice - discountAmount);
+
+  return {
+    adultsCost,
+    childrenCost,
+    rooms,
+    hasSurcharge,
+    surchargeAmount,
+    basePrice,
+    discountPercentage: discountPercentage * 100,
+    discountAmount,
+    finalPrice
+  };
+};
+
 const PackageDetails = () => {
   const { id } = useParams();
   const [pkg, setPkg] = useState(null);
@@ -43,6 +91,10 @@ const PackageDetails = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const [settings, setSettings] = useState(null);
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+
   // Admin Send to Customer state
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
@@ -52,7 +104,9 @@ const PackageDetails = () => {
     email: '',
     phone: '',
     location: '',
-    bestTimeToReach: ''
+    bestTimeToReach: '',
+    adults: 1,
+    children: 0
   });
 
   const getTokenPayload = () => {
@@ -94,6 +148,7 @@ const PackageDetails = () => {
   const fetchGlobalTerms = async () => {
     try {
       const response = await api.get('/settings/terms');
+      setSettings(response.data);
       setGlobalTerms(response.data.termsAndConditions || '');
     } catch (error) {
       console.error('Error fetching global terms:', error);
@@ -196,8 +251,14 @@ const PackageDetails = () => {
 
     setBookingLoading(true);
     try {
+      const calc = calculatePricing(adults, children, pkg.pricing?.finalPrice || 0, settings);
       await api.post('/bookings', {
         ...bookingForm,
+        adults: adults,
+        children: children,
+        basePrice: calc.basePrice,
+        discountPercentage: calc.discountPercentage,
+        finalPrice: calc.finalPrice,
         packageId: id,
         packageTitle: pkg.title
       });
@@ -227,15 +288,35 @@ const PackageDetails = () => {
     }
     setSendLoading(true);
     try {
+      const adminCalc = calculatePricing(
+        parseInt(sendForm.adults) || 1,
+        parseInt(sendForm.children) || 0,
+        pkg.pricing?.finalPrice || 0,
+        settings
+      );
       await api.post('/bookings', {
         ...sendForm,
+        adults: parseInt(sendForm.adults) || 1,
+        children: parseInt(sendForm.children) || 0,
+        basePrice: adminCalc.basePrice,
+        discountPercentage: adminCalc.discountPercentage,
+        finalPrice: adminCalc.finalPrice,
         packageId: id,
         packageTitle: pkg.title,
         isCustom: pkg.packageType === 'Custom'
       });
       toast.success('Itinerary PDF sent successfully!');
       setShowSendModal(false);
-      setSendForm({ firstName: '', lastName: '', email: '', phone: '', location: '', bestTimeToReach: '' });
+      setSendForm({ 
+        firstName: '', 
+        lastName: '', 
+        email: '', 
+        phone: '', 
+        location: '', 
+        bestTimeToReach: '', 
+        adults: 1, 
+        children: 0 
+      });
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to send package');
     } finally {
@@ -377,22 +458,120 @@ const PackageDetails = () => {
                 <div className="mb-2">
                   <span className="text-gray-500 text-sm font-medium uppercase tracking-wide">Starting from</span>
                 </div>
-                <div className="flex items-baseline mb-1">
+                <div className="flex flex-wrap items-baseline gap-x-2 mb-1">
                   <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
                     {pkg.pricing?.currency || 'INR'} {formatCurrency(pkg.pricing?.finalPrice)}
                   </span>
+                  <span className="text-xs text-gray-500 font-normal">/ per person</span>
                   {pkg.pricing?.basePrice > pkg.pricing?.finalPrice && (
-                    <span className="ml-3 text-lg text-gray-400 line-through decoration-red-400">
+                    <span className="text-sm text-gray-400 line-through decoration-red-400 w-full mt-1">
                       {pkg.pricing?.currency || 'INR'} {formatCurrency(pkg.pricing?.basePrice)}
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-gray-500 italic mb-6">
+                <div className="text-xs text-gray-500 italic mb-4">
                   {numberToWords(pkg.pricing?.finalPrice)}
                 </div>
+
+                {/* Traveler Selectors */}
+                <div className="border-t border-blue-100/50 pt-4 mt-4 space-y-3">
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Configure Travelers</span>
+                  
+                  <div className="flex justify-between items-center bg-white border border-blue-100 rounded-xl p-2.5 shadow-sm">
+                    <div>
+                      <span className="text-sm font-semibold text-gray-800">Adults</span>
+                      <span className="block text-[10px] text-gray-400">18+ years</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <button 
+                        type="button"
+                        onClick={() => setAdults(Math.max(1, adults - 1))}
+                        className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 font-bold hover:bg-blue-100 active:scale-95 transition-all flex items-center justify-center"
+                      >
+                        -
+                      </button>
+                      <span className="text-sm font-bold text-gray-800 w-4 text-center">{adults}</span>
+                      <button 
+                        type="button"
+                        onClick={() => setAdults(adults + 1)}
+                        className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 font-bold hover:bg-blue-100 active:scale-95 transition-all flex items-center justify-center"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-white border border-blue-100 rounded-xl p-2.5 shadow-sm">
+                    <div>
+                      <span className="text-sm font-semibold text-gray-800">Children</span>
+                      <span className="block text-[10px] text-gray-400">0 - 17 years</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <button 
+                        type="button"
+                        onClick={() => setChildren(Math.max(0, children - 1))}
+                        className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 font-bold hover:bg-blue-100 active:scale-95 transition-all flex items-center justify-center"
+                      >
+                        -
+                      </button>
+                      <span className="text-sm font-bold text-gray-800 w-4 text-center">{children}</span>
+                      <button 
+                        type="button"
+                        onClick={() => setChildren(children + 1)}
+                        className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 font-bold hover:bg-blue-100 active:scale-95 transition-all flex items-center justify-center"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cost Breakdown */}
+                {(() => {
+                  const calc = calculatePricing(adults, children, pkg.pricing?.finalPrice || 0, settings);
+                  return (
+                    <div className="border-t border-blue-100/50 pt-4 mt-4 space-y-2.5">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Estimated Price Breakdown</span>
+                      <div className="text-xs space-y-1.5 bg-white border border-blue-100 rounded-xl p-3 shadow-sm text-gray-600">
+                        <div className="flex justify-between">
+                          <span>Adults ({adults}):</span>
+                          <span>{pkg.pricing?.currency || 'INR'} {formatCurrency(calc.adultsCost)}</span>
+                        </div>
+                        {children > 0 && (
+                          <div className="flex justify-between">
+                            <span>Children ({children}):</span>
+                            <span>{pkg.pricing?.currency || 'INR'} {formatCurrency(calc.childrenCost)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span>Rooms Needed:</span>
+                          <span className="font-semibold text-gray-800">{calc.rooms} {calc.rooms === 1 ? 'Room' : 'Rooms'}</span>
+                        </div>
+                        {calc.surchargeAmount > 0 && (
+                          <div className="flex justify-between text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded">
+                            <span>Room Surcharge:</span>
+                            <span>+{pkg.pricing?.currency || 'INR'} {formatCurrency(calc.surchargeAmount)}</span>
+                          </div>
+                        )}
+                        {calc.discountAmount > 0 && (
+                          <div className="flex justify-between text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded">
+                            <span>Group Discount ({calc.discountPercentage.toFixed(0)}%):</span>
+                            <span>-{pkg.pricing?.currency || 'INR'} {formatCurrency(calc.discountAmount)}</span>
+                          </div>
+                        )}
+                        <hr className="border-gray-100 my-1" />
+                        <div className="flex justify-between text-base font-extrabold text-blue-600">
+                          <span>Total Cost:</span>
+                          <span>{pkg.pricing?.currency || 'INR'} {formatCurrency(calc.finalPrice)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <button 
                   onClick={handleBookNow}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-lg shadow-sm hover:shadow-md transition-all"
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-lg shadow-sm hover:shadow-md transition-all"
                 >
                   Book Now
                 </button>
@@ -527,6 +706,32 @@ const PackageDetails = () => {
             </div>
             
             <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
+              {/* Summary of Selection */}
+              {(() => {
+                const calc = calculatePricing(adults, children, pkg.pricing?.finalPrice || 0, settings);
+                return (
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-xs space-y-1.5 shadow-sm">
+                    <div className="flex justify-between font-medium text-gray-700">
+                      <span>Package:</span>
+                      <span className="text-gray-900 font-semibold">{pkg.title}</span>
+                    </div>
+                    <div className="flex justify-between font-medium text-gray-700">
+                      <span>Travelers:</span>
+                      <span className="text-gray-900 font-semibold">{adults} Adults, {children} Children</span>
+                    </div>
+                    <div className="flex justify-between font-medium text-gray-700">
+                      <span>Rooms Allocated:</span>
+                      <span className="text-gray-900 font-semibold">{calc.rooms} {calc.rooms === 1 ? 'Room' : 'Rooms'}</span>
+                    </div>
+                    <hr className="border-blue-100 my-1" />
+                    <div className="flex justify-between text-sm font-extrabold text-blue-600">
+                      <span>Total Cost:</span>
+                      <span>{pkg.pricing?.currency || 'INR'} {formatCurrency(calc.finalPrice)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
@@ -721,6 +926,31 @@ const PackageDetails = () => {
                     value={sendForm.bestTimeToReach}
                     onChange={(e) => setSendForm({...sendForm, bestTimeToReach: e.target.value})}
                     placeholder="e.g. 5 PM - 7 PM"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Adults *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.adults}
+                    onChange={(e) => setSendForm({...sendForm, adults: parseInt(e.target.value) || 1})}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Children *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    value={sendForm.children}
+                    onChange={(e) => setSendForm({...sendForm, children: parseInt(e.target.value) || 0})}
                   />
                 </div>
               </div>

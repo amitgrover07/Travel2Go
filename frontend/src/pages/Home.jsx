@@ -242,6 +242,7 @@ const Home = () => {
                       <div>
                         <span className="text-lg font-extrabold text-blue-600">
                           {pkg.pricing?.currency || 'INR'} {formatCurrency(pkg.pricing?.finalPrice)}
+                          <span className="text-xs text-gray-500 font-normal ml-1">/ per person</span>
                         </span>
                         <div className="text-[10px] text-gray-400 italic mt-0.5">
                           {numberToWords(pkg.pricing?.finalPrice)}

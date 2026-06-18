@@ -32,6 +32,20 @@ public class EmailService {
         helper.setTo(request.getEmail());
         helper.setSubject("Booking Confirmation: " + request.getPackageTitle());
         
+        int adults = request.getAdults() != null ? request.getAdults() : 1;
+        int children = request.getChildren() != null ? request.getChildren() : 0;
+        String priceDetails = "";
+        if (request.getFinalPrice() != null) {
+            priceDetails = String.format(
+                "Base Price: INR %.2f\n" +
+                "Discount: %.1f%%\n" +
+                "Final Price: INR %.2f\n",
+                request.getBasePrice() != null ? request.getBasePrice() : 0.0,
+                request.getDiscountPercentage() != null ? request.getDiscountPercentage() : 0.0,
+                request.getFinalPrice()
+            );
+        }
+
         String content = String.format(
             "Dear %s %s,\n\n" +
             "Thank you for booking with Travel2Go!\n\n" +
@@ -40,7 +54,10 @@ public class EmailService {
             "Booking Details:\n" +
             "Package: %s\n" +
             "Location: %s\n" +
-            "Phone: %s\n\n" +
+            "Phone: %s\n" +
+            "Adults: %d\n" +
+            "Children: %d\n" +
+            "%s\n" +
             "Our team will contact you shortly with more details.\n\n" +
             "Best Regards,\n" +
             "Travel2Go Team",
@@ -49,7 +66,10 @@ public class EmailService {
             request.getPackageTitle(),
             request.getPackageTitle(),
             request.getLocation(),
-            request.getPhone()
+            request.getPhone(),
+            adults,
+            children,
+            priceDetails
         );
         
         helper.setText(content);
