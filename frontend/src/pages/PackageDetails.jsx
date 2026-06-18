@@ -1,6 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Calendar, ArrowLeft, X, Loader2, Mail, User, Phone, MapPinIcon, Send } from 'lucide-react';
+import { 
+  MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, 
+  Calendar, ArrowLeft, X, Loader2, Mail, User, Phone, MapPinIcon, Send,
+  Hotel, Car, Compass, Activity, Plane, Ship, Train, Camera, Coffee, 
+  Utensils, Tent, Ticket, Shield, HelpCircle, Settings
+} from 'lucide-react';
+
+const ICON_MAP = {
+  Hotel,
+  Car,
+  Compass,
+  MapPin,
+  Activity,
+  Plane,
+  Ship,
+  Train,
+  Camera,
+  Coffee,
+  Utensils,
+  Tent,
+  Ticket,
+  Shield,
+  HelpCircle
+};
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import SEO from '../components/SEO';
@@ -27,6 +50,8 @@ const PackageDetails = () => {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [globalTerms, setGlobalTerms] = useState('');
+  const [attachedConfigs, setAttachedConfigs] = useState([]);
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -79,7 +104,16 @@ const PackageDetails = () => {
     const fetchPackageDetails = async () => {
       try {
         const response = await api.get(`/packages/${id}`);
-        setPkg(response.data);
+        const pkgData = response.data;
+        setPkg(pkgData);
+        
+        // Fetch attached configurations and categories
+        const [configsRes, catsRes] = await Promise.all([
+          api.get(`/configurators/attached?packageId=${pkgData.id}&destination=${pkgData.destination}`),
+          api.get('/configurator-categories')
+        ]);
+        setAttachedConfigs(Array.isArray(configsRes.data) ? configsRes.data : []);
+        setCategories(Array.isArray(catsRes.data) ? catsRes.data : []);
       } catch (error) {
         console.error('Error fetching package details:', error);
       } finally {
@@ -446,6 +480,69 @@ const PackageDetails = () => {
                 </div>
               )}
             </div>
+
+            {/* Attached Configurations / Customizations */}
+            {attachedConfigs.length > 0 && (
+              <div className="border-t border-gray-200 pt-10 mb-10">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2.5">
+                  <Settings className="h-6 w-6 text-blue-600" />
+                  Optional Activities & Configuration Customizations
+                </h2>
+                <div className="space-y-6">
+                  {attachedConfigs.map((config) => (
+                    <div key={config.id} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b pb-3 mb-4 gap-2">
+                        <div>
+                          <h3 className="font-extrabold text-gray-900 text-lg leading-tight">
+                            {config.title}
+                          </h3>
+                          {config.description && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              {config.description}
+                            </p>
+                          )}
+                        </div>
+                        <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold shrink-0 self-start sm:self-center">
+                          {config.configCode}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(config.options || []).map((opt, idx) => {
+                          const iconName = getCategoryIcon ? getCategoryIcon(opt.categoryName) : (categories.find(c => c.name === opt.categoryName)?.icon || 'HelpCircle');
+                          const IconComponent = ICON_MAP[iconName] || HelpCircle;
+                          return (
+                            <div key={idx} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:border-blue-450 transition-all shadow-sm">
+                              <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg shadow-sm">
+                                  <IconComponent className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                    {opt.categoryName}
+                                  </span>
+                                  <p className="text-xs font-bold text-gray-700 mt-1 leading-snug">
+                                    {opt.optionName}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right pl-3 shrink-0">
+                                <span className="text-sm font-black text-gray-900 block">
+                                  ₹{formatCurrency(opt.price)}
+                                </span>
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                                  Add-on Price
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Itinerary */}
             {pkg.itinerary && pkg.itinerary.length > 0 && (

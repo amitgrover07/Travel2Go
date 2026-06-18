@@ -1,7 +1,7 @@
 // redeploy: 2026-05-16
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star, Users, Menu } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star, Users, Menu, Sliders, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -10,6 +10,8 @@ import { formatCurrency } from '../utils/formatUtils';
 import AdminLeads from '../components/AdminLeads';
 import AdminUsers from '../components/AdminUsers';
 import { AdminSkeleton } from '../components/SkeletonLoader';
+import AdminConfigurator from '../components/AdminConfigurator';
+import AdminConfiguratorCategories from '../components/AdminConfiguratorCategories';
 
 const quillModules = {
   toolbar: [
@@ -53,7 +55,7 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mediaContexts, setMediaContexts] = useState({ thumbnail: '', gallery: {} });
-  const [view, setView] = useState('packages'); // 'packages' | 'settings' | 'customPackages' | 'leads'
+  const [view, setView] = useState('packages'); // 'packages' | 'settings' | 'customPackages' | 'leads' | 'configurator' | 'configuratorCategories'
   const [globalTerms, setGlobalTerms] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
   const navigate = useNavigate();
@@ -780,6 +782,24 @@ const Admin = () => {
                   <User className="h-5 w-5 shrink-0" />
                   <span className="text-sm font-semibold">Users</span>
                 </button>
+                <button
+                  onClick={() => setView('configurator')}
+                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                    view === 'configurator' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-605 hover:text-indigo-800 hover:bg-indigo-50'
+                  }`}
+                >
+                  <Sliders className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-semibold">Configurator</span>
+                </button>
+                <button
+                  onClick={() => setView('configuratorCategories')}
+                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                    view === 'configuratorCategories' ? 'text-teal-700 bg-teal-100' : 'text-teal-605 hover:text-teal-800 hover:bg-teal-50'
+                  }`}
+                >
+                  <List className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-semibold">Categories</span>
+                </button>
                 <button 
                   onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
                   className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
@@ -866,6 +886,24 @@ const Admin = () => {
             >
               <User className="h-5 w-5 shrink-0" />
               <span>User Management</span>
+            </button>
+            <button
+              onClick={() => { setView('configurator'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                view === 'configurator' ? 'text-indigo-700 bg-indigo-50' : 'text-indigo-655 hover:bg-indigo-50/50'
+              }`}
+            >
+              <Sliders className="h-5 w-5 shrink-0" />
+              <span>Configurator</span>
+            </button>
+            <button
+              onClick={() => { setView('configuratorCategories'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                view === 'configuratorCategories' ? 'text-teal-700 bg-teal-50' : 'text-teal-655 hover:bg-teal-50/50'
+              }`}
+            >
+              <List className="h-5 w-5 shrink-0" />
+              <span>Categories</span>
             </button>
             <button
               onClick={() => { setView(view === 'settings' ? 'packages' : 'settings'); setMobileMenuOpen(false); }}
@@ -1784,6 +1822,18 @@ const Admin = () => {
                 </div>
               </div>
             </>
+          )}
+
+          {view === 'configurator' && (
+            <div className="w-full">
+              <AdminConfigurator />
+            </div>
+          )}
+
+          {view === 'configuratorCategories' && (
+            <div className="w-full">
+              <AdminConfiguratorCategories />
+            </div>
           )}
           
         </div>
