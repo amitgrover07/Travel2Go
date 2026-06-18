@@ -60,11 +60,6 @@ public class BookingController {
                 .location(cleanLocation)
                 .packageId(request.getPackageId())
                 .packageTitle(request.getPackageTitle())
-                .adults(request.getAdults())
-                .children(request.getChildren())
-                .basePrice(request.getBasePrice())
-                .discountPercentage(request.getDiscountPercentage())
-                .finalPrice(request.getFinalPrice())
                 .bookingDate(new java.util.Date())
                 .status("CONFIRMED")
                 .build();

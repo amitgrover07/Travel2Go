@@ -110,14 +110,6 @@ public class PdfService {
             long price = (long) pkg.getPricing().getFinalPrice();
             String currency = pkg.getPricing().getCurrency() != null ? pkg.getPricing().getCurrency() : "INR";
             
-            String priceLabel = "Final Price (per person): ";
-            if (booking != null && booking.getFinalPrice() != null) {
-                price = booking.getFinalPrice().longValue();
-                int adults = booking.getAdults() != null ? booking.getAdults() : 1;
-                int children = booking.getChildren() != null ? booking.getChildren() : 0;
-                priceLabel = String.format("Final Price (for %d Adults, %d Children): ", adults, children);
-            }
-            
             PdfPTable priceTable = new PdfPTable(1);
             priceTable.setWidthPercentage(100);
             PdfPCell cell = new PdfPCell();
@@ -126,7 +118,7 @@ public class PdfService {
             cell.setPadding(15);
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             
-            Paragraph pricePara = new Paragraph(priceLabel + currency + " " + String.format("%,d", price), priceFont);
+            Paragraph pricePara = new Paragraph("Final Price: " + currency + " " + String.format("%,d", price), priceFont);
             pricePara.setAlignment(Element.ALIGN_CENTER);
             cell.addElement(pricePara);
             
@@ -208,27 +200,6 @@ public class PdfService {
             ListItem locationItem = new ListItem("Location: " + booking.getLocation(), normalFont);
             locationItem.setSpacingAfter(3);
             userDetailsList.add(locationItem);
-            
-            int adultsCount = booking.getAdults() != null ? booking.getAdults() : 1;
-            int childrenCount = booking.getChildren() != null ? booking.getChildren() : 0;
-            ListItem travelersItem = new ListItem(String.format("Travelers: %d Adults, %d Children", adultsCount, childrenCount), normalFont);
-            travelersItem.setSpacingAfter(3);
-            userDetailsList.add(travelersItem);
-
-            String currency = (pkg.getPricing() != null && pkg.getPricing().getCurrency() != null) ? pkg.getPricing().getCurrency() : "INR";
-            if (booking.getFinalPrice() != null) {
-                ListItem basePriceItem = new ListItem(String.format("Base Price: %s %.2f", currency, booking.getBasePrice() != null ? booking.getBasePrice() : 0.0), normalFont);
-                basePriceItem.setSpacingAfter(3);
-                userDetailsList.add(basePriceItem);
-
-                ListItem discountItem = new ListItem(String.format("Discount Applied: %.1f%%", booking.getDiscountPercentage() != null ? booking.getDiscountPercentage() : 0.0), normalFont);
-                discountItem.setSpacingAfter(3);
-                userDetailsList.add(discountItem);
-
-                ListItem finalPriceItem = new ListItem(String.format("Final Calculated Price: %s %.2f", currency, booking.getFinalPrice()), normalFont);
-                finalPriceItem.setSpacingAfter(3);
-                userDetailsList.add(finalPriceItem);
-            }
             
             ListItem dateItem = new ListItem("Date of Request: " + bookingDateStr, normalFont);
             dateItem.setSpacingAfter(3);

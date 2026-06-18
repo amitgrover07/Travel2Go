@@ -34,9 +34,6 @@ public class Lead {
     private String packageTitle;
     private String packageCode;
     
-    private Integer adults;
-    private Integer children;
-    
     // Pricing Info
     private Double basePrice;
     private Double discountPercentage;

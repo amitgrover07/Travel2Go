@@ -19,11 +19,6 @@ public class BookingRequest {
     private boolean isCustom;
     private String bestTimeToReach;
     private String leadId; // Optional: If sending from an existing lead
-    private Integer adults;
-    private Integer children;
-    private Double basePrice;
-    private Double discountPercentage;
-    private Double finalPrice;
 
     // Manual getters and setter to ensure Jackson maps JSON "isCustom" property correctly
     public boolean getIsCustom() {

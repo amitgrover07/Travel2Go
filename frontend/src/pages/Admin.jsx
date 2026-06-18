@@ -1,7 +1,7 @@
 // redeploy: 2026-05-16
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star, Users, Menu, Calculator } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star, Users, Menu } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -128,52 +128,8 @@ const Admin = () => {
     lastName: '',
     email: '',
     phone: '',
-    location: '',
-    adults: 1,
-    children: 0
+    location: ''
   });
-
-  const [childPriceFactor, setChildPriceFactor] = useState(0.7);
-  const [extraRoomSurcharge, setExtraRoomSurcharge] = useState(1500.0);
-  const [groupDiscountRate, setGroupDiscountRate] = useState(0.01);
-  const [maxGroupDiscount, setMaxGroupDiscount] = useState(0.10);
-
-  const calculatePricing = (adults, children, packagePerPersonPrice) => {
-    const totalPeople = adults + children;
-    const adultsCost = adults * packagePerPersonPrice;
-    const childrenCost = children * packagePerPersonPrice * childPriceFactor;
-    let basePrice = adultsCost + childrenCost;
-
-    let rooms = 0;
-    let hasSurcharge = false;
-    
-    if (adults === 2 && children === 1) {
-      rooms = 1;
-      hasSurcharge = false;
-    } else if (totalPeople % 2 === 0) {
-      rooms = totalPeople / 2;
-      hasSurcharge = false;
-    } else {
-      rooms = Math.floor(totalPeople / 2) + 1;
-      hasSurcharge = totalPeople > 0;
-    }
-
-    const surchargeAmount = hasSurcharge ? extraRoomSurcharge : 0;
-    basePrice += surchargeAmount;
-
-    const discountPercentage = totalPeople > 1 
-      ? Math.min(maxGroupDiscount, (totalPeople - 1) * groupDiscountRate) 
-      : 0;
-
-    const discountAmount = basePrice * discountPercentage;
-    const finalPrice = Math.round(basePrice - discountAmount);
-
-    return {
-      basePrice,
-      discountPercentage: discountPercentage * 100,
-      finalPrice
-    };
-  };
 
   const handleOpenSendModal = (pkg, isCustom) => {
     setSendPackage({ ...pkg, isCustom });
@@ -188,33 +144,15 @@ const Admin = () => {
     }
     setSendLoading(true);
     try {
-      const calc = calculatePricing(
-        parseInt(sendForm.adults) || 1,
-        parseInt(sendForm.children) || 0,
-        sendPackage?.pricing?.finalPrice || 0
-      );
       await api.post('/bookings', {
         ...sendForm,
-        adults: parseInt(sendForm.adults) || 1,
-        children: parseInt(sendForm.children) || 0,
-        basePrice: calc.basePrice,
-        discountPercentage: calc.discountPercentage,
-        finalPrice: calc.finalPrice,
         packageId: sendPackage.id,
         packageTitle: sendPackage.title,
         isCustom: sendPackage.isCustom
       });
       toast.success('Itinerary PDF sent successfully!');
       setShowSendModal(false);
-      setSendForm({ 
-        firstName: '', 
-        lastName: '', 
-        email: '', 
-        phone: '', 
-        location: '', 
-        adults: 1, 
-        children: 0 
-      });
+      setSendForm({ firstName: '', lastName: '', email: '', phone: '', location: '' });
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to send package');
     } finally {
@@ -422,10 +360,6 @@ const Admin = () => {
     try {
       const response = await api.get('/settings/terms');
       setGlobalTerms(response.data.termsAndConditions || '');
-      setChildPriceFactor(response.data.childPriceFactor ?? 0.7);
-      setExtraRoomSurcharge(response.data.extraRoomSurcharge ?? 1500.0);
-      setGroupDiscountRate(response.data.groupDiscountRate ?? 0.01);
-      setMaxGroupDiscount(response.data.maxGroupDiscount ?? 0.10);
     } catch (error) {
       console.error('Error fetching global terms:', error);
     }
@@ -434,17 +368,11 @@ const Admin = () => {
   const handleSaveGlobalTerms = async () => {
     setSavingSettings(true);
     try {
-      await api.put('/settings/terms', { 
-        termsAndConditions: globalTerms,
-        childPriceFactor: parseFloat(childPriceFactor),
-        extraRoomSurcharge: parseFloat(extraRoomSurcharge),
-        groupDiscountRate: parseFloat(groupDiscountRate),
-        maxGroupDiscount: parseFloat(maxGroupDiscount)
-      });
-      toast.success('Global settings updated successfully');
+      await api.put('/settings/terms', { termsAndConditions: globalTerms });
+      toast.success('Global Terms & Conditions updated successfully');
     } catch (error) {
       console.error('Error saving global terms:', error);
-      toast.error('Failed to save global settings');
+      toast.error('Failed to save global terms');
     } finally {
       setSavingSettings(false);
     }
@@ -1000,82 +928,13 @@ const Admin = () => {
                   className="bg-white rounded-md h-96 mb-12"
                 />
               </div>
-
-              {/* Dynamic Calculator Settings */}
-              <div className="mt-10 pt-8 border-t border-gray-200">
-                <div className="flex items-center gap-3 mb-6">
-                  <Calculator className="h-6 w-6 text-purple-600" />
-                  <h2 className="text-2xl font-bold text-gray-900">Dynamic Pricing & Room Surcharge Settings</h2>
-                </div>
-                <p className="text-gray-500 mb-6 italic">
-                  Configure the rules for children pricing, room surcharges, and group discounts.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-2">
-                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider text-gray-800">Child Price Factor</label>
-                    <p className="text-xs text-gray-505 text-gray-500">Multiplier applied to the per-person package price for children (e.g. 0.7 = 70%)</p>
-                    <input
-                      type="number"
-                      step="0.05"
-                      min="0"
-                      max="1"
-                      className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      value={childPriceFactor}
-                      onChange={(e) => setChildPriceFactor(parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-
-                  <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-2">
-                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider text-gray-800">Extra Room Surcharge (INR)</label>
-                    <p className="text-xs text-gray-505 text-gray-500">Flat surcharge added when an extra room is required for odd traveler counts</p>
-                    <input
-                      type="number"
-                      step="100"
-                      min="0"
-                      className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      value={extraRoomSurcharge}
-                      onChange={(e) => setExtraRoomSurcharge(parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-
-                  <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-2">
-                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider text-gray-800">Group Discount Rate (Per Person)</label>
-                    <p className="text-xs text-gray-505 text-gray-500">Discount added per additional person after the first traveler (e.g. 0.01 = 1%)</p>
-                    <input
-                      type="number"
-                      step="0.005"
-                      min="0"
-                      max="1"
-                      className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      value={groupDiscountRate}
-                      onChange={(e) => setGroupDiscountRate(parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-
-                  <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-2">
-                    <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider text-gray-800">Max Group Discount</label>
-                    <p className="text-xs text-gray-505 text-gray-500">Maximum discount percentage cap that can be applied (e.g. 0.10 = 10%)</p>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="1"
-                      className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      value={maxGroupDiscount}
-                      onChange={(e) => setMaxGroupDiscount(parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                </div>
-              </div>
-
               <div className="flex justify-end pt-8">
                 <button 
                   onClick={handleSaveGlobalTerms}
                   disabled={savingSettings}
                   className="flex items-center px-8 py-3 border border-transparent rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-md font-bold text-lg disabled:bg-blue-400 transition-all"
                 >
-                  {savingSettings ? 'Saving...' : 'Save Settings'}
+                  {savingSettings ? 'Saving...' : 'Save Global Terms'}
                 </button>
               </div>
             </div>
@@ -2020,31 +1879,6 @@ const Admin = () => {
                     value={sendForm.location}
                     onChange={(e) => setSendForm({...sendForm, location: e.target.value})}
                     placeholder="Mumbai, India"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Adults *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                    value={sendForm.adults}
-                    onChange={(e) => setSendForm({...sendForm, adults: parseInt(e.target.value) || 1})}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Children *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                    value={sendForm.children}
-                    onChange={(e) => setSendForm({...sendForm, children: parseInt(e.target.value) || 0})}
                   />
                 </div>
               </div>
