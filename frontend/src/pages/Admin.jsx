@@ -1,7 +1,7 @@
 // redeploy: 2026-05-16
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star, Users } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star, Users, Menu } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -9,6 +9,7 @@ import api from '../services/api';
 import { formatCurrency } from '../utils/formatUtils';
 import AdminLeads from '../components/AdminLeads';
 import AdminUsers from '../components/AdminUsers';
+import { AdminSkeleton } from '../components/SkeletonLoader';
 
 const quillModules = {
   toolbar: [
@@ -45,6 +46,8 @@ const defaultForm = {
 
 const Admin = () => {
   const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [formData, setFormData] = useState(defaultForm);
   const [editingId, setEditingId] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -336,9 +339,21 @@ const Admin = () => {
       return;
     }
     
-    fetchPackages();
-    fetchGlobalTerms();
-    fetchCustomPackages();
+    const loadAllData = async () => {
+      try {
+        setLoading(true);
+        await Promise.all([
+          fetchPackages(),
+          fetchGlobalTerms(),
+          fetchCustomPackages()
+        ]);
+      } catch (err) {
+        console.error('Error loading admin dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAllData();
   }, []);
 
   const fetchGlobalTerms = async () => {
@@ -715,82 +730,170 @@ const Admin = () => {
       <nav className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center space-x-2">
-              <h1 className="text-xl font-bold text-gray-900 mr-2 sm:mr-4">Admin Dashboard</h1>
-              <Link to="/" title="View Website" className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors hidden sm:flex items-center justify-center">
-                <Globe className="h-5 w-5" />
-              </Link>
-              <Link to="/admin/images" title="Media Gallery" className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors hidden sm:flex items-center justify-center">
-                <Image className="h-5 w-5" />
-              </Link>
-              <button
-                onClick={() => setView('packages')}
-                title="Packages"
-                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                  view === 'packages' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
-                }`}
-              >
-                <Package className="h-5 w-5" />
-                <span className="text-sm font-semibold hidden md:inline">Packages</span>
-              </button>
-              <button
-                onClick={() => { setView('customPackages'); fetchCustomPackages(); }}
-                title="Custom Packages"
-                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                  view === 'customPackages' ? 'text-purple-700 bg-purple-100' : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
-                }`}
-              >
-                <Star className="h-5 w-5" />
-                <span className="text-sm font-semibold hidden md:inline">Custom Packages</span>
-              </button>
-              <button
-                onClick={() => setView('leads')}
-                title="Leads CRM"
-                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                  view === 'leads' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
-                }`}
-              >
-                <Users className="h-5 w-5" />
-                <span className="text-sm font-semibold hidden md:inline">Leads CRM</span>
-              </button>
-              <button
-                onClick={() => setView('users')}
-                title="User Management"
-                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                  view === 'users' ? 'text-teal-700 bg-teal-100' : 'text-teal-600 hover:text-teal-800 hover:bg-teal-50'
-                }`}
-              >
-                <User className="h-5 w-5" />
-                <span className="text-sm font-semibold hidden md:inline">User Management</span>
-              </button>
-              <button 
-                onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
-                title="Global Terms"
-                className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                  view === 'settings' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
-                }`}
-              >
-                <Settings className="h-5 w-5" />
-                <span className="text-sm font-semibold hidden md:inline">Global Terms</span>
-              </button>
+            {/* Brand and Desktop Menu Container */}
+            <div className="flex items-center space-x-4 flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-gray-900 shrink-0">Admin</h1>
+              
+              {/* Desktop Menu Options (Hidden on Mobile) */}
+              <div className="hidden lg:flex items-center space-x-2">
+                <Link to="/" className="p-2 px-3 rounded-md flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors">
+                  <Globe className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-semibold">Website</span>
+                </Link>
+                <Link to="/admin/images" className="p-2 px-3 rounded-md flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors">
+                  <Image className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-semibold">Gallery</span>
+                </Link>
+                <button
+                  onClick={() => setView('packages')}
+                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                    view === 'packages' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
+                  }`}
+                >
+                  <Package className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-semibold">Packages</span>
+                </button>
+                <button
+                  onClick={() => { setView('customPackages'); fetchCustomPackages(); }}
+                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                    view === 'customPackages' ? 'text-purple-700 bg-purple-100' : 'text-purple-650 hover:text-purple-800 hover:bg-purple-50'
+                  }`}
+                >
+                  <Star className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-semibold">Custom</span>
+                </button>
+                <button
+                  onClick={() => setView('leads')}
+                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                    view === 'leads' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-605 hover:text-indigo-800 hover:bg-indigo-50'
+                  }`}
+                >
+                  <Users className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-semibold">Leads CRM</span>
+                </button>
+                <button
+                  onClick={() => setView('users')}
+                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                    view === 'users' ? 'text-teal-700 bg-teal-100' : 'text-teal-605 hover:text-teal-800 hover:bg-teal-50'
+                  }`}
+                >
+                  <User className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-semibold">Users</span>
+                </button>
+                <button 
+                  onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
+                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                    view === 'settings' ? 'text-blue-700 bg-blue-100' : 'text-blue-605 hover:text-blue-800 hover:bg-blue-50'
+                  }`}
+                >
+                  <Settings className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-semibold">Terms</span>
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
+
+            {/* Right Side Options (User profile, Logout, Hamburguer Menu) */}
+            <div className="flex items-center space-x-3 shrink-0">
               {userProfile && userProfile.picture && (
-                <div className="flex items-center space-x-2">
-                  <img src={userProfile.picture} alt={userProfile.name} className="w-8 h-8 rounded-full border border-gray-300 object-cover" />
-                  <span className="text-sm font-medium text-gray-700 hidden md:block">{userProfile.name}</span>
+                <div className="flex items-center space-x-2 shrink-0">
+                  <img src={userProfile.picture} alt={userProfile.name} className="w-8 h-8 rounded-full border border-gray-300 object-cover flex-shrink-0" />
+                  <span className="text-sm font-medium text-gray-700 hidden sm:block truncate max-w-[100px]">{userProfile.name}</span>
                 </div>
               )}
-              <button onClick={handleLogout} className="flex items-center text-gray-600 hover:text-gray-900">
+              
+              {/* Desktop Logout Button */}
+              <button onClick={handleLogout} className="hidden lg:flex items-center text-gray-650 hover:text-gray-900 transition-colors shrink-0">
                 <LogOut className="h-5 w-5 mr-1" /> Logout
+              </button>
+
+              {/* Mobile Hamburger Button */}
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+                className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                title="Toggle Menu"
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row gap-6">
+      {/* Mobile menu dropdown */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden bg-white border-b border-gray-250 shadow-md">
+          <div className="px-4 py-3 space-y-2">
+            <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-colors">
+              <Globe className="h-5 w-5 shrink-0" />
+              <span>Website</span>
+            </Link>
+            <Link to="/admin/images" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-colors">
+              <Image className="h-5 w-5 shrink-0" />
+              <span>Gallery</span>
+            </Link>
+            <button
+              onClick={() => { setView('packages'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                view === 'packages' ? 'text-blue-700 bg-blue-50' : 'text-blue-605 hover:bg-blue-50/50'
+              }`}
+            >
+              <Package className="h-5 w-5 shrink-0" />
+              <span>Packages</span>
+            </button>
+            <button
+              onClick={() => { setView('customPackages'); fetchCustomPackages(); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                view === 'customPackages' ? 'text-purple-700 bg-purple-50' : 'text-purple-655 hover:bg-purple-50/50'
+              }`}
+            >
+              <Star className="h-5 w-5 shrink-0" />
+              <span>Custom Packages</span>
+            </button>
+            <button
+              onClick={() => { setView('leads'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                view === 'leads' ? 'text-indigo-700 bg-indigo-50' : 'text-indigo-655 hover:bg-indigo-50/50'
+              }`}
+            >
+              <Users className="h-5 w-5 shrink-0" />
+              <span>Leads CRM</span>
+            </button>
+            <button
+              onClick={() => { setView('users'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                view === 'users' ? 'text-teal-700 bg-teal-50' : 'text-teal-655 hover:bg-teal-50/50'
+              }`}
+            >
+              <User className="h-5 w-5 shrink-0" />
+              <span>User Management</span>
+            </button>
+            <button
+              onClick={() => { setView(view === 'settings' ? 'packages' : 'settings'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                view === 'settings' ? 'text-blue-700 bg-blue-50' : 'text-blue-605 hover:bg-blue-50/50'
+              }`}
+            >
+              <Settings className="h-5 w-5 shrink-0" />
+              <span>Global Terms</span>
+            </button>
+            <div className="border-t border-gray-150 pt-2 mt-2">
+              <button
+                onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 font-bold text-sm transition-colors"
+              >
+                <LogOut className="h-5 w-5 shrink-0" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <AdminSkeleton />
+      ) : (
+        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row gap-6">
           
           {/* Settings Section */}
           {view === 'leads' && (
@@ -1685,6 +1788,7 @@ const Admin = () => {
           
         </div>
       </main>
+      )}
       {/* Send to Customer Modal */}
       {showSendModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">

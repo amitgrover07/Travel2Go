@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, Clock, Edit3, X, Save, CheckCircle2, DollarSign, P
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatUtils';
+import { LeadsSkeleton } from './SkeletonLoader';
 
 const BUCKETS = [
   { id: 'NEW', label: 'New', color: 'bg-blue-100 border-blue-300 text-blue-800' },
@@ -241,7 +242,7 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
   const getLeadsByStatus = (status) => leads.filter(l => (l.status || 'NEW') === status);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-gray-500 font-medium">Loading Leads CRM...</div>;
+    return <LeadsSkeleton />;
   }
 
   const allAvailablePackages = [...packages, ...customPackages];

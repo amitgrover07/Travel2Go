@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Shield, User, Loader2, Key, Phone, Mail, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { UsersSkeleton } from './SkeletonLoader';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -121,12 +122,7 @@ const AdminUsers = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-10 w-10 text-blue-600 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium animate-pulse">Loading users directory...</p>
-      </div>
-    );
+    return <UsersSkeleton />;
   }
 
   return (
