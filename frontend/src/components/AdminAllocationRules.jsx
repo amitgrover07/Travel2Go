@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit2, Trash2, X, Search, ChevronDown, ChevronUp, 
   AlertCircle, IndianRupee, Save, Settings, Info, Package,
-  Sliders, Calendar, User, Users, CheckSquare, Square
+  Sliders, Calendar, User, Users, CheckSquare, Square, Car
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -217,15 +217,15 @@ export default function AdminAllocationRules() {
 
   // Filters
   const filteredRules = rules.filter(r => 
-    r.ruleCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    (r.ruleCode || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (r.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (r.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredPackages = packages.filter(p => 
-    p.title?.toLowerCase().includes(packageSearch.toLowerCase()) ||
-    p.packageCode?.toLowerCase().includes(packageSearch.toLowerCase()) ||
-    p.destination?.toLowerCase().includes(packageSearch.toLowerCase())
+    (p.title || '').toLowerCase().includes(packageSearch.toLowerCase()) ||
+    (p.packageCode || '').toLowerCase().includes(packageSearch.toLowerCase()) ||
+    (p.destination || '').toLowerCase().includes(packageSearch.toLowerCase())
   );
 
   if (loading) {
