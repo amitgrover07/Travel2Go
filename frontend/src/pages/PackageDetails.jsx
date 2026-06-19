@@ -4,7 +4,8 @@ import {
   MapPin, Clock, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle, 
   Calendar, ArrowLeft, X, Loader2, Mail, User, Phone, MapPinIcon, Send,
   Hotel, Car, Compass, Activity, Plane, Ship, Train, Camera, Coffee, 
-  Utensils, Tent, Ticket, Shield, HelpCircle, Settings
+  Utensils, Tent, Ticket, Shield, HelpCircle, Settings,
+  Trash2, Plus, Users, Info, UserPlus
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -44,6 +45,259 @@ const renderBulletPoints = (text) => {
   );
 };
 
+const defaultFallbackRule = {
+  ruleCode: 'DEFAULT',
+  title: 'Default Fallback Rule',
+  baseRoomRate: 3000,
+  extraAdultRate: 1200,
+  cwbRate: 800,
+  cnbRate: 400,
+  sightseeingTicketPrice: 500,
+  vehicles: [
+    { vehicleName: 'Sedan', maxPax: 4, dailyRate: 2000, tollCharges: 500, permitTax: 0, driverAllowance: 300 },
+    { vehicleName: 'SUV', maxPax: 6, dailyRate: 2500, tollCharges: 600, permitTax: 0, driverAllowance: 300 },
+    { vehicleName: 'Innova Crysta', maxPax: 6, dailyRate: 3000, tollCharges: 800, permitTax: 0, driverAllowance: 300 },
+    { vehicleName: 'Tempo Traveller', maxPax: 12, dailyRate: 5000, tollCharges: 1500, permitTax: 500, driverAllowance: 500 }
+  ]
+};
+
+const classifyGuests = (guestsList) => {
+  let A = 0;
+  let CWB = 0;
+  let CNB = 0;
+  let I = 0;
+  
+  guestsList.forEach(g => {
+    const age = parseInt(g.age);
+    if (isNaN(age)) return;
+    
+    if (age >= 12) {
+      A++;
+    } else if (age >= 5) {
+      if (g.bedRequired) {
+        CWB++;
+      } else {
+        CNB++;
+      }
+    } else {
+      I++;
+    }
+  });
+  
+  return { A, CWB, CNB, I };
+};
+
+const allocateRooms = (A, CWB, CNB, I, overrideTriple) => {
+  let rooms = [];
+  
+  if (A === 0) return [];
+  
+  if (A === 1) {
+    if (CWB === 0 && CNB === 0) {
+      rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: I });
+    } else if (CWB + CNB === 1) {
+      rooms.push({ 
+        tag: CWB === 1 ? "Double + 1 Extra Bed (CWB)" : "Double + CNB", 
+        adults: 1, 
+        cwb: CWB, 
+        cnb: CNB, 
+        infants: I 
+      });
+    } else {
+      let remainingCWB = CWB;
+      let remainingCNB = CNB;
+      
+      let cwbInRoom = Math.min(remainingCWB, 2);
+      remainingCWB -= cwbInRoom;
+      let cnbInRoom = 0;
+      if (cwbInRoom < 2) {
+        cnbInRoom = Math.min(remainingCNB, 2 - cwbInRoom);
+        remainingCNB -= cnbInRoom;
+      }
+      rooms.push({
+        tag: cwbInRoom > 0 ? "Double + 1 Extra Bed (CWB)" : "Double + CNB",
+        adults: 1,
+        cwb: cwbInRoom,
+        cnb: cnbInRoom,
+        infants: I
+      });
+      
+      while (remainingCWB > 0 || remainingCNB > 0) {
+        let roomCWB = Math.min(remainingCWB, 3);
+        remainingCWB -= roomCWB;
+        let roomCNB = 0;
+        if (roomCWB < 3) {
+          roomCNB = Math.min(remainingCNB, 3 - roomCWB);
+          remainingCNB -= roomCNB;
+        }
+        rooms.push({ tag: "Family Room", adults: 0, cwb: roomCWB, cnb: roomCNB, infants: 0 });
+      }
+    }
+  } else if (A === 2) {
+    if (CWB === 0 && CNB === 0) {
+      rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: I });
+    } else if (CWB + CNB === 1) {
+      rooms.push({ 
+        tag: CWB === 1 ? "Double + 1 Extra Bed (CWB)" : "Double + CNB", 
+        adults: 2, 
+        cwb: CWB, 
+        cnb: CNB, 
+        infants: I 
+      });
+    } else if (CWB + CNB === 2) {
+      rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: 0 });
+      rooms.push({ tag: "Single Occupancy", adults: 1, cwb: CWB, cnb: CNB, infants: I });
+    } else {
+      rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
+      let remainingCWB = CWB;
+      let remainingCNB = CNB;
+      while (remainingCWB > 0 || remainingCNB > 0) {
+        let roomCWB = Math.min(remainingCWB, 3);
+        remainingCWB -= roomCWB;
+        let roomCNB = 0;
+        if (roomCWB < 3) {
+          roomCNB = Math.min(remainingCNB, 3 - roomCWB);
+          remainingCNB -= roomCNB;
+        }
+        rooms.push({ tag: "Family Room", adults: 0, cwb: roomCWB, cnb: roomCNB, infants: I });
+      }
+    }
+  } else if (A === 3) {
+    if (CWB === 0 && CNB === 0) {
+      if (overrideTriple) {
+        rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
+        rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: 0 });
+      } else {
+        rooms.push({ tag: "Triple Sharing", adults: 3, cwb: 0, cnb: 0, infants: 0 });
+      }
+    } else {
+      if (overrideTriple) {
+        rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
+        rooms.push({ tag: "Single Occupancy", adults: 1, cwb: CWB, cnb: CNB, infants: I });
+      } else {
+        rooms.push({ tag: "Triple Sharing", adults: 3, cwb: 0, cnb: 0, infants: 0 });
+        rooms.push({ tag: "Single Occupancy", adults: 0, cwb: CWB, cnb: CNB, infants: I });
+      }
+    }
+  } else {
+    let remainingAdults = A;
+    let remainingCWB = CWB;
+    let remainingCNB = CNB;
+    
+    while (remainingAdults > 0) {
+      if (remainingAdults === 3) {
+        if (overrideTriple) {
+          rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
+          rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: 0 });
+        } else {
+          rooms.push({ tag: "Triple Sharing", adults: 3, cwb: 0, cnb: 0, infants: 0 });
+        }
+        remainingAdults = 0;
+      } else if (remainingAdults === 1) {
+        rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: 0 });
+        remainingAdults = 0;
+      } else {
+        rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
+        remainingAdults -= 2;
+      }
+    }
+    
+    if (I > 0 && rooms.length > 0) {
+      rooms[0].infants = I;
+    }
+    
+    let roomIdx = 0;
+    while (remainingCWB > 0 || remainingCNB > 0) {
+      if (roomIdx < rooms.length) {
+        let room = rooms[roomIdx];
+        if (room.tag === "Double Sharing" || room.tag === "Single Occupancy") {
+          let currentPax = room.adults + (room.cwb || 0) + (room.cnb || 0);
+          if (currentPax < 4) {
+            let space = 4 - currentPax;
+            let addCWB = Math.min(remainingCWB, space);
+            room.cwb = (room.cwb || 0) + addCWB;
+            remainingCWB -= addCWB;
+            space -= addCWB;
+            
+            if (space > 0) {
+              let addCNB = Math.min(remainingCNB, space);
+              room.cnb = (room.cnb || 0) + addCNB;
+              remainingCNB -= addCNB;
+            }
+            
+            if (room.cwb > 0) {
+              room.tag = "Double + 1 Extra Bed (CWB)";
+            } else if (room.cnb > 0) {
+              room.tag = "Double + CNB";
+            }
+          }
+        }
+        roomIdx++;
+      } else {
+        let addCWB = Math.min(remainingCWB, 3);
+        remainingCWB -= addCWB;
+        let addCNB = 0;
+        if (addCWB < 3) {
+          addCNB = Math.min(remainingCNB, 3 - addCWB);
+          remainingCNB -= addCNB;
+        }
+        rooms.push({ tag: "Family Room", adults: 0, cwb: addCWB, cnb: addCNB, infants: 0 });
+      }
+    }
+  }
+  
+  return rooms;
+};
+
+const recommendVehicle = (totalPax, vehiclesList) => {
+  if (!vehiclesList || vehiclesList.length === 0) return null;
+  const sorted = [...vehiclesList].sort((a, b) => a.maxPax - b.maxPax);
+  const match = sorted.find(v => v.maxPax >= totalPax);
+  return match || sorted[sorted.length - 1];
+};
+
+const calculateCustomQuote = (rooms, rule, nights, totalPax, days, selectedVehicle) => {
+  const baseRoomRate = rule.baseRoomRate;
+  const extraAdultRate = rule.extraAdultRate;
+  const cwbRate = rule.cwbRate;
+  const cnbRate = rule.cnbRate;
+  const ticketRate = rule.sightseeingTicketPrice;
+  
+  let hotelCost = 0;
+  rooms.forEach(r => {
+    let roomCost = baseRoomRate;
+    if (r.adults === 3) {
+      roomCost += extraAdultRate;
+    }
+    if (r.cwb > 0) {
+      roomCost += r.cwb * cwbRate;
+    }
+    if (r.cnb > 0) {
+      roomCost += r.cnb * cnbRate;
+    }
+    hotelCost += roomCost * nights;
+  });
+  
+  let sightseeingCost = totalPax * ticketRate;
+  
+  let transportCost = 0;
+  if (selectedVehicle) {
+    transportCost = (selectedVehicle.dailyRate * days) + 
+                    (selectedVehicle.driverAllowance * days) + 
+                    selectedVehicle.tollCharges + 
+                    selectedVehicle.permitTax;
+  }
+  
+  const totalCost = hotelCost + sightseeingCost + transportCost;
+  
+  return {
+    hotelCost,
+    sightseeingCost,
+    transportCost,
+    totalCost
+  };
+};
+
 const PackageDetails = () => {
   const { id } = useParams();
   const [pkg, setPkg] = useState(null);
@@ -67,6 +321,38 @@ const PackageDetails = () => {
   });
   const [bookingLoading, setBookingLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const [allocationRule, setAllocationRule] = useState(null);
+  const [guests, setGuests] = useState([
+    { name: 'Traveler 1', age: 30, bedRequired: false },
+    { name: 'Traveler 2', age: 28, bedRequired: false }
+  ]);
+  const [overrideTriple, setOverrideTriple] = useState(false);
+  const [vehicleOverride, setVehicleOverride] = useState('');
+
+  const nights = pkg?.duration?.nights || 1;
+  const days = pkg?.duration?.days || 1;
+  
+  // Guest classifications
+  const { A, CWB, CNB, I } = classifyGuests(guests);
+  const totalPax = A + CWB + CNB; // headcount for sightseeing tickets & vehicle recommendation (exclude infant)
+  
+  // Room allocation
+  const allocatedRooms = allocateRooms(A, CWB, CNB, I, overrideTriple);
+  
+  // Vehicle lists & selection
+  const vehicles = allocationRule?.vehicles || [];
+  const recommendedVehicle = recommendVehicle(totalPax, vehicles);
+  const selectedVehicle = vehicleOverride 
+    ? (vehicles.find(v => v.vehicleName === vehicleOverride) || recommendedVehicle)
+    : recommendedVehicle;
+  
+  // Pricing breakdown
+  const quote = allocationRule 
+    ? calculateCustomQuote(allocatedRooms, allocationRule, nights, totalPax, days, selectedVehicle)
+    : null;
+  
+  const perAdultCost = (quote && A > 0) ? Math.round(quote.totalCost / A) : 0;
 
   // Admin Send to Customer state
   const [showSendModal, setShowSendModal] = useState(false);
@@ -114,6 +400,14 @@ const PackageDetails = () => {
         ]);
         setAttachedConfigs(Array.isArray(configsRes.data) ? configsRes.data : []);
         setCategories(Array.isArray(catsRes.data) ? catsRes.data : []);
+
+        try {
+          const ruleRes = await api.get(`/allocation-rules/package/${pkgData.id}`);
+          setAllocationRule(ruleRes.data);
+        } catch (ruleErr) {
+          console.log('No specific allocation rule found for package, using fallback rates', ruleErr);
+          setAllocationRule(defaultFallbackRule);
+        }
       } catch (error) {
         console.error('Error fetching package details:', error);
       } finally {
@@ -233,7 +527,19 @@ const PackageDetails = () => {
       await api.post('/bookings', {
         ...bookingForm,
         packageId: id,
-        packageTitle: pkg.title
+        packageTitle: pkg.title,
+        guests: guests,
+        roomsBreakdown: allocatedRooms,
+        selectedVehicle: selectedVehicle?.vehicleName,
+        hotelCost: quote?.hotelCost,
+        transportCost: quote?.transportCost,
+        sightseeingCost: quote?.sightseeingCost,
+        totalCost: quote?.totalCost,
+        perAdultCost: perAdultCost,
+        adultsCount: A,
+        cwbCount: CWB,
+        cnbCount: CNB,
+        infantCount: I
       });
       toast.success('Booking submitted successfully! Check your email for confirmation.');
       setShowBookingModal(false);
@@ -265,7 +571,19 @@ const PackageDetails = () => {
         ...sendForm,
         packageId: id,
         packageTitle: pkg.title,
-        isCustom: pkg.packageType === 'Custom'
+        isCustom: pkg.packageType === 'Custom',
+        guests: guests,
+        roomsBreakdown: allocatedRooms,
+        selectedVehicle: selectedVehicle?.vehicleName,
+        hotelCost: quote?.hotelCost,
+        transportCost: quote?.transportCost,
+        sightseeingCost: quote?.sightseeingCost,
+        totalCost: quote?.totalCost,
+        perAdultCost: perAdultCost,
+        adultsCount: A,
+        cwbCount: CWB,
+        cnbCount: CNB,
+        infantCount: I
       });
       toast.success('Itinerary PDF sent successfully!');
       setShowSendModal(false);
@@ -405,6 +723,252 @@ const PackageDetails = () => {
                   className="text-gray-600 text-base sm:text-lg leading-relaxed quill-content overflow-hidden"
                   dangerouslySetInnerHTML={{ __html: cleanHtmlForDisplay(pkg.overview) }}
                 />
+
+                {/* Guest List & Custom Price Calculator */}
+                <div className="mt-8 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2 font-display">
+                    <Users className="h-5 w-5 text-blue-600 animate-pulse" />
+                    Configure Travelers & Get Live Custom Quote
+                  </h3>
+                  <p className="text-xs text-gray-400 font-semibold mb-6">
+                    Add guest details below to automatically calculate room configurations, transport recommendations, and exact package cost.
+                  </p>
+
+                  {/* Guest rows */}
+                  <div className="space-y-3.5 mb-6">
+                    {guests.map((g, idx) => (
+                      <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-gray-50/50 p-3 rounded-xl border border-gray-100 hover:border-blue-200 transition-all animate-in fade-in duration-150">
+                        <div className="flex-1 min-w-0">
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Traveler Name</label>
+                          <input 
+                            type="text" 
+                            placeholder={`Traveler ${idx + 1}`}
+                            className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            value={g.name}
+                            onChange={(e) => {
+                              const updated = [...guests];
+                              updated[idx].name = e.target.value;
+                              setGuests(updated);
+                            }}
+                          />
+                        </div>
+                        <div className="w-full sm:w-20">
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Age</label>
+                          <input 
+                            type="number" 
+                            min="0"
+                            placeholder="Age"
+                            className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            value={g.age}
+                            onChange={(e) => {
+                              const updated = [...guests];
+                              const ageVal = parseInt(e.target.value);
+                              updated[idx].age = isNaN(ageVal) ? '' : ageVal;
+                              if (ageVal < 5 || ageVal >= 12) {
+                                updated[idx].bedRequired = false;
+                              }
+                              setGuests(updated);
+                            }}
+                          />
+                        </div>
+                        
+                        {/* Bed preference - only for child 5-11 */}
+                        <div className="w-full sm:w-36 flex items-center gap-2">
+                          <div className="flex-1">
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Extra Bed Required</label>
+                            {parseInt(g.age) >= 5 && parseInt(g.age) < 12 ? (
+                              <label className="relative inline-flex items-center cursor-pointer mt-1">
+                                <input 
+                                  type="checkbox" 
+                                  className="sr-only peer"
+                                  checked={g.bedRequired}
+                                  onChange={(e) => {
+                                    const updated = [...guests];
+                                    updated[idx].bedRequired = e.target.checked;
+                                    setGuests(updated);
+                                  }}
+                                />
+                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                <span className="ml-2 text-xs font-bold text-gray-700">{g.bedRequired ? 'Yes' : 'No'}</span>
+                              </label>
+                            ) : (
+                              <span className="text-[10px] text-gray-400 font-semibold block mt-1.5 italic">
+                                {parseInt(g.age) >= 12 ? 'Adult (Included)' : parseInt(g.age) < 5 ? 'Infant (Free Room)' : 'Specify age...'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Remove button */}
+                        <div className="self-end sm:self-center mt-3 sm:mt-0">
+                          {guests.length > 1 && (
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                const updated = guests.filter((_, i) => i !== idx);
+                                setGuests(updated);
+                              }}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 mb-6">
+                    <button 
+                      type="button"
+                      onClick={() => setGuests([...guests, { name: '', age: 30, bedRequired: false }])}
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 px-4 rounded-xl text-xs border border-blue-100 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                    >
+                      <Plus size={14} /> Add Guest
+                    </button>
+                    {guests.length > 0 && (
+                      <button 
+                        type="button"
+                        onClick={() => setGuests([{ name: 'Traveler 1', age: 30, bedRequired: false }, { name: 'Traveler 2', age: 28, bedRequired: false }])}
+                        className="bg-gray-50 hover:bg-gray-150 text-gray-600 font-bold py-2 px-4 rounded-xl text-xs border border-gray-200 flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                      >
+                        Reset Guests
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Warning if no adults */}
+                  {A === 0 && guests.length > 0 && (
+                    <div className="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs font-semibold text-amber-700 flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>At least one adult (Age 12 or above) is required in the guest list to calculate quotes and allocate rooms.</span>
+                    </div>
+                  )}
+
+                  {/* Allocations Breakdown */}
+                  {quote && A > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-5 border-t border-gray-100 animate-in fade-in duration-200">
+                      {/* Room Allocation */}
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <Hotel className="h-4 w-4 text-blue-600" />
+                          Hotel Room Allocation
+                        </h4>
+                        
+                        {/* List allocated rooms */}
+                        <div className="space-y-2">
+                          {allocatedRooms.map((r, i) => (
+                            <div key={i} className="flex justify-between items-center p-3 bg-blue-50/20 border border-blue-50 rounded-xl shadow-sm">
+                              <div>
+                                <span className="text-[10px] font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded mr-2 uppercase">
+                                  Room {i + 1}
+                                </span>
+                                <span className="text-xs font-bold text-gray-800">{r.tag}</span>
+                              </div>
+                              <span className="text-[10px] font-semibold text-gray-400">
+                                {r.adults > 0 && `${r.adults} Adults`}
+                                {r.cwb > 0 && `, ${r.cwb} CWB`}
+                                {r.cnb > 0 && `, ${r.cnb} CNB`}
+                                {r.infants > 0 && `, ${r.infants} Infant`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Room splits override options */}
+                        {allocatedRooms.some(r => r.tag === "Triple Sharing") && (
+                          <div className="bg-gray-50 p-3 rounded-xl border border-gray-150 flex items-center justify-between shadow-sm">
+                            <div className="pr-3">
+                              <span className="text-xs font-bold text-gray-800 block">Split Triple Sharing Room?</span>
+                              <span className="text-[10px] text-gray-400 font-semibold block mt-0.5">Split Triple Room into 1 Double Sharing + 1 Single Occupancy room.</span>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                              <input 
+                                type="checkbox" 
+                                className="sr-only peer"
+                                checked={overrideTriple}
+                                onChange={(e) => setOverrideTriple(e.target.checked)}
+                              />
+                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Transport Allocation */}
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <Car className="h-4 w-4 text-blue-600" />
+                          Transport Allocation ({totalPax} Pax)
+                        </h4>
+
+                        {/* Recommended vehicle notice */}
+                        {recommendedVehicle && (
+                          <div className="bg-gray-50 p-3 rounded-xl border border-gray-150 text-xs shadow-sm">
+                            <span className="font-bold text-gray-700 block">Recommended Vehicle:</span>
+                            <span className="text-xs font-semibold text-gray-500 mt-1 block">
+                              {recommendedVehicle.vehicleName} (Accommodates up to {recommendedVehicle.maxPax} Pax)
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Vehicle override selection */}
+                        {vehicles.length > 0 && (
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Upgrade/Override Vehicle</label>
+                            <select 
+                              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              value={vehicleOverride || recommendedVehicle?.vehicleName || ''}
+                              onChange={(e) => setVehicleOverride(e.target.value)}
+                            >
+                              {vehicles.map((v, i) => (
+                                <option key={i} value={v.vehicleName}>
+                                  {v.vehicleName} (Max {v.maxPax} Pax) - ₹{formatCurrency(v.dailyRate)}/day
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Pricing Quote Summary */}
+                      <div className="md:col-span-2 bg-gray-50 p-4 border border-gray-100 rounded-2xl mt-2 space-y-3 shadow-inner">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Custom Pricing Cost Sheet</span>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                          <div className="bg-white p-3 border border-gray-150 rounded-xl shadow-sm">
+                            <span className="text-[10px] text-gray-400 font-bold block uppercase tracking-wider mb-1">Hotel Cost ({nights} nights)</span>
+                            <span className="text-base font-extrabold text-gray-800">₹{formatCurrency(quote.hotelCost)}</span>
+                            <span className="block text-[9px] text-gray-400 mt-0.5">{allocatedRooms.length} rooms mapped</span>
+                          </div>
+                          
+                          <div className="bg-white p-3 border border-gray-150 rounded-xl shadow-sm">
+                            <span className="text-[10px] text-gray-400 font-bold block uppercase tracking-wider mb-1">Transport Cost ({days} days)</span>
+                            <span className="text-base font-extrabold text-gray-800">₹{formatCurrency(quote.transportCost)}</span>
+                            <span className="block text-[9px] text-gray-400 mt-0.5">{selectedVehicle?.vehicleName || 'None'} selected</span>
+                          </div>
+                          
+                          <div className="bg-white p-3 border border-gray-150 rounded-xl shadow-sm">
+                            <span className="text-[10px] text-gray-400 font-bold block uppercase tracking-wider mb-1">Sightseeing Tickets</span>
+                            <span className="text-base font-extrabold text-gray-800">₹{formatCurrency(quote.sightseeingCost)}</span>
+                            <span className="block text-[9px] text-gray-400 mt-0.5">{totalPax} headcounts mapped</span>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-gray-200 pt-3 flex justify-between items-center flex-wrap gap-2">
+                          <div>
+                            <span className="text-[10px] text-gray-400 font-black uppercase tracking-wider block">Grand Dynamic Quote Total</span>
+                            <span className="text-2xl font-black text-blue-600">₹{formatCurrency(quote.totalCost)}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] text-gray-400 font-black uppercase tracking-wider block">Per Adult Share</span>
+                            <span className="text-xl font-black text-gray-800">₹{formatCurrency(perAdultCost)} <span className="text-[10px] font-semibold text-gray-500">/ adult</span></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Pricing Card */}
@@ -414,20 +978,27 @@ const PackageDetails = () => {
                   <span className="font-medium text-lg">{pkg.duration?.days} Days / {pkg.duration?.nights} Nights</span>
                 </div>
                 <div className="mb-2">
-                  <span className="text-gray-500 text-sm font-medium uppercase tracking-wide">Starting from</span>
-                </div>
-                <div className="flex items-baseline mb-1">
-                  <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
-                    {pkg.pricing?.currency || 'INR'} {formatCurrency(pkg.pricing?.finalPrice)}
+                  <span className="text-gray-500 text-sm font-medium uppercase tracking-wide">
+                    {quote ? 'Estimated Quote' : 'Starting from'}
                   </span>
-                  {pkg.pricing?.basePrice > pkg.pricing?.finalPrice && (
-                    <span className="ml-3 text-lg text-gray-400 line-through decoration-red-400">
+                </div>
+                <div className="flex flex-col mb-1">
+                  <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
+                    {pkg.pricing?.currency || 'INR'} {formatCurrency(quote ? quote.totalCost : pkg.pricing?.finalPrice)}
+                  </span>
+                  {quote && A > 0 && (
+                    <span className="text-sm text-indigo-600 font-bold mt-1 bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-1 inline-block self-start">
+                      ₹{formatCurrency(perAdultCost)} per adult ({A} Adults)
+                    </span>
+                  )}
+                  {!quote && pkg.pricing?.basePrice > pkg.pricing?.finalPrice && (
+                    <span className="mt-1 text-sm text-gray-400 line-through decoration-red-400">
                       {pkg.pricing?.currency || 'INR'} {formatCurrency(pkg.pricing?.basePrice)}
                     </span>
                   )}
                 </div>
                 <div className="text-xs text-gray-500 italic mb-6">
-                  {numberToWords(pkg.pricing?.finalPrice)}
+                  {numberToWords(quote ? quote.totalCost : pkg.pricing?.finalPrice)}
                 </div>
                 <button 
                   onClick={handleBookNow}

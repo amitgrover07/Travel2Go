@@ -12,6 +12,7 @@ import AdminUsers from '../components/AdminUsers';
 import { AdminSkeleton } from '../components/SkeletonLoader';
 import AdminConfigurator from '../components/AdminConfigurator';
 import AdminConfiguratorCategories from '../components/AdminConfiguratorCategories';
+import AdminAllocationRules from '../components/AdminAllocationRules';
 
 const quillModules = {
   toolbar: [
@@ -808,7 +809,7 @@ const Admin = () => {
                   <button
                     onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'configurator' ? null : 'configurator'); }}
                     className={`p-2 px-2.5 rounded-md flex items-center justify-center gap-1.5 transition-colors text-sm font-semibold ${
-                      activeDropdown === 'configurator' || view === 'configurator' || view === 'configuratorCategories'
+                      activeDropdown === 'configurator' || view === 'configurator' || view === 'configuratorCategories' || view === 'allocationRules'
                         ? 'text-indigo-700 bg-indigo-100'
                         : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
                     }`}
@@ -836,6 +837,15 @@ const Admin = () => {
                       >
                         <List className="h-4 w-4 shrink-0" />
                         <span>Category Setup</span>
+                      </button>
+                      <button
+                        onClick={() => { setView('allocationRules'); setActiveDropdown(null); }}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-2 ${
+                          view === 'allocationRules' ? 'text-indigo-700 bg-indigo-50/50' : 'text-gray-700 hover:text-indigo-700'
+                        }`}
+                      >
+                        <Settings className="h-4 w-4 shrink-0" />
+                        <span>Allocation Rules</span>
                       </button>
                     </div>
                   )}
@@ -981,6 +991,15 @@ const Admin = () => {
             >
               <List className="h-5 w-5 shrink-0" />
               <span>Categories</span>
+            </button>
+            <button
+              onClick={() => { setView('allocationRules'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                view === 'allocationRules' ? 'text-indigo-700 bg-indigo-50' : 'text-indigo-600 hover:bg-indigo-50/50'
+              }`}
+            >
+              <Settings className="h-5 w-5 shrink-0" />
+              <span>Allocation Rules</span>
             </button>
             <button
               onClick={() => { setView(view === 'settings' ? 'packages' : 'settings'); setMobileMenuOpen(false); }}
@@ -1910,6 +1929,12 @@ const Admin = () => {
           {view === 'configuratorCategories' && (
             <div className="w-full">
               <AdminConfiguratorCategories />
+            </div>
+          )}
+
+          {view === 'allocationRules' && (
+            <div className="w-full">
+              <AdminAllocationRules />
             </div>
           )}
           

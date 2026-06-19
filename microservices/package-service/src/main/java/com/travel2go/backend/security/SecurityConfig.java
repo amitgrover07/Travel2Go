@@ -55,6 +55,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/settings/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/configurators/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/configurator-categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/allocation-rules/**").permitAll()
                         .requestMatchers("/api/custom-packages/all").permitAll()
                         .requestMatchers("/api/packages/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/custom-packages/**").hasAuthority("ROLE_ADMIN")
@@ -62,6 +63,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/media/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/configurators/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/configurator-categories/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/allocation-rules/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
 
