@@ -265,7 +265,7 @@ export default function AdminConfigurator() {
       {/* Configuration Creator/Editor (Left/Main Column) */}
       <div className="lg:w-1/2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm overflow-y-auto max-h-[calc(100vh-8rem)]">
         <h2 className="text-xl font-bold text-gray-900 mb-5 pb-2 border-b border-gray-100 flex items-center gap-2">
-          <Settings className="text-indigo-650" />
+          <Settings className="text-indigo-600" />
           {editingId ? 'Edit Configuration' : 'Create Configuration'}
         </h2>
 
@@ -417,7 +417,7 @@ export default function AdminConfigurator() {
             {/* Sub-form to add/edit single Option */}
             <div className="bg-white p-4 rounded-xl border border-gray-100 space-y-4 shadow-sm">
               <h4 className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
-                <Plus size={14} className="text-indigo-650" />
+                <Plus size={14} className="text-indigo-600" />
                 {editingOptionIndex !== null ? 'Edit Custom Option' : 'Add Custom Option'}
               </h4>
               
@@ -556,7 +556,7 @@ export default function AdminConfigurator() {
 
                       <div className="flex items-center gap-3.5 shrink-0">
                         <div className="text-right">
-                          <span className="text-xs font-extrabold text-indigo-650 block">
+                          <span className="text-xs font-extrabold text-indigo-600 block">
                             ₹{formatCurrency(opt.price)}
                           </span>
                           <span className="text-[9px] font-semibold text-gray-400">
@@ -654,7 +654,7 @@ export default function AdminConfigurator() {
           ) : configurations.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-gray-50/50 border border-dashed rounded-2xl border-gray-200">
               <AlertCircle className="h-10 w-10 text-gray-300 mb-3" />
-              <h4 className="text-sm font-bold text-gray-750">No configurations found</h4>
+              <h4 className="text-sm font-bold text-gray-700">No configurations found</h4>
               <p className="text-xs text-gray-400 mt-1 max-w-[250px]">Create configurations on the left using travel categories.</p>
             </div>
           ) : (
@@ -672,11 +672,11 @@ export default function AdminConfigurator() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-[10px] font-mono font-black bg-indigo-55 text-indigo-700 px-2 py-0.5 rounded-md">
+                        <span className="text-[10px] font-mono font-black bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md">
                           {cfg.configCode}
                         </span>
                         <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
-                          cfg.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-705'
+                          cfg.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                         }`}>
                           {cfg.status}
                         </span>
@@ -700,7 +700,7 @@ export default function AdminConfigurator() {
                       )}
                       
                       {/* Price Tag */}
-                      <div className="mt-2 text-xs font-black text-indigo-650 flex items-center gap-0.5">
+                      <div className="mt-2 text-xs font-black text-indigo-600 flex items-center gap-0.5">
                         <span className="text-[10px] font-bold text-gray-400">Total Setup:</span>
                         ₹{formatCurrency(configSum)} INR
                       </div>

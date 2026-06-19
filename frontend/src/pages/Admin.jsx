@@ -737,81 +737,81 @@ const Admin = () => {
               <h1 className="text-xl font-bold text-gray-900 shrink-0">Admin</h1>
               
               {/* Desktop Menu Options (Hidden on Mobile) */}
-              <div className="hidden lg:flex items-center space-x-2">
-                <Link to="/" className="p-2 px-3 rounded-md flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors">
-                  <Globe className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-semibold">Website</span>
+              <div className="hidden xl:flex items-center space-x-1 xl:space-x-2">
+                <Link to="/" className="p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors text-xs xl:text-sm">
+                  <Globe className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
+                  <span className="font-semibold">Website</span>
                 </Link>
-                <Link to="/admin/images" className="p-2 px-3 rounded-md flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors">
-                  <Image className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-semibold">Gallery</span>
+                <Link to="/admin/images" className="p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors text-xs xl:text-sm">
+                  <Image className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
+                  <span className="font-semibold">Gallery</span>
                 </Link>
                 <button
                   onClick={() => setView('packages')}
-                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
                     view === 'packages' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
                   }`}
                 >
-                  <Package className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-semibold">Packages</span>
+                  <Package className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
+                  <span className="font-semibold">Packages</span>
                 </button>
                 <button
                   onClick={() => { setView('customPackages'); fetchCustomPackages(); }}
-                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                    view === 'customPackages' ? 'text-purple-700 bg-purple-100' : 'text-purple-650 hover:text-purple-800 hover:bg-purple-50'
+                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
+                    view === 'customPackages' ? 'text-purple-700 bg-purple-100' : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
                   }`}
                 >
-                  <Star className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-semibold">Custom</span>
+                  <Star className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
+                  <span className="font-semibold">Custom</span>
                 </button>
                 <button
                   onClick={() => setView('leads')}
-                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                    view === 'leads' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-605 hover:text-indigo-800 hover:bg-indigo-50'
+                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
+                    view === 'leads' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
                   }`}
                 >
-                  <Users className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-semibold">Leads CRM</span>
+                  <Users className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
+                  <span className="font-semibold">Leads CRM</span>
                 </button>
                 <button
                   onClick={() => setView('users')}
-                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                    view === 'users' ? 'text-teal-700 bg-teal-100' : 'text-teal-605 hover:text-teal-800 hover:bg-teal-50'
+                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
+                    view === 'users' ? 'text-teal-700 bg-teal-100' : 'text-teal-600 hover:text-teal-800 hover:bg-teal-50'
                   }`}
                 >
-                  <User className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-semibold">Users</span>
+                  <User className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
+                  <span className="font-semibold">Users</span>
                 </button>
                 <button
                   onClick={() => setView('configurator')}
-                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                    view === 'configurator' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-605 hover:text-indigo-800 hover:bg-indigo-50'
+                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
+                    view === 'configurator' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
                   }`}
                 >
-                  <Sliders className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-semibold">Configurator</span>
+                  <Sliders className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
+                  <span className="font-semibold">Configurator</span>
                 </button>
                 <button
                   onClick={() => setView('configuratorCategories')}
-                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                    view === 'configuratorCategories' ? 'text-teal-700 bg-teal-100' : 'text-teal-605 hover:text-teal-800 hover:bg-teal-50'
+                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
+                    view === 'configuratorCategories' ? 'text-teal-700 bg-teal-100' : 'text-teal-600 hover:text-teal-800 hover:bg-teal-50'
                   }`}
                 >
-                  <List className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-semibold">Categories</span>
+                  <List className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
+                  <span className="font-semibold">Categories</span>
                 </button>
                 <button 
                   onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
-                  className={`p-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
-                    view === 'settings' ? 'text-blue-700 bg-blue-100' : 'text-blue-605 hover:text-blue-800 hover:bg-blue-50'
+                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
+                    view === 'settings' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
                   }`}
                 >
-                  <Settings className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-semibold">Terms</span>
+                  <Settings className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
+                  <span className="font-semibold">Terms</span>
                 </button>
               </div>
             </div>
-
+ 
             {/* Right Side Options (User profile, Logout, Hamburguer Menu) */}
             <div className="flex items-center space-x-3 shrink-0">
               {userProfile && userProfile.picture && (
@@ -822,14 +822,14 @@ const Admin = () => {
               )}
               
               {/* Desktop Logout Button */}
-              <button onClick={handleLogout} className="hidden lg:flex items-center text-gray-650 hover:text-gray-900 transition-colors shrink-0">
+              <button onClick={handleLogout} className="hidden xl:flex items-center text-gray-600 hover:text-gray-900 transition-colors shrink-0">
                 <LogOut className="h-5 w-5 mr-1" /> Logout
               </button>
-
+ 
               {/* Mobile Hamburger Button */}
               <button 
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-                className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                className="xl:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                 title="Toggle Menu"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -838,10 +838,10 @@ const Admin = () => {
           </div>
         </div>
       </nav>
-
+ 
       {/* Mobile menu dropdown */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-gray-250 shadow-md">
+        <div className="xl:hidden bg-white border-b border-gray-200 shadow-md">
           <div className="px-4 py-3 space-y-2">
             <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-colors">
               <Globe className="h-5 w-5 shrink-0" />
@@ -854,7 +854,7 @@ const Admin = () => {
             <button
               onClick={() => { setView('packages'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                view === 'packages' ? 'text-blue-700 bg-blue-50' : 'text-blue-605 hover:bg-blue-50/50'
+                view === 'packages' ? 'text-blue-700 bg-blue-50' : 'text-blue-600 hover:bg-blue-50/50'
               }`}
             >
               <Package className="h-5 w-5 shrink-0" />
@@ -863,7 +863,7 @@ const Admin = () => {
             <button
               onClick={() => { setView('customPackages'); fetchCustomPackages(); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                view === 'customPackages' ? 'text-purple-700 bg-purple-50' : 'text-purple-655 hover:bg-purple-50/50'
+                view === 'customPackages' ? 'text-purple-700 bg-purple-50' : 'text-purple-600 hover:bg-purple-50/50'
               }`}
             >
               <Star className="h-5 w-5 shrink-0" />
@@ -872,7 +872,7 @@ const Admin = () => {
             <button
               onClick={() => { setView('leads'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                view === 'leads' ? 'text-indigo-700 bg-indigo-50' : 'text-indigo-655 hover:bg-indigo-50/50'
+                view === 'leads' ? 'text-indigo-700 bg-indigo-50' : 'text-indigo-600 hover:bg-indigo-50/50'
               }`}
             >
               <Users className="h-5 w-5 shrink-0" />
@@ -881,7 +881,7 @@ const Admin = () => {
             <button
               onClick={() => { setView('users'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                view === 'users' ? 'text-teal-700 bg-teal-50' : 'text-teal-655 hover:bg-teal-50/50'
+                view === 'users' ? 'text-teal-700 bg-teal-50' : 'text-teal-600 hover:bg-teal-50/50'
               }`}
             >
               <User className="h-5 w-5 shrink-0" />
@@ -890,7 +890,7 @@ const Admin = () => {
             <button
               onClick={() => { setView('configurator'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                view === 'configurator' ? 'text-indigo-700 bg-indigo-50' : 'text-indigo-655 hover:bg-indigo-50/50'
+                view === 'configurator' ? 'text-indigo-700 bg-indigo-50' : 'text-indigo-600 hover:bg-indigo-50/50'
               }`}
             >
               <Sliders className="h-5 w-5 shrink-0" />
@@ -899,7 +899,7 @@ const Admin = () => {
             <button
               onClick={() => { setView('configuratorCategories'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                view === 'configuratorCategories' ? 'text-teal-700 bg-teal-50' : 'text-teal-655 hover:bg-teal-50/50'
+                view === 'configuratorCategories' ? 'text-teal-700 bg-teal-50' : 'text-teal-600 hover:bg-teal-50/50'
               }`}
             >
               <List className="h-5 w-5 shrink-0" />
@@ -908,13 +908,13 @@ const Admin = () => {
             <button
               onClick={() => { setView(view === 'settings' ? 'packages' : 'settings'); setMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                view === 'settings' ? 'text-blue-700 bg-blue-50' : 'text-blue-605 hover:bg-blue-50/50'
+                view === 'settings' ? 'text-blue-700 bg-blue-50' : 'text-blue-600 hover:bg-blue-50/50'
               }`}
             >
               <Settings className="h-5 w-5 shrink-0" />
               <span>Global Terms</span>
             </button>
-            <div className="border-t border-gray-150 pt-2 mt-2">
+            <div className="border-t border-gray-200 pt-2 mt-2">
               <button
                 onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 font-bold text-sm transition-colors"

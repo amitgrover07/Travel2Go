@@ -629,7 +629,7 @@ const AdminLeads = ({ packages = [], customPackages = [] }) => {
                               <span className="font-bold text-gray-850 text-[10px] uppercase tracking-wider bg-gray-50 px-1.5 py-0.5 rounded shrink-0 w-max">{log.action.replace(/_/g, ' ')}</span>
                               <span className="text-[9px] text-gray-400 font-semibold whitespace-nowrap">{new Date(log.timestamp).toLocaleDateString()} {new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                             </div>
-                            <div className="text-xs text-gray-650 leading-snug mb-2 font-medium">{log.details}</div>
+                            <div className="text-xs text-gray-600 leading-snug mb-2 font-medium">{log.details}</div>
                             <div className="text-[10px] text-gray-450 font-bold border-t border-gray-50 pt-1.5 flex items-center justify-between">
                               <span>By: <span className="text-gray-600 font-bold">{log.adminName}</span></span>
                             </div>
