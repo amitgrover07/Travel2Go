@@ -3,7 +3,10 @@ import {
   Hotel, Car, Compass, MapPin, Activity, Plane, Ship, Train, 
   Camera, Coffee, Utensils, Tent, Ticket, Shield, HelpCircle, 
   Plus, Edit2, Trash2, X, Search, ChevronDown, ChevronUp, 
-  AlertCircle, IndianRupee, Save, Settings
+  AlertCircle, IndianRupee, Save, Settings,
+  Bus, Luggage, Palmtree, Mountain, Sunset, Globe, Map, 
+  Wifi, Wine, Briefcase, Calendar, Clock, Sparkles, Heart, 
+  Sun, Umbrella, Key, Bike, Tag, Footprints
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -24,6 +27,26 @@ const ICON_MAP = {
   Tent,
   Ticket,
   Shield,
+  Bus,
+  Luggage,
+  Palmtree,
+  Mountain,
+  Sunset,
+  Globe,
+  Map,
+  Wifi,
+  Wine,
+  Briefcase,
+  Calendar,
+  Clock,
+  Sparkles,
+  Heart,
+  Sun,
+  Umbrella,
+  Key,
+  Bike,
+  Tag,
+  Footprints,
   HelpCircle
 };
 

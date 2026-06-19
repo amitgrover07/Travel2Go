@@ -5,7 +5,10 @@ import {
   Calendar, ArrowLeft, X, Loader2, Mail, User, Phone, MapPinIcon, Send,
   Hotel, Car, Compass, Activity, Plane, Ship, Train, Camera, Coffee, 
   Utensils, Tent, Ticket, Shield, HelpCircle, Settings,
-  Trash2, Plus, Users, Info, UserPlus
+  Trash2, Plus, Users, Info, UserPlus,
+  Bus, Luggage, Palmtree, Mountain, Sunset, Globe, Map, 
+  Wifi, Wine, Briefcase, Sparkles, Heart, Sun, Umbrella, 
+  Key, Bike, Tag, Footprints
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -23,6 +26,26 @@ const ICON_MAP = {
   Tent,
   Ticket,
   Shield,
+  Bus,
+  Luggage,
+  Palmtree,
+  Mountain,
+  Sunset,
+  Globe,
+  Map,
+  Wifi,
+  Wine,
+  Briefcase,
+  Calendar,
+  Clock,
+  Sparkles,
+  Heart,
+  Sun,
+  Umbrella,
+  Key,
+  Bike,
+  Tag,
+  Footprints,
   HelpCircle
 };
 import toast from 'react-hot-toast';
@@ -256,7 +279,7 @@ const recommendVehicle = (totalPax, vehiclesList) => {
   return match || sorted[sorted.length - 1];
 };
 
-const calculateCustomQuote = (rooms, rule, nights, totalPax, days, selectedVehicle) => {
+const calculateCustomQuote = (rooms, rule, nights, totalPax, days, selectedVehicle, includeSightseeing) => {
   const baseRoomRate = rule.baseRoomRate;
   const extraAdultRate = rule.extraAdultRate;
   const cwbRate = rule.cwbRate;
@@ -278,7 +301,7 @@ const calculateCustomQuote = (rooms, rule, nights, totalPax, days, selectedVehic
     hotelCost += roomCost * nights;
   });
   
-  let sightseeingCost = totalPax * ticketRate;
+  let sightseeingCost = includeSightseeing ? (totalPax * ticketRate) : 0;
   
   let transportCost = 0;
   if (selectedVehicle) {
@@ -329,6 +352,7 @@ const PackageDetails = () => {
   ]);
   const [overrideTriple, setOverrideTriple] = useState(false);
   const [vehicleOverride, setVehicleOverride] = useState('');
+  const [includeSightseeingOption, setIncludeSightseeingOption] = useState(true);
 
   const nights = pkg?.duration?.nights || 1;
   const days = pkg?.duration?.days || 1;
@@ -348,8 +372,12 @@ const PackageDetails = () => {
     : recommendedVehicle;
   
   // Pricing breakdown
+  const sightseeingIncludedInQuote = (allocationRule?.packageType === 'GIT') 
+    ? (allocationRule?.includeSightseeing !== false)
+    : includeSightseeingOption;
+
   const quote = allocationRule 
-    ? calculateCustomQuote(allocatedRooms, allocationRule, nights, totalPax, days, selectedVehicle)
+    ? calculateCustomQuote(allocatedRooms, allocationRule, nights, totalPax, days, selectedVehicle, sightseeingIncludedInQuote)
     : null;
   
   const perAdultCost = (quote && A > 0) ? Math.round(quote.totalCost / A) : 0;
@@ -404,9 +432,11 @@ const PackageDetails = () => {
         try {
           const ruleRes = await api.get(`/allocation-rules/package/${pkgData.id}`);
           setAllocationRule(ruleRes.data);
+          setIncludeSightseeingOption(ruleRes.data.includeSightseeing !== false);
         } catch (ruleErr) {
           console.log('No specific allocation rule found for package, using fallback rates', ruleErr);
           setAllocationRule(defaultFallbackRule);
+          setIncludeSightseeingOption(true);
         }
       } catch (error) {
         console.error('Error fetching package details:', error);
@@ -948,10 +978,28 @@ const PackageDetails = () => {
                             <span className="block text-[9px] text-gray-400 mt-0.5">{selectedVehicle?.vehicleName || 'None'} selected</span>
                           </div>
                           
-                          <div className="bg-white p-3 border border-gray-150 rounded-xl shadow-sm">
-                            <span className="text-[10px] text-gray-400 font-bold block uppercase tracking-wider mb-1">Sightseeing Tickets</span>
-                            <span className="text-base font-extrabold text-gray-800">₹{formatCurrency(quote.sightseeingCost)}</span>
-                            <span className="block text-[9px] text-gray-400 mt-0.5">{totalPax} headcounts mapped</span>
+                          <div className="bg-white p-3 border border-gray-150 rounded-xl shadow-sm flex flex-col justify-between">
+                            <div>
+                              <span className="text-[10px] text-gray-400 font-bold block uppercase tracking-wider mb-1">Sightseeing Tickets</span>
+                              <span className="text-base font-extrabold text-gray-800">₹{formatCurrency(quote.sightseeingCost)}</span>
+                            </div>
+                            <div className="mt-1.5 border-t border-gray-100 pt-1.5">
+                              {allocationRule?.packageType === 'GIT' ? (
+                                <span className="block text-[9px] font-bold text-green-600">
+                                  {allocationRule?.includeSightseeing !== false ? '✓ Bundled Group Tour (GIT)' : '✗ Excluded from GIT Package'}
+                                </span>
+                              ) : (
+                                <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                                  <input 
+                                    type="checkbox"
+                                    className="rounded text-blue-600 focus:ring-blue-500 h-3 w-3"
+                                    checked={includeSightseeingOption}
+                                    onChange={(e) => setIncludeSightseeingOption(e.target.checked)}
+                                  />
+                                  <span className="text-[9px] text-blue-700 font-bold hover:underline">Include upfront</span>
+                                </label>
+                              )}
+                            </div>
                           </div>
                         </div>
 
@@ -976,7 +1024,31 @@ const PackageDetails = () => {
                 <div className="flex items-center text-gray-600 mb-4">
                   <Clock className="h-5 w-5 mr-2 text-blue-500" />
                   <span className="font-medium text-lg">{pkg.duration?.days} Days / {pkg.duration?.nights} Nights</span>
-                </div>
+                 </div>
+                {allocationRule && (
+                  <div className="mb-4 p-3 bg-white border border-blue-100 rounded-xl flex flex-col gap-1.5 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-gray-500 uppercase tracking-wide text-[9px]">Tour Type</span>
+                      <span className="font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[10px] uppercase">
+                        {allocationRule.packageType === 'GIT' ? 'Group Tour (GIT)' : 'Private Tour (FIT)'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center border-t border-gray-50 pt-1.5">
+                      <span className="font-bold text-gray-500 uppercase tracking-wide text-[9px]">Meal Plan</span>
+                      <span className="font-black text-gray-700">
+                        {allocationRule.mealPlan === 'CP' && 'Continental (CP - Room & Breakfast)'}
+                        {allocationRule.mealPlan === 'MAP' && 'Half Board (MAP - Breakfast & Dinner)'}
+                        {allocationRule.mealPlan === 'AP' && 'Full Board (AP - All Meals)'}
+                        {!['CP', 'MAP', 'AP'].includes(allocationRule.mealPlan) && (allocationRule.mealPlan || 'CP (Room & Breakfast)')}
+                      </span>
+                    </div>
+                    {allocationRule.packageType === 'FIT' && (
+                      <div className="border-t border-gray-50 pt-1.5 text-[9px] text-gray-400 font-semibold leading-relaxed">
+                        ⚠️ **8-to-8 Disposal Rule:** Private cab is at disposal for sightseeing daily from 8 AM to 8 PM.
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="mb-2">
                   <span className="text-gray-500 text-sm font-medium uppercase tracking-wide">
                     {quote ? 'Estimated Quote' : 'Starting from'}

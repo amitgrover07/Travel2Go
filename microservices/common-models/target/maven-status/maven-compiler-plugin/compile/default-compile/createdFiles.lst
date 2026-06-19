@@ -9,6 +9,7 @@ com\travel2go\backend\dto\MediaFileDTO$MediaFileDTOBuilder.class
 com\travel2go\backend\model\Booking$BookingBuilder.class
 com\travel2go\backend\model\GlobalSettings.class
 com\travel2go\backend\model\Lead.class
+com\travel2go\backend\model\AllocationRule.class
 com\travel2go\backend\model\HolidayPackage$Audit.class
 com\travel2go\backend\model\TravelConfiguration$ConfigOption.class
 com\travel2go\backend\model\ConfiguratorCategory.class
@@ -17,6 +18,7 @@ com\travel2go\backend\model\TravelConfiguration$ConfigOption$ConfigOptionBuilder
 com\travel2go\backend\model\HolidayPackage$Duration.class
 com\travel2go\backend\model\LeadActivity.class
 com\travel2go\backend\model\Booking.class
+com\travel2go\backend\model\AllocationRule$VehicleRate.class
 com\travel2go\backend\model\HolidayPackage.class
 com\travel2go\backend\model\ConfiguratorCategory$ConfiguratorCategoryBuilder.class
 com\travel2go\backend\model\HolidayPackage$ItineraryDay.class
@@ -27,8 +29,10 @@ com\travel2go\backend\model\HolidayPackage$Media.class
 com\travel2go\backend\model\LeadActivity$LeadActivityBuilder.class
 com\travel2go\backend\model\TravelConfiguration.class
 com\travel2go\backend\model\LeadAuditLog.class
+com\travel2go\backend\model\AllocationRule$AllocationRuleBuilder.class
 com\travel2go\backend\model\User$UserBuilder.class
 com\travel2go\backend\model\HolidayPackage$Audit$AuditBuilder.class
 com\travel2go\backend\model\VerificationCode$VerificationCodeBuilder.class
+com\travel2go\backend\model\AllocationRule$VehicleRate$VehicleRateBuilder.class
 com\travel2go\backend\dto\BookingRequest.class
 com\travel2go\backend\dto\MediaFileDTO.class

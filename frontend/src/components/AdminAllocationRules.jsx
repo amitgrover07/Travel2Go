@@ -18,6 +18,9 @@ const defaultRuleForm = {
   cwbRate: 800,
   cnbRate: 400,
   sightseeingTicketPrice: 500,
+  packageType: 'FIT',
+  mealPlan: 'CP',
+  includeSightseeing: true,
   vehicles: [
     { vehicleName: 'Sedan', maxPax: 4, dailyRate: 2000, tollCharges: 500, permitTax: 0, driverAllowance: 300 },
     { vehicleName: 'SUV', maxPax: 6, dailyRate: 2500, tollCharges: 600, permitTax: 0, driverAllowance: 300 },
@@ -325,6 +328,46 @@ export default function AdminAllocationRules() {
                 >
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="INACTIVE">INACTIVE</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Package Type (GIT vs FIT)</label>
+                <select 
+                  name="packageType"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-bold text-sm"
+                  value={formData.packageType || 'FIT'}
+                  onChange={handleFormChange}
+                >
+                  <option value="FIT">Free Independent Tour (FIT - Custom / Private)</option>
+                  <option value="GIT">Group Inclusive Tour (GIT - Fixed / Group)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Meal Plan</label>
+                <select 
+                  name="mealPlan"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-bold text-sm"
+                  value={formData.mealPlan || 'CP'}
+                  onChange={handleFormChange}
+                >
+                  <option value="CP">CP (Continental Plan - Room + Breakfast)</option>
+                  <option value="MAP">MAP (Modified American Plan - Room + Breakfast + Dinner)</option>
+                  <option value="AP">AP (American Plan - Room + All Meals)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Include Sightseeing Upfront</label>
+                <select 
+                  name="includeSightseeing"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-bold text-sm"
+                  value={formData.includeSightseeing === false ? 'false' : 'true'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, includeSightseeing: e.target.value === 'true' }))}
+                >
+                  <option value="true">Yes (Included in package base quote)</option>
+                  <option value="false">No (Excluded from package base quote)</option>
                 </select>
               </div>
             </div>
@@ -679,6 +722,17 @@ export default function AdminAllocationRules() {
                           }`}>
                             {rule.status}
                           </span>
+                          <span className="text-[10px] font-black bg-purple-50 text-purple-700 px-2 py-0.5 rounded uppercase">
+                            {rule.packageType || 'FIT'}
+                          </span>
+                          <span className="text-[10px] font-black bg-amber-50 text-amber-700 px-2 py-0.5 rounded uppercase">
+                            {rule.mealPlan || 'CP'}
+                          </span>
+                          {rule.includeSightseeing !== false && (
+                            <span className="text-[10px] font-black bg-teal-50 text-teal-700 px-2 py-0.5 rounded uppercase">
+                              Sightseeing Inc.
+                            </span>
+                          )}
                           <span className="text-[10px] font-semibold text-gray-400">
                             {rule.mappedPackageIds?.length || 0} packages mapped
                           </span>

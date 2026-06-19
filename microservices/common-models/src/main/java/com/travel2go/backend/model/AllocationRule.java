@@ -30,6 +30,13 @@ public class AllocationRule {
     private double cwbRate;            // Child With Bed per night
     private double cnbRate;            // Child No Bed per night
     private double sightseeingTicketPrice; // per headcount
+
+    @Builder.Default
+    private String packageType = "FIT";        // GIT, FIT
+    @Builder.Default
+    private String mealPlan = "CP";           // CP, MAP, AP
+    @Builder.Default
+    private boolean includeSightseeing = true; // whether sightseeing is included in base calculation
     
     // Vehicles configuration
     private List<VehicleRate> vehicles;
