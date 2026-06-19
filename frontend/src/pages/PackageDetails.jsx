@@ -88,7 +88,6 @@ const classifyGuests = (guestsList) => {
   let A = 0;
   let CWB = 0;
   let CNB = 0;
-  let I = 0;
   
   guestsList.forEach(g => {
     const age = parseInt(g.age);
@@ -96,229 +95,181 @@ const classifyGuests = (guestsList) => {
     
     if (age >= 12) {
       A++;
-    } else if (age >= 5) {
-      if (g.bedRequired) {
-        CWB++;
-      } else {
-        CNB++;
-      }
+    } else if (age >= 5 && age < 12) {
+      CWB++;
     } else {
-      I++;
+      CNB++;
     }
   });
   
-  return { A, CWB, CNB, I };
+  return { A, CWB, CNB, I: 0 };
 };
 
-const allocateRooms = (A, CWB, CNB, I, overrideTriple) => {
-  let rooms = [];
-  
+const allocateRooms = (A, CWB, CNB, baseRoomRate, cwbRate, cnbRate) => {
   if (A === 0) return [];
-  
-  if (A === 1) {
-    if (CWB === 0 && CNB === 0) {
-      rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: I });
-    } else if (CWB + CNB === 1) {
-      rooms.push({ 
-        tag: CWB === 1 ? "Double + 1 Extra Bed (CWB)" : "Double + CNB", 
-        adults: 1, 
-        cwb: CWB, 
-        cnb: CNB, 
-        infants: I 
-      });
-    } else {
-      let remainingCWB = CWB;
-      let remainingCNB = CNB;
-      
-      let cwbInRoom = Math.min(remainingCWB, 2);
-      remainingCWB -= cwbInRoom;
-      let cnbInRoom = 0;
-      if (cwbInRoom < 2) {
-        cnbInRoom = Math.min(remainingCNB, 2 - cwbInRoom);
-        remainingCNB -= cnbInRoom;
-      }
-      rooms.push({
-        tag: cwbInRoom > 0 ? "Double + 1 Extra Bed (CWB)" : "Double + CNB",
-        adults: 1,
-        cwb: cwbInRoom,
-        cnb: cnbInRoom,
-        infants: I
-      });
-      
-      while (remainingCWB > 0 || remainingCNB > 0) {
-        let roomCWB = Math.min(remainingCWB, 3);
-        remainingCWB -= roomCWB;
-        let roomCNB = 0;
-        if (roomCWB < 3) {
-          roomCNB = Math.min(remainingCNB, 3 - roomCWB);
-          remainingCNB -= roomCNB;
-        }
-        rooms.push({ tag: "Family Room", adults: 0, cwb: roomCWB, cnb: roomCNB, infants: 0 });
-      }
-    }
-  } else if (A === 2) {
-    if (CWB === 0 && CNB === 0) {
-      rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: I });
-    } else if (CWB + CNB === 1) {
-      rooms.push({ 
-        tag: CWB === 1 ? "Double + 1 Extra Bed (CWB)" : "Double + CNB", 
-        adults: 2, 
-        cwb: CWB, 
-        cnb: CNB, 
-        infants: I 
-      });
-    } else if (CWB + CNB === 2) {
-      rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: 0 });
-      rooms.push({ tag: "Single Occupancy", adults: 1, cwb: CWB, cnb: CNB, infants: I });
-    } else {
-      rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
-      let remainingCWB = CWB;
-      let remainingCNB = CNB;
-      while (remainingCWB > 0 || remainingCNB > 0) {
-        let roomCWB = Math.min(remainingCWB, 3);
-        remainingCWB -= roomCWB;
-        let roomCNB = 0;
-        if (roomCWB < 3) {
-          roomCNB = Math.min(remainingCNB, 3 - roomCWB);
-          remainingCNB -= roomCNB;
-        }
-        rooms.push({ tag: "Family Room", adults: 0, cwb: roomCWB, cnb: roomCNB, infants: I });
-      }
-    }
-  } else if (A === 3) {
-    if (CWB === 0 && CNB === 0) {
-      if (overrideTriple) {
-        rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
-        rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: 0 });
-      } else {
-        rooms.push({ tag: "Triple Sharing", adults: 3, cwb: 0, cnb: 0, infants: 0 });
-      }
-    } else {
-      if (overrideTriple) {
-        rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
-        rooms.push({ tag: "Single Occupancy", adults: 1, cwb: CWB, cnb: CNB, infants: I });
-      } else {
-        rooms.push({ tag: "Triple Sharing", adults: 3, cwb: 0, cnb: 0, infants: 0 });
-        rooms.push({ tag: "Single Occupancy", adults: 0, cwb: CWB, cnb: CNB, infants: I });
-      }
-    }
-  } else {
-    let remainingAdults = A;
-    let remainingCWB = CWB;
-    let remainingCNB = CNB;
-    
-    while (remainingAdults > 0) {
-      if (remainingAdults === 3) {
-        if (overrideTriple) {
-          rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
-          rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: 0 });
-        } else {
-          rooms.push({ tag: "Triple Sharing", adults: 3, cwb: 0, cnb: 0, infants: 0 });
-        }
-        remainingAdults = 0;
-      } else if (remainingAdults === 1) {
-        rooms.push({ tag: "Single Occupancy", adults: 1, cwb: 0, cnb: 0, infants: 0 });
-        remainingAdults = 0;
-      } else {
-        rooms.push({ tag: "Double Sharing", adults: 2, cwb: 0, cnb: 0, infants: 0 });
-        remainingAdults -= 2;
-      }
-    }
-    
-    if (I > 0 && rooms.length > 0) {
-      rooms[0].infants = I;
-    }
-    
-    let roomIdx = 0;
-    while (remainingCWB > 0 || remainingCNB > 0) {
-      if (roomIdx < rooms.length) {
-        let room = rooms[roomIdx];
-        if (room.tag === "Double Sharing" || room.tag === "Single Occupancy") {
-          let currentPax = room.adults + (room.cwb || 0) + (room.cnb || 0);
-          if (currentPax < 4) {
-            let space = 4 - currentPax;
-            let addCWB = Math.min(remainingCWB, space);
-            room.cwb = (room.cwb || 0) + addCWB;
-            remainingCWB -= addCWB;
-            space -= addCWB;
-            
-            if (space > 0) {
-              let addCNB = Math.min(remainingCNB, space);
-              room.cnb = (room.cnb || 0) + addCNB;
-              remainingCNB -= addCNB;
-            }
-            
-            if (room.cwb > 0) {
-              room.tag = "Double + 1 Extra Bed (CWB)";
-            } else if (room.cnb > 0) {
-              room.tag = "Double + CNB";
-            }
-          }
-        }
-        roomIdx++;
-      } else {
-        let addCWB = Math.min(remainingCWB, 3);
-        remainingCWB -= addCWB;
-        let addCNB = 0;
-        if (addCWB < 3) {
-          addCNB = Math.min(remainingCNB, 3 - addCWB);
-          remainingCNB -= addCNB;
-        }
-        rooms.push({ tag: "Family Room", adults: 0, cwb: addCWB, cnb: addCNB, infants: 0 });
-      }
-    }
+
+  // If Adults == 2, CWB == 0, CNB <= 1
+  if (A === 2 && CWB === 0 && CNB <= 1) {
+    const infantSharing = CNB === 1;
+    return [{
+      tag: `ROOM 1 Double Sharing (2 Adults${infantSharing ? ', 1 Infant sharing' : ''})`,
+      adults: 2,
+      cwb: 0,
+      cnb: CNB,
+      costPerNight: baseRoomRate + (infantSharing ? cnbRate : 0)
+    }];
   }
-  
+
+  // If Adults == 2, CWB == 1, CNB == 0
+  if (A === 2 && CWB === 1 && CNB === 0) {
+    return [{
+      tag: "ROOM 1 Double Sharing + Extra Bed",
+      adults: 2,
+      cwb: 1,
+      cnb: 0,
+      costPerNight: baseRoomRate + cwbRate
+    }];
+  }
+
+  // If Adults == 2, CWB == 1, CNB == 1
+  if (A === 2 && CWB === 1 && CNB === 1) {
+    return [{
+      tag: "ROOM 1 Double Sharing + Extra Bed (1 Child, 1 Infant sharing)",
+      adults: 2,
+      cwb: 1,
+      cnb: 1,
+      costPerNight: baseRoomRate + cwbRate + cnbRate
+    }];
+  }
+
+  // Fallback for larger counts
+  const totalBedSeekers = A + CWB;
+  const numRooms = Math.ceil(totalBedSeekers / 2);
+  const rooms = [];
+
+  let remainingAdults = A;
+  let remainingCWB = CWB;
+  let remainingCNB = CNB;
+
+  for (let i = 0; i < numRooms; i++) {
+    let roomA = 0;
+    let roomCWB = 0;
+    
+    if (remainingAdults >= 2) {
+      roomA = 2;
+      remainingAdults -= 2;
+    } else if (remainingAdults === 1) {
+      roomA = 1;
+      remainingAdults = 0;
+      if (remainingCWB >= 1) {
+        roomCWB = 1;
+        remainingCWB -= 1;
+      }
+    } else {
+      roomCWB = Math.min(remainingCWB, 2);
+      remainingCWB -= roomCWB;
+    }
+
+    const roomCNB = i === 0 ? remainingCNB : 0;
+    if (i === 0) remainingCNB = 0;
+
+    let labelParts = [];
+    if (roomA > 0) labelParts.push(`${roomA} Adult${roomA > 1 ? 's' : ''}`);
+    if (roomCWB > 0) labelParts.push(`${roomCWB} Child${roomCWB > 1 ? ' with Bed' : ' with Bed'}`);
+    if (roomCNB > 0) labelParts.push(`${roomCNB} Infant${roomCNB > 1 ? 's' : ''} sharing`);
+
+    rooms.push({
+      tag: `ROOM ${i + 1} Double Sharing (${labelParts.join(', ')})`,
+      adults: roomA,
+      cwb: roomCWB,
+      cnb: roomCNB,
+      costPerNight: baseRoomRate + (roomCNB * cnbRate)
+    });
+  }
+
   return rooms;
 };
 
-const recommendVehicle = (totalPax, vehiclesList) => {
+const findCheapestFleet = (totalPax, vehiclesList) => {
   if (!vehiclesList || vehiclesList.length === 0) return null;
-  const sorted = [...vehiclesList].sort((a, b) => a.maxPax - b.maxPax);
-  const match = sorted.find(v => v.maxPax >= totalPax);
-  return match || sorted[sorted.length - 1];
-};
-
-const calculateCustomQuote = (rooms, rule, nights, totalPax, days, selectedVehicle, includeSightseeing) => {
-  const baseRoomRate = rule.baseRoomRate;
-  const extraAdultRate = rule.extraAdultRate;
-  const cwbRate = rule.cwbRate;
-  const cnbRate = rule.cnbRate;
-  const ticketRate = rule.sightseeingTicketPrice;
   
-  let hotelCost = 0;
-  rooms.forEach(r => {
-    let roomCost = baseRoomRate;
-    if (r.adults === 3) {
-      roomCost += extraAdultRate;
-    }
-    if (r.cwb > 0) {
-      roomCost += r.cwb * cwbRate;
-    }
-    if (r.cnb > 0) {
-      roomCost += r.cnb * cnbRate;
-    }
-    hotelCost += roomCost * nights;
+  // Sort vehicles by maxPax ascending, then dailyRate ascending
+  const sortedVehicles = [...vehiclesList].sort((a, b) => {
+    if (a.maxPax !== b.maxPax) return a.maxPax - b.maxPax;
+    return a.dailyRate - b.dailyRate;
   });
   
-  let sightseeingCost = includeSightseeing ? (totalPax * ticketRate) : 0;
+  const largestVehicle = sortedVehicles[sortedVehicles.length - 1];
   
-  let transportCost = 0;
-  if (selectedVehicle) {
-    transportCost = (selectedVehicle.dailyRate * days) + 
-                    (selectedVehicle.driverAllowance * days) + 
-                    selectedVehicle.tollCharges + 
-                    selectedVehicle.permitTax;
+  // If headcount fits in a single vehicle:
+  const singleFits = sortedVehicles.filter(v => v.maxPax >= totalPax);
+  if (singleFits.length > 0) {
+    const cheapestSingle = singleFits.reduce((min, v) => v.dailyRate < min.dailyRate ? v : min, singleFits[0]);
+    return {
+      description: `${cheapestSingle.vehicleName} (Accommodates up to ${cheapestSingle.maxPax} Pax)`,
+      vehicles: [cheapestSingle],
+      totalDailyRate: cheapestSingle.dailyRate,
+      totalDriverAllowance: cheapestSingle.driverAllowance,
+      totalTollCharges: cheapestSingle.tollCharges,
+      totalPermitTax: cheapestSingle.permitTax
+    };
   }
   
-  const totalCost = hotelCost + sightseeingCost + transportCost;
+  // If headcount is larger than largest vehicle's maxPax:
+  // Split fleet cheapest combination search up to 4 vehicles
+  let bestCombo = null;
+  let minCost = Infinity;
   
-  return {
-    hotelCost,
-    sightseeingCost,
-    transportCost,
-    totalCost
+  const search = (currentCombo, currentCapacity, currentCost) => {
+    if (currentCapacity >= totalPax) {
+      if (currentCost < minCost) {
+        minCost = currentCost;
+        bestCombo = [...currentCombo];
+      }
+      return;
+    }
+    if (currentCombo.length >= 3) {
+      const remaining = totalPax - currentCapacity;
+      const count = Math.ceil(remaining / largestVehicle.maxPax);
+      const cost = currentCost + count * largestVehicle.dailyRate;
+      if (cost < minCost) {
+        minCost = cost;
+        bestCombo = [...currentCombo];
+        for (let i = 0; i < count; i++) {
+          bestCombo.push(largestVehicle);
+        }
+      }
+      return;
+    }
+    
+    for (let v of sortedVehicles) {
+      currentCombo.push(v);
+      search(currentCombo, currentCapacity + v.maxPax, currentCost + v.dailyRate);
+      currentCombo.pop();
+    }
   };
+  
+  search([], 0, 0);
+  
+  if (bestCombo) {
+    const counts = {};
+    bestCombo.forEach(v => {
+      counts[v.vehicleName] = (counts[v.vehicleName] || 0) + 1;
+    });
+    const descParts = Object.entries(counts).map(([name, count]) => `${count} x ${name}`);
+    const desc = descParts.join(' + ');
+    
+    return {
+      description: desc,
+      vehicles: bestCombo,
+      totalDailyRate: bestCombo.reduce((sum, v) => sum + v.dailyRate, 0),
+      totalDriverAllowance: bestCombo.reduce((sum, v) => sum + v.driverAllowance, 0),
+      totalTollCharges: bestCombo.reduce((sum, v) => sum + v.tollCharges, 0),
+      totalPermitTax: bestCombo.reduce((sum, v) => sum + v.permitTax, 0)
+    };
+  }
+  
+  return null;
 };
 
 const PackageDetails = () => {
@@ -358,29 +309,64 @@ const PackageDetails = () => {
   const days = pkg?.duration?.days || 1;
   
   // Guest classifications
-  const { A, CWB, CNB, I } = classifyGuests(guests);
+  const { A, CWB, CNB } = classifyGuests(guests);
   const totalPax = A + CWB + CNB; // headcount for sightseeing tickets & vehicle recommendation (exclude infant)
   
   // Room allocation
-  const allocatedRooms = allocateRooms(A, CWB, CNB, I, overrideTriple);
+  const allocatedRooms = allocationRule 
+    ? allocateRooms(A, CWB, CNB, allocationRule.baseRoomRate, allocationRule.cwbRate, allocationRule.cnbRate) 
+    : [];
   
   // Vehicle lists & selection
   const vehicles = allocationRule?.vehicles || [];
-  const recommendedVehicle = recommendVehicle(totalPax, vehicles);
-  const selectedVehicle = vehicleOverride 
-    ? (vehicles.find(v => v.vehicleName === vehicleOverride) || recommendedVehicle)
-    : recommendedVehicle;
+  const recommendedFleet = allocationRule ? findCheapestFleet(totalPax, vehicles) : null;
+  
+  let selectedFleet = null;
+  if (vehicleOverride && vehicles.length > 0) {
+    const matchedVehicle = vehicles.find(v => v.vehicleName === vehicleOverride);
+    if (matchedVehicle) {
+      const numVehicles = Math.ceil(totalPax / matchedVehicle.maxPax);
+      const fleet = Array(numVehicles).fill(matchedVehicle);
+      
+      const counts = {};
+      fleet.forEach(v => {
+        counts[v.vehicleName] = (counts[v.vehicleName] || 0) + 1;
+      });
+      const desc = Object.entries(counts).map(([name, count]) => `${count} x ${name}`).join(' + ');
+
+      selectedFleet = {
+        description: desc,
+        vehicles: fleet,
+        totalDailyRate: matchedVehicle.dailyRate * numVehicles,
+        totalDriverAllowance: matchedVehicle.driverAllowance * numVehicles,
+        totalTollCharges: matchedVehicle.tollCharges * numVehicles,
+        totalPermitTax: matchedVehicle.permitTax * numVehicles
+      };
+    }
+  }
+  
+  if (!selectedFleet) {
+    selectedFleet = recommendedFleet;
+  }
   
   // Pricing breakdown
   const sightseeingIncludedInQuote = (allocationRule?.packageType === 'GIT') 
     ? (allocationRule?.includeSightseeing !== false)
     : includeSightseeingOption;
 
-  const quote = allocationRule 
-    ? calculateCustomQuote(allocatedRooms, allocationRule, nights, totalPax, days, selectedVehicle, sightseeingIncludedInQuote)
-    : null;
+  const hotelCost = allocationRule ? allocatedRooms.reduce((sum, r) => sum + r.costPerNight, 0) * nights : 0;
+  const transportCost = selectedFleet ? (selectedFleet.totalDailyRate * days) + (selectedFleet.totalDriverAllowance * days) + selectedFleet.totalTollCharges + selectedFleet.totalPermitTax : 0;
+  const sightseeingCost = (allocationRule && sightseeingIncludedInQuote) ? (A + CWB) * allocationRule.sightseeingTicketPrice : 0;
   
-  const perAdultCost = (quote && A > 0) ? Math.round(quote.totalCost / A) : 0;
+  const totalCost = hotelCost + transportCost + sightseeingCost;
+  const quote = allocationRule ? {
+    hotelCost,
+    transportCost,
+    sightseeingCost,
+    totalCost
+  } : null;
+  
+  const perAdultCost = (totalCost && A > 0) ? Math.round(totalCost / A) : 0;
 
   // Admin Send to Customer state
   const [showSendModal, setShowSendModal] = useState(false);
@@ -560,7 +546,7 @@ const PackageDetails = () => {
         packageTitle: pkg.title,
         guests: guests,
         roomsBreakdown: allocatedRooms,
-        selectedVehicle: selectedVehicle?.vehicleName,
+        selectedVehicle: selectedFleet?.description,
         hotelCost: quote?.hotelCost,
         transportCost: quote?.transportCost,
         sightseeingCost: quote?.sightseeingCost,
@@ -604,7 +590,7 @@ const PackageDetails = () => {
         isCustom: pkg.packageType === 'Custom',
         guests: guests,
         roomsBreakdown: allocatedRooms,
-        selectedVehicle: selectedVehicle?.vehicleName,
+        selectedVehicle: selectedFleet?.description,
         hotelCost: quote?.hotelCost,
         transportCost: quote?.transportCost,
         sightseeingCost: quote?.sightseeingCost,
@@ -802,30 +788,19 @@ const PackageDetails = () => {
                           />
                         </div>
                         
-                        {/* Bed preference - only for child 5-11 */}
+                        {/* Traveler type status derived from age */}
                         <div className="w-full sm:w-36 flex items-center gap-2">
                           <div className="flex-1">
-                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Extra Bed Required</label>
-                            {parseInt(g.age) >= 5 && parseInt(g.age) < 12 ? (
-                              <label className="relative inline-flex items-center cursor-pointer mt-1">
-                                <input 
-                                  type="checkbox" 
-                                  className="sr-only peer"
-                                  checked={g.bedRequired}
-                                  onChange={(e) => {
-                                    const updated = [...guests];
-                                    updated[idx].bedRequired = e.target.checked;
-                                    setGuests(updated);
-                                  }}
-                                />
-                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                                <span className="ml-2 text-xs font-bold text-gray-700">{g.bedRequired ? 'Yes' : 'No'}</span>
-                              </label>
-                            ) : (
-                              <span className="text-[10px] text-gray-400 font-semibold block mt-1.5 italic">
-                                {parseInt(g.age) >= 12 ? 'Adult (Included)' : parseInt(g.age) < 5 ? 'Infant (Free Room)' : 'Specify age...'}
-                              </span>
-                            )}
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Traveler Type</label>
+                            <span className="text-[11px] font-bold text-gray-700 block mt-1.5">
+                              {parseInt(g.age) >= 12 
+                                ? 'Adult' 
+                                : (parseInt(g.age) >= 5 && parseInt(g.age) < 12)
+                                  ? 'Child with Bed (CWB)' 
+                                  : (parseInt(g.age) < 5)
+                                    ? 'Child No Bed (CNB)'
+                                    : 'Specify age...'}
+                            </span>
                           </div>
                         </div>
 
@@ -933,11 +908,11 @@ const PackageDetails = () => {
                         </h4>
 
                         {/* Recommended vehicle notice */}
-                        {recommendedVehicle && (
+                        {recommendedFleet && (
                           <div className="bg-gray-50 p-3 rounded-xl border border-gray-150 text-xs shadow-sm">
                             <span className="font-bold text-gray-700 block">Recommended Vehicle:</span>
                             <span className="text-xs font-semibold text-gray-500 mt-1 block">
-                              {recommendedVehicle.vehicleName} (Accommodates up to {recommendedVehicle.maxPax} Pax)
+                              {recommendedFleet.description}
                             </span>
                           </div>
                         )}
@@ -948,9 +923,10 @@ const PackageDetails = () => {
                             <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Upgrade/Override Vehicle</label>
                             <select 
                               className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              value={vehicleOverride || recommendedVehicle?.vehicleName || ''}
+                              value={vehicleOverride || (recommendedFleet?.vehicles?.length === 1 ? recommendedFleet.vehicles[0].vehicleName : '') || ''}
                               onChange={(e) => setVehicleOverride(e.target.value)}
                             >
+                              <option value="">-- Use Fleet Auto-Recommendation --</option>
                               {vehicles.map((v, i) => (
                                 <option key={i} value={v.vehicleName}>
                                   {v.vehicleName} (Max {v.maxPax} Pax) - ₹{formatCurrency(v.dailyRate)}/day
@@ -975,7 +951,7 @@ const PackageDetails = () => {
                           <div className="bg-white p-3 border border-gray-150 rounded-xl shadow-sm">
                             <span className="text-[10px] text-gray-400 font-bold block uppercase tracking-wider mb-1">Transport Cost ({days} days)</span>
                             <span className="text-base font-extrabold text-gray-800">₹{formatCurrency(quote.transportCost)}</span>
-                            <span className="block text-[9px] text-gray-400 mt-0.5">{selectedVehicle?.vehicleName || 'None'} selected</span>
+                            <span className="block text-[9px] text-gray-400 mt-0.5">{selectedFleet?.description || 'None selected'}</span>
                           </div>
                           
                           <div className="bg-white p-3 border border-gray-150 rounded-xl shadow-sm flex flex-col justify-between">
@@ -1129,65 +1105,43 @@ const PackageDetails = () => {
               )}
             </div>
 
-            {/* Attached Configurations / Customizations */}
-            {attachedConfigs.length > 0 && (
-              <div className="border-t border-gray-200 pt-10 mb-10">
+            {/* Rule-defined Custom Activities / Customizations */}
+            {allocationRule?.customActivities?.length > 0 && (
+              <div className="border-t border-gray-200 pt-10 mb-10 animate-in fade-in duration-200">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2.5">
                   <Settings className="h-6 w-6 text-blue-600" />
                   Optional Activities & Configuration Customizations
                 </h2>
-                <div className="space-y-6">
-                  {attachedConfigs.map((config) => (
-                    <div key={config.id} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b pb-3 mb-4 gap-2">
-                        <div>
-                          <h3 className="font-extrabold text-gray-900 text-lg leading-tight">
-                            {config.title}
-                          </h3>
-                          {config.description && (
-                            <p className="text-sm text-gray-500 mt-1">
-                              {config.description}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {allocationRule.customActivities.map((opt, idx) => {
+                    const iconName = categories.find(c => c.name === opt.categoryName)?.icon || 'HelpCircle';
+                    const IconComponent = ICON_MAP[iconName] || HelpCircle;
+                    return (
+                      <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-450 transition-all shadow-sm">
+                        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg shadow-sm">
+                            <IconComponent className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                              {opt.categoryName}
+                            </span>
+                            <p className="text-xs font-bold text-gray-700 mt-1 leading-snug">
+                              {opt.optionName}
                             </p>
-                          )}
+                          </div>
                         </div>
-                        <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold shrink-0 self-start sm:self-center">
-                          {config.configCode}
-                        </span>
+                        <div className="text-right pl-3 shrink-0">
+                          <span className="text-sm font-black text-gray-900 block">
+                            ₹{formatCurrency(opt.price)}
+                          </span>
+                          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                            Add-on Price
+                          </span>
+                        </div>
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(config.options || []).map((opt, idx) => {
-                          const iconName = getCategoryIcon(opt.categoryName);
-                          const IconComponent = ICON_MAP[iconName] || HelpCircle;
-                          return (
-                            <div key={idx} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:border-blue-450 transition-all shadow-sm">
-                              <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg shadow-sm">
-                                  <IconComponent className="h-5 w-5" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                                    {opt.categoryName}
-                                  </span>
-                                  <p className="text-xs font-bold text-gray-700 mt-1 leading-snug">
-                                    {opt.optionName}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="text-right pl-3 shrink-0">
-                                <span className="text-sm font-black text-gray-900 block">
-                                  ₹{formatCurrency(opt.price)}
-                                </span>
-                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                                  Add-on Price
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

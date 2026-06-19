@@ -2,11 +2,53 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit2, Trash2, X, Search, ChevronDown, ChevronUp, 
   AlertCircle, IndianRupee, Save, Settings, Info, Package,
-  Sliders, Calendar, User, Users, CheckSquare, Square, Car
+  Sliders, Calendar, User, Users, CheckSquare, Square, Car,
+  Hotel, Compass, MapPin, Activity, Plane, Ship, Train, Camera, Coffee,
+  Utensils, Tent, Ticket, Shield, HelpCircle, Bus, Luggage, Palmtree,
+  Mountain, Sunset, Globe, Map, Wifi, Wine, Briefcase, Clock, Sparkles,
+  Heart, Sun, Umbrella, Key, Bike, Tag, Footprints
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { formatCurrency } from '../utils/formatUtils';
+
+const ICON_MAP = {
+  Hotel,
+  Car,
+  Compass,
+  MapPin,
+  Activity,
+  Plane,
+  Ship,
+  Train,
+  Camera,
+  Coffee,
+  Utensils,
+  Tent,
+  Ticket,
+  Shield,
+  Bus,
+  Luggage,
+  Palmtree,
+  Mountain,
+  Sunset,
+  Globe,
+  Map,
+  Wifi,
+  Wine,
+  Briefcase,
+  Calendar,
+  Clock,
+  Sparkles,
+  Heart,
+  Sun,
+  Umbrella,
+  Key,
+  Bike,
+  Tag,
+  Footprints,
+  HelpCircle
+};
 
 const defaultRuleForm = {
   ruleCode: '',
@@ -27,7 +69,8 @@ const defaultRuleForm = {
     { vehicleName: 'Innova Crysta', maxPax: 6, dailyRate: 3000, tollCharges: 800, permitTax: 0, driverAllowance: 300 },
     { vehicleName: 'Tempo Traveller', maxPax: 12, dailyRate: 5000, tollCharges: 1500, permitTax: 500, driverAllowance: 500 }
   ],
-  mappedPackageIds: []
+  mappedPackageIds: [],
+  customActivities: []
 };
 
 const defaultVehicleRow = {
@@ -42,6 +85,7 @@ const defaultVehicleRow = {
 export default function AdminAllocationRules() {
   const [rules, setRules] = useState([]);
   const [packages, setPackages] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState(defaultRuleForm);
   const [editingId, setEditingId] = useState(null);
@@ -50,6 +94,16 @@ export default function AdminAllocationRules() {
   const [showForm, setShowForm] = useState(false);
   const [packageSearch, setPackageSearch] = useState('');
 
+  // Option Form State for Custom Activities
+  const [optionData, setOptionData] = useState({
+    categoryName: '',
+    optionName: '',
+    basePrice: '',
+    markupPercentage: 0,
+    price: 0
+  });
+  const [editingOptionIndex, setEditingOptionIndex] = useState(null);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -57,12 +111,14 @@ export default function AdminAllocationRules() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [rulesRes, packagesRes] = await Promise.all([
+      const [rulesRes, packagesRes, categoriesRes] = await Promise.all([
         api.get('/allocation-rules/all'),
-        api.get('/packages/all')
+        api.get('/packages/all'),
+        api.get('/configurator-categories')
       ]);
       setRules(Array.isArray(rulesRes.data) ? rulesRes.data : []);
       setPackages(Array.isArray(packagesRes.data) ? packagesRes.data : []);
+      setCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
     } catch (err) {
       console.error('Failed to load rules data', err);
       toast.error('Failed to load rules data');
@@ -89,9 +145,18 @@ export default function AdminAllocationRules() {
     setFormData({
       ...defaultRuleForm,
       ruleCode: nextCode,
-      mappedPackageIds: []
+      mappedPackageIds: [],
+      customActivities: []
     });
     setEditingId(null);
+    setOptionData({
+      categoryName: '',
+      optionName: '',
+      basePrice: '',
+      markupPercentage: 0,
+      price: 0
+    });
+    setEditingOptionIndex(null);
     setShowForm(true);
   };
 
@@ -100,9 +165,18 @@ export default function AdminAllocationRules() {
       ...defaultRuleForm,
       ...rule,
       vehicles: Array.isArray(rule.vehicles) ? rule.vehicles : [],
-      mappedPackageIds: Array.isArray(rule.mappedPackageIds) ? rule.mappedPackageIds : []
+      mappedPackageIds: Array.isArray(rule.mappedPackageIds) ? rule.mappedPackageIds : [],
+      customActivities: Array.isArray(rule.customActivities) ? rule.customActivities : []
     });
     setEditingId(rule.id);
+    setOptionData({
+      categoryName: '',
+      optionName: '',
+      basePrice: '',
+      markupPercentage: 0,
+      price: 0
+    });
+    setEditingOptionIndex(null);
     setShowForm(true);
   };
 
@@ -116,6 +190,80 @@ export default function AdminAllocationRules() {
       console.error('Delete error:', err);
       toast.error(err.response?.data?.message || 'Failed to delete rule');
     }
+  };
+
+  const handleAddCustomActivity = () => {
+    if (!optionData.categoryName) {
+      toast.error('Please select a category');
+      return;
+    }
+    if (!optionData.optionName.trim()) {
+      toast.error('Option details/name is required');
+      return;
+    }
+    if (optionData.basePrice === '' || Number(optionData.basePrice) < 0) {
+      toast.error('Please enter a valid base price');
+      return;
+    }
+
+    const basePriceNum = Number(optionData.basePrice);
+    const markupPct = optionData.markupPercentage === '' ? 0 : Number(optionData.markupPercentage);
+    const finalPrice = Math.ceil(basePriceNum * (1 + markupPct / 100));
+
+    const newOption = {
+      categoryName: optionData.categoryName,
+      optionName: optionData.optionName.trim(),
+      basePrice: basePriceNum,
+      markupPercentage: markupPct,
+      price: finalPrice
+    };
+
+    const updatedOptions = [...(formData.customActivities || [])];
+    if (editingOptionIndex !== null) {
+      updatedOptions[editingOptionIndex] = newOption;
+      setEditingOptionIndex(null);
+      toast.success('Option updated in configuration');
+    } else {
+      updatedOptions.push(newOption);
+      toast.success('Option added to configuration');
+    }
+
+    setFormData(prev => ({ ...prev, customActivities: updatedOptions }));
+    setOptionData({
+      categoryName: '',
+      optionName: '',
+      basePrice: '',
+      markupPercentage: 0,
+      price: 0
+    });
+  };
+
+  const handleEditCustomActivity = (index) => {
+    const opt = formData.customActivities[index];
+    setOptionData({
+      categoryName: opt.categoryName,
+      optionName: opt.optionName,
+      basePrice: opt.basePrice !== undefined ? opt.basePrice : opt.price,
+      markupPercentage: opt.markupPercentage !== undefined ? opt.markupPercentage : 0,
+      price: opt.price
+    });
+    setEditingOptionIndex(index);
+  };
+
+  const handleDeleteCustomActivity = (index) => {
+    const filtered = formData.customActivities.filter((_, idx) => idx !== index);
+    setFormData(prev => ({ ...prev, customActivities: filtered }));
+    if (editingOptionIndex === index) {
+      setEditingOptionIndex(null);
+      setOptionData({
+        categoryName: '',
+        optionName: '',
+        basePrice: '',
+        markupPercentage: 0,
+        price: 0
+      });
+    }
+    toast.success('Option removed');
   };
 
   const handleFormChange = (e) => {
@@ -569,6 +717,211 @@ export default function AdminAllocationRules() {
               )}
             </div>
 
+            {/* Row 3.5: Custom Activity Add-ons */}
+            <div className="border-t border-gray-100 pt-6">
+              <h3 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Sliders size={16} /> Custom Activity Add-ons
+              </h3>
+
+              {/* Sub-form to add/edit single Option */}
+              <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-150 space-y-4 shadow-sm mb-4">
+                <h4 className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Plus size={14} className="text-indigo-600" />
+                  {editingOptionIndex !== null ? 'Edit Custom Option' : 'Add Custom Option'}
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 ml-0.5">
+                      Category *
+                    </label>
+                    <select
+                      value={optionData.categoryName}
+                      onChange={(e) => setOptionData({ ...optionData, categoryName: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none font-semibold text-gray-700"
+                    >
+                      <option value="">-- Choose Category --</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 ml-0.5">
+                      Base Price (INR) *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">₹</span>
+                      <input
+                        type="number"
+                        value={optionData.basePrice}
+                        onChange={(e) => {
+                          const base = e.target.value;
+                          const markup = optionData.markupPercentage || 0;
+                          const final = base !== '' ? Math.ceil(Number(base) * (1 + Number(markup) / 100)) : 0;
+                          setOptionData({ ...optionData, basePrice: base, price: final });
+                        }}
+                        placeholder="e.g. 5000"
+                        className="w-full pl-7 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 ml-0.5">
+                      Increase Price (%)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={optionData.markupPercentage}
+                        onChange={(e) => {
+                          const markup = e.target.value;
+                          const base = optionData.basePrice || 0;
+                          const final = base !== '' ? Math.ceil(Number(base) * (1 + Number(markup) / 100)) : 0;
+                          setOptionData({ ...optionData, markupPercentage: markup, price: final });
+                        }}
+                        placeholder="e.g. 10"
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none pr-8 font-semibold text-gray-700"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">%</span>
+                    </div>
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 ml-0.5">
+                      Option / Item Details *
+                    </label>
+                    <input
+                      type="text"
+                      value={optionData.optionName}
+                      onChange={(e) => setOptionData({ ...optionData, optionName: e.target.value })}
+                      placeholder="e.g. 3 Nights Stay at Munnar Resort (Standard Double Room)"
+                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none font-semibold text-gray-700"
+                    />
+                  </div>
+                </div>
+
+                {optionData.basePrice !== '' && (
+                  <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex justify-between items-center text-xs">
+                    <span className="text-gray-500 font-medium">Final Option Price (with markup):</span>
+                    <span className="font-extrabold text-indigo-700">₹{formatCurrency(optionData.price)} INR</span>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-1 border-t border-gray-50">
+                  {editingOptionIndex !== null && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOptionData({
+                          categoryName: '',
+                          optionName: '',
+                          basePrice: '',
+                          markupPercentage: 0,
+                          price: 0
+                        });
+                        setEditingOptionIndex(null);
+                      }}
+                      className="px-3.5 py-1.5 bg-gray-150 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-all"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddCustomActivity}
+                    className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1 shadow-md shadow-indigo-600/10 hover:shadow-lg"
+                  >
+                    {editingOptionIndex !== null ? 'Update Option' : 'Add Option'}
+                  </button>
+                </div>
+              </div>
+
+              {/* List of custom activities */}
+              {(!formData.customActivities || formData.customActivities.length === 0) ? (
+                <div className="p-6 bg-white rounded-xl border border-dashed border-gray-200 text-center flex flex-col items-center justify-center gap-2">
+                  <AlertCircle className="h-8 w-8 text-gray-300 animate-pulse" />
+                  <p className="text-xs font-bold text-gray-500">No custom activity add-ons configured yet</p>
+                  <p className="text-[10px] text-gray-400">Add categories, options, and pricing above to build your configuration.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                  {formData.customActivities.map((opt, idx) => {
+                    const iconName = categories.find(c => c.name === opt.categoryName)?.icon || 'HelpCircle';
+                    const IconComponent = ICON_MAP[iconName] || HelpCircle;
+                    return (
+                      <div 
+                        key={idx} 
+                        className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-xl hover:border-indigo-300 transition-all shadow-sm group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg shadow-sm">
+                            <IconComponent className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1 pr-3">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">
+                                {opt.categoryName}
+                              </span>
+                              <span className="text-[10px] font-semibold text-gray-500">
+                                Option #{idx + 1}
+                              </span>
+                            </div>
+                            <p className="text-xs font-bold text-gray-700 truncate leading-snug">
+                              {opt.optionName}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <span className="text-xs font-extrabold text-indigo-600 block">
+                              ₹{formatCurrency(opt.price)}
+                            </span>
+                            <span className="text-[9px] font-semibold text-gray-400">
+                              INR
+                            </span>
+                          </div>
+                          
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleEditCustomActivity(idx)}
+                              className="p-1.5 text-blue-500 hover:bg-blue-50 rounded border border-transparent hover:border-blue-100 transition-colors"
+                              title="Edit Option"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCustomActivity(idx)}
+                              className="p-1.5 text-red-400 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition-colors"
+                              title="Remove Option"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Total Cost Summary */}
+                  <div className="p-3.5 bg-indigo-50/50 border border-indigo-100 rounded-xl flex items-center justify-between mt-3 shadow-inner">
+                    <div>
+                      <p className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-widest">Total Configuration Pricing</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Sum of all individual items</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-lg font-black text-indigo-800 flex items-center gap-0.5 justify-end">
+                        ₹{formatCurrency(formData.customActivities.reduce((sum, opt) => sum + opt.price, 0))}
+                      </span>
+                      <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-wider">INR</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
             {/* Row 4: Map Packages by ID */}
             <div className="border-t border-gray-100 pt-6">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
@@ -802,6 +1155,24 @@ export default function AdminAllocationRules() {
                         )}
                       </div>
                     </div>
+
+                    {/* Custom Activities summary */}
+                    {rule.customActivities && rule.customActivities.length > 0 && (
+                      <div className="mt-3 space-y-1">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Custom Activity Add-ons:</span>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {rule.customActivities.map((act, i) => (
+                            <span 
+                              key={i} 
+                              className="bg-indigo-50/50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1.5 shadow-sm"
+                            >
+                              <Sliders size={10} className="text-indigo-500 shrink-0" />
+                              {act.optionName} ({act.categoryName}): ₹{formatCurrency(act.price)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Audit Trail */}

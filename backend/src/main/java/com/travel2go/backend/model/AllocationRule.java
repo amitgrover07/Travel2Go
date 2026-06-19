@@ -44,6 +44,8 @@ public class AllocationRule {
     // Package mapping: list of package IDs this rule applies to
     private List<String> mappedPackageIds;
     
+    private List<CustomActivity> customActivities;
+    
     private HolidayPackage.Audit audit;
 
     @Data
@@ -57,5 +59,17 @@ public class AllocationRule {
         private double tollCharges;
         private double permitTax;
         private double driverAllowance; // per day
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CustomActivity {
+        private String categoryName;
+        private String optionName;
+        private double basePrice;
+        private double markupPercentage;
+        private double price;
     }
 }

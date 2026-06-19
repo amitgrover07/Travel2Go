@@ -115,6 +115,7 @@ public class AllocationRuleController {
         existingRule.setSightseeingTicketPrice(ruleDetails.getSightseeingTicketPrice());
         existingRule.setVehicles(ruleDetails.getVehicles());
         existingRule.setMappedPackageIds(ruleDetails.getMappedPackageIds());
+        existingRule.setCustomActivities(ruleDetails.getCustomActivities());
         existingRule.setPackageType(ruleDetails.getPackageType());
         existingRule.setMealPlan(ruleDetails.getMealPlan());
         existingRule.setIncludeSightseeing(ruleDetails.isIncludeSightseeing());
