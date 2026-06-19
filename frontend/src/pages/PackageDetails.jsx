@@ -330,7 +330,12 @@ const PackageDetails = () => {
     </div>;
   }
 
-    const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  const getCategoryIcon = (catName) => {
+    const matched = categories.find(c => c.name === catName);
+    return matched ? matched.icon : 'HelpCircle';
+  };
+
+  const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
@@ -509,7 +514,7 @@ const PackageDetails = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {(config.options || []).map((opt, idx) => {
-                          const iconName = getCategoryIcon ? getCategoryIcon(opt.categoryName) : (categories.find(c => c.name === opt.categoryName)?.icon || 'HelpCircle');
+                          const iconName = getCategoryIcon(opt.categoryName);
                           const IconComponent = ICON_MAP[iconName] || HelpCircle;
                           return (
                             <div key={idx} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:border-blue-450 transition-all shadow-sm">

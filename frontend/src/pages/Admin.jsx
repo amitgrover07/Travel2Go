@@ -56,6 +56,7 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
   const [mediaContexts, setMediaContexts] = useState({ thumbnail: '', gallery: {} });
   const [view, setView] = useState('packages'); // 'packages' | 'settings' | 'customPackages' | 'leads' | 'configurator' | 'configuratorCategories'
+  const [activeDropdown, setActiveDropdown] = useState(null); // null | 'packages' | 'configurator' | 'settings'
   const [globalTerms, setGlobalTerms] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
   const navigate = useNavigate();
@@ -357,6 +358,16 @@ const Admin = () => {
     };
     loadAllData();
   }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (activeDropdown && !e.target.closest('.nav-dropdown-container')) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [activeDropdown]);
 
   const fetchGlobalTerms = async () => {
     try {
@@ -737,81 +748,147 @@ const Admin = () => {
               <h1 className="text-xl font-bold text-gray-900 shrink-0">Admin</h1>
               
               {/* Desktop Menu Options (Hidden on Mobile) */}
-              <div className="hidden xl:flex items-center space-x-1 xl:space-x-2">
-                <Link to="/" className="p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors text-xs xl:text-sm">
-                  <Globe className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
-                  <span className="font-semibold">Website</span>
+              <div className="hidden lg:flex items-center space-x-1.5 lg:space-x-2">
+                <Link to="/" className="p-2 px-2.5 rounded-md flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors text-sm font-semibold">
+                  <Globe className="h-5 w-5 shrink-0" />
+                  <span>Website</span>
                 </Link>
-                <Link to="/admin/images" className="p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors text-xs xl:text-sm">
-                  <Image className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
-                  <span className="font-semibold">Gallery</span>
-                </Link>
-                <button
-                  onClick={() => setView('packages')}
-                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
-                    view === 'packages' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
-                  }`}
-                >
-                  <Package className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
-                  <span className="font-semibold">Packages</span>
-                </button>
-                <button
-                  onClick={() => { setView('customPackages'); fetchCustomPackages(); }}
-                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
-                    view === 'customPackages' ? 'text-purple-700 bg-purple-100' : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
-                  }`}
-                >
-                  <Star className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
-                  <span className="font-semibold">Custom</span>
-                </button>
+
+                {/* Packages Dropdown */}
+                <div className="nav-dropdown-container relative">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'packages' ? null : 'packages'); }}
+                    className={`p-2 px-2.5 rounded-md flex items-center justify-center gap-1.5 transition-colors text-sm font-semibold ${
+                      activeDropdown === 'packages' || view === 'packages' || view === 'customPackages'
+                        ? 'text-purple-700 bg-purple-100'
+                        : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
+                    }`}
+                  >
+                    <Package className="h-5 w-5 shrink-0" />
+                    <span>Packages</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${activeDropdown === 'packages' ? 'rotate-180' : ''}`} />
+                  </button>
+                  {activeDropdown === 'packages' && (
+                    <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <button
+                        onClick={() => { setView('packages'); setActiveDropdown(null); }}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-purple-50 transition-colors flex items-center gap-2 ${
+                          view === 'packages' ? 'text-purple-700 bg-purple-50/50' : 'text-gray-700 hover:text-purple-700'
+                        }`}
+                      >
+                        <Package className="h-4 w-4 shrink-0" />
+                        <span>Packages List</span>
+                      </button>
+                      <button
+                        onClick={() => { setView('customPackages'); fetchCustomPackages(); setActiveDropdown(null); }}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-purple-50 transition-colors flex items-center gap-2 ${
+                          view === 'customPackages' ? 'text-purple-700 bg-purple-50/50' : 'text-gray-700 hover:text-purple-700'
+                        }`}
+                      >
+                        <Star className="h-4 w-4 shrink-0" />
+                        <span>Custom Packages</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Leads CRM Button */}
                 <button
                   onClick={() => setView('leads')}
-                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
+                  className={`p-2 px-2.5 rounded-md flex items-center justify-center gap-1.5 transition-colors text-sm font-semibold ${
                     view === 'leads' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
                   }`}
                 >
-                  <Users className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
-                  <span className="font-semibold">Leads CRM</span>
+                  <Users className="h-5 w-5 shrink-0" />
+                  <span>Leads CRM</span>
                 </button>
-                <button
-                  onClick={() => setView('users')}
-                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
-                    view === 'users' ? 'text-teal-700 bg-teal-100' : 'text-teal-600 hover:text-teal-800 hover:bg-teal-50'
-                  }`}
-                >
-                  <User className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
-                  <span className="font-semibold">Users</span>
-                </button>
-                <button
-                  onClick={() => setView('configurator')}
-                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
-                    view === 'configurator' ? 'text-indigo-700 bg-indigo-100' : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
-                  }`}
-                >
-                  <Sliders className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
-                  <span className="font-semibold">Configurator</span>
-                </button>
-                <button
-                  onClick={() => setView('configuratorCategories')}
-                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
-                    view === 'configuratorCategories' ? 'text-teal-700 bg-teal-100' : 'text-teal-600 hover:text-teal-800 hover:bg-teal-50'
-                  }`}
-                >
-                  <List className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
-                  <span className="font-semibold">Categories</span>
-                </button>
-                <button 
-                  onClick={() => setView(view === 'settings' ? 'packages' : 'settings')}
-                  className={`p-2 px-2 xl:px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors text-xs xl:text-sm ${
-                    view === 'settings' ? 'text-blue-700 bg-blue-100' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
-                  }`}
-                >
-                  <Settings className="h-4 w-4 xl:h-5 xl:w-5 shrink-0" />
-                  <span className="font-semibold">Terms</span>
-                </button>
+
+                {/* Configurator Dropdown */}
+                <div className="nav-dropdown-container relative">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'configurator' ? null : 'configurator'); }}
+                    className={`p-2 px-2.5 rounded-md flex items-center justify-center gap-1.5 transition-colors text-sm font-semibold ${
+                      activeDropdown === 'configurator' || view === 'configurator' || view === 'configuratorCategories'
+                        ? 'text-indigo-700 bg-indigo-100'
+                        : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
+                    }`}
+                  >
+                    <Sliders className="h-5 w-5 shrink-0" />
+                    <span>Configurator</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${activeDropdown === 'configurator' ? 'rotate-180' : ''}`} />
+                  </button>
+                  {activeDropdown === 'configurator' && (
+                    <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <button
+                        onClick={() => { setView('configurator'); setActiveDropdown(null); }}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-2 ${
+                          view === 'configurator' ? 'text-indigo-700 bg-indigo-50/50' : 'text-gray-700 hover:text-indigo-700'
+                        }`}
+                      >
+                        <Sliders className="h-4 w-4 shrink-0" />
+                        <span>Configurator Setup</span>
+                      </button>
+                      <button
+                        onClick={() => { setView('configuratorCategories'); setActiveDropdown(null); }}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-2 ${
+                          view === 'configuratorCategories' ? 'text-indigo-700 bg-indigo-50/50' : 'text-gray-700 hover:text-indigo-700'
+                        }`}
+                      >
+                        <List className="h-4 w-4 shrink-0" />
+                        <span>Category Setup</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Settings Dropdown */}
+                <div className="nav-dropdown-container relative">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'settings' ? null : 'settings'); }}
+                    className={`p-2 px-2.5 rounded-md flex items-center justify-center gap-1.5 transition-colors text-sm font-semibold ${
+                      activeDropdown === 'settings' || view === 'users' || view === 'settings'
+                        ? 'text-teal-700 bg-teal-100'
+                        : 'text-teal-600 hover:text-teal-800 hover:bg-teal-50'
+                    }`}
+                  >
+                    <Settings className="h-5 w-5 shrink-0" />
+                    <span>System</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${activeDropdown === 'settings' ? 'rotate-180' : ''}`} />
+                  </button>
+                  {activeDropdown === 'settings' && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <button
+                        onClick={() => { setView('users'); setActiveDropdown(null); }}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-teal-50 transition-colors flex items-center gap-2 ${
+                          view === 'users' ? 'text-teal-700 bg-teal-50/50' : 'text-gray-700 hover:text-teal-700'
+                        }`}
+                      >
+                        <User className="h-4 w-4 shrink-0" />
+                        <span>User Management</span>
+                      </button>
+                      <button
+                        onClick={() => { setView('settings'); setActiveDropdown(null); }}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-teal-50 transition-colors flex items-center gap-2 ${
+                          view === 'settings' ? 'text-teal-700 bg-teal-50/50' : 'text-gray-700 hover:text-teal-700'
+                        }`}
+                      >
+                        <FileText className="h-4 w-4 shrink-0" />
+                        <span>Global Terms</span>
+                      </button>
+                      <Link
+                        to="/admin/images"
+                        onClick={() => setActiveDropdown(null)}
+                        className="w-full text-left px-4 py-2 text-xs font-semibold hover:bg-teal-50 transition-colors flex items-center gap-2 text-gray-700 hover:text-teal-700"
+                      >
+                        <Image className="h-4 w-4 shrink-0" />
+                        <span>Media Gallery</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
- 
+
             {/* Right Side Options (User profile, Logout, Hamburguer Menu) */}
             <div className="flex items-center space-x-3 shrink-0">
               {userProfile && userProfile.picture && (
@@ -822,14 +899,14 @@ const Admin = () => {
               )}
               
               {/* Desktop Logout Button */}
-              <button onClick={handleLogout} className="hidden xl:flex items-center text-gray-600 hover:text-gray-900 transition-colors shrink-0">
+              <button onClick={handleLogout} className="hidden lg:flex items-center text-gray-600 hover:text-gray-900 transition-colors shrink-0">
                 <LogOut className="h-5 w-5 mr-1" /> Logout
               </button>
- 
+
               {/* Mobile Hamburger Button */}
               <button 
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-                className="xl:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                 title="Toggle Menu"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -838,10 +915,10 @@ const Admin = () => {
           </div>
         </div>
       </nav>
- 
+
       {/* Mobile menu dropdown */}
       {mobileMenuOpen && (
-        <div className="xl:hidden bg-white border-b border-gray-200 shadow-md">
+        <div className="lg:hidden bg-white border-b border-gray-200 shadow-md">
           <div className="px-4 py-3 space-y-2">
             <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-colors">
               <Globe className="h-5 w-5 shrink-0" />
