@@ -9,6 +9,7 @@ import com.travel2go.backend.model.Trip;
 import com.travel2go.backend.repository.LegRepository;
 import com.travel2go.backend.repository.TripRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -25,9 +26,10 @@ public class TripService {
     private final BookingClient bookingClient;
     private final TripEventPublisher eventPublisher;
 
-    public Trip createTrip(CreateTripRequest request) {
+    public Trip createTrip(CreateTripRequest request, String ownerUserId) {
         Date now = new Date();
         Trip trip = Trip.builder()
+                .ownerUserId(ownerUserId)
                 .title(request.getTitle())
                 .travellerIds(request.getTravellerIds())
                 .legIds(new ArrayList<>())
@@ -47,20 +49,22 @@ public class TripService {
         return saved;
     }
 
-    public TripDetailResponse getTripDetail(String tripId) {
+    public TripDetailResponse getTripDetail(String tripId, String requestingUserId) {
         Trip trip = tripRepository.findById(tripId).block();
         if (trip == null) {
             throw new IllegalArgumentException("Trip not found: " + tripId);
         }
+        assertOwner(trip, requestingUserId);
         List<Leg> legs = legRepository.findByTripId(tripId).collectList().block();
         return new TripDetailResponse(trip, legs);
     }
 
-    public Leg addLeg(String tripId, AddLegRequest request) {
+    public Leg addLeg(String tripId, AddLegRequest request, String requestingUserId) {
         Trip trip = tripRepository.findById(tripId).block();
         if (trip == null) {
             throw new IllegalArgumentException("Trip not found: " + tripId);
         }
+        assertOwner(trip, requestingUserId);
 
         Leg leg = Leg.builder()
                 .tripId(tripId)
@@ -80,5 +84,11 @@ public class TripService {
         tripRepository.save(trip).block();
 
         return savedLeg;
+    }
+
+    private void assertOwner(Trip trip, String requestingUserId) {
+        if (!trip.getOwnerUserId().equals(requestingUserId)) {
+            throw new AccessDeniedException("Not authorized to access trip: " + trip.getId());
+        }
     }
 }

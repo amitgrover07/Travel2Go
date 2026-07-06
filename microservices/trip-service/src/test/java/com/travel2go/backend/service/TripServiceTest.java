@@ -21,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,22 +55,23 @@ class TripServiceTest {
             return Mono.just(t);
         });
 
-        Trip result = tripService.createTrip(request);
+        Trip result = tripService.createTrip(request, "user-1");
 
         assertThat(result.getId()).isEqualTo("trip-1");
         assertThat(result.getStatus()).isEqualTo("DRAFT");
+        assertThat(result.getOwnerUserId()).isEqualTo("user-1");
         verify(eventPublisher).publish(eq("trip.created"), any());
     }
 
     @Test
     void getTripDetail_returnsTripWithItsLegs() {
-        Trip trip = Trip.builder().id("trip-1").title("Goa Family Trip").build();
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").title("Goa Family Trip").build();
         Leg leg = Leg.builder().id("leg-1").tripId("trip-1").type("RAIL").build();
 
         when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
         when(legRepository.findByTripId("trip-1")).thenReturn(Flux.just(leg));
 
-        TripDetailResponse result = tripService.getTripDetail("trip-1");
+        TripDetailResponse result = tripService.getTripDetail("trip-1", "user-1");
 
         assertThat(result.getTrip().getId()).isEqualTo("trip-1");
         assertThat(result.getLegs()).hasSize(1);
@@ -81,12 +83,22 @@ class TripServiceTest {
         when(tripRepository.findById("missing")).thenReturn(Mono.empty());
 
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
-                () -> tripService.getTripDetail("missing"));
+                () -> tripService.getTripDetail("missing", "user-1"));
+    }
+
+    @Test
+    void getTripDetail_rejectsNonOwner() {
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
+        when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> tripService.getTripDetail("trip-1", "user-2"));
     }
 
     @Test
     void addLeg_appendsLegIdToTripAndSavesLeg() {
-        Trip trip = Trip.builder().id("trip-1").legIds(new java.util.ArrayList<>()).build();
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").legIds(new java.util.ArrayList<>()).build();
         AddLegRequest request = AddLegRequest.builder()
                 .type("RAIL")
                 .pricePaise(150000L)
@@ -101,10 +113,24 @@ class TripServiceTest {
         });
         when(tripRepository.save(any(Trip.class))).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
 
-        Leg result = tripService.addLeg("trip-1", request);
+        Leg result = tripService.addLeg("trip-1", request, "user-1");
 
         assertThat(result.getId()).isEqualTo("leg-1");
         assertThat(result.getStatus()).isEqualTo("SELECTED");
         assertThat(trip.getLegIds()).containsExactly("leg-1");
+    }
+
+    @Test
+    void addLeg_rejectsNonOwner_withoutSavingLeg() {
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").legIds(new java.util.ArrayList<>()).build();
+        AddLegRequest request = AddLegRequest.builder().type("RAIL").pricePaise(150000L).build();
+
+        when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> tripService.addLeg("trip-1", request, "user-2"));
+
+        verify(legRepository, never()).save(any());
     }
 }
