@@ -14,12 +14,14 @@ services:
       - media-service
       - notification-service
       - trip-service
+      - payment-service
     environment:
       - IDENTITY_SERVICE_URL=http://identity-service:8081
       - PACKAGE_SERVICE_URL=http://package-service:8082
       - BOOKING_SERVICE_URL=http://booking-service:8083
       - MEDIA_SERVICE_URL=http://media-service:8084
       - TRIP_SERVICE_URL=http://trip-service:8087
+      - PAYMENT_SERVICE_URL=http://payment-service:8088
 
   identity-service:
     build: ./microservices/identity-service
@@ -86,6 +88,15 @@ services:
       - SERVER_PORT=8087
       - BOOKING_SERVICE_URL=http://booking-service:8083
       - SPRING_RABBITMQ_HOST=rabbitmq
+
+  payment-service:
+    build: ./microservices/payment-service
+    ports:
+      - "8088:8088"
+    networks:
+      - travel2go-network
+    environment:
+      - SERVER_PORT=8088
 
   frontend:
     build: ./frontend

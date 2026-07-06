@@ -28,6 +28,7 @@ jobs:
           - service: api-gateway
           - service: reactive-booking-function
           - service: trip-service
+          - service: payment-service
 
     steps:
       - name: Checkout repository
