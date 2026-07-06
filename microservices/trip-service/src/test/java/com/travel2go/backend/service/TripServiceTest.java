@@ -133,4 +133,53 @@ class TripServiceTest {
 
         verify(legRepository, never()).save(any());
     }
+
+    @Test
+    void bookLeg_confirmsLegAndPublishesEvent() {
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
+        com.travel2go.backend.model.Leg leg = com.travel2go.backend.model.Leg.builder()
+                .id("leg-1").tripId("trip-1").status("SELECTED").build();
+
+        when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
+        when(legRepository.findById("leg-1")).thenReturn(Mono.just(leg));
+        when(bookingClient.createLegBooking(any())).thenReturn(
+                com.travel2go.backend.dto.LegBookingResponse.builder()
+                        .bookingId("booking-99").status("CONFIRMED").build());
+        when(legRepository.save(any(com.travel2go.backend.model.Leg.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        com.travel2go.backend.model.Leg result = tripService.bookLeg("trip-1", "leg-1", 150000L, "quote-token-abc", "user-1");
+
+        assertThat(result.getStatus()).isEqualTo("CONFIRMED");
+        assertThat(result.getSupplierRef()).isEqualTo("booking-99");
+        verify(eventPublisher).publish(eq("leg.booked"), any());
+    }
+
+    @Test
+    void bookLeg_rejectsLegFromDifferentTrip() {
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
+        com.travel2go.backend.model.Leg leg = com.travel2go.backend.model.Leg.builder()
+                .id("leg-1").tripId("trip-OTHER").build();
+
+        when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
+        when(legRepository.findById("leg-1")).thenReturn(Mono.just(leg));
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> tripService.bookLeg("trip-1", "leg-1", 150000L, "quote-token-abc", "user-1"));
+
+        verify(bookingClient, never()).createLegBooking(any());
+    }
+
+    @Test
+    void bookLeg_rejectsNonOwner_withoutCallingBookingClient() {
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
+
+        when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> tripService.bookLeg("trip-1", "leg-1", 150000L, "quote-token-abc", "user-2"));
+
+        verify(bookingClient, never()).createLegBooking(any());
+    }
 }

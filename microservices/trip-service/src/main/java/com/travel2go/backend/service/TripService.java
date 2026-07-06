@@ -86,6 +86,39 @@ public class TripService {
         return savedLeg;
     }
 
+    public Leg bookLeg(String tripId, String legId, Long amountPaise, String quoteToken, String requestingUserId) {
+        Trip trip = tripRepository.findById(tripId).block();
+        if (trip == null) {
+            throw new IllegalArgumentException("Trip not found: " + tripId);
+        }
+        assertOwner(trip, requestingUserId);
+
+        Leg leg = legRepository.findById(legId).block();
+        if (leg == null || !tripId.equals(leg.getTripId())) {
+            throw new IllegalArgumentException("Leg not found for trip: " + legId);
+        }
+
+        com.travel2go.backend.dto.LegBookingResponse response = bookingClient.createLegBooking(
+                com.travel2go.backend.dto.LegBookingRequest.builder()
+                        .tripId(tripId)
+                        .legId(legId)
+                        .quoteToken(quoteToken)
+                        .amountPaise(amountPaise)
+                        .build());
+
+        leg.setStatus("CONFIRMED");
+        leg.setSupplierRef(response.getBookingId());
+        Leg saved = legRepository.save(leg).block();
+
+        eventPublisher.publish("leg.booked", Map.of(
+                "tripId", tripId,
+                "legId", legId,
+                "bookingId", response.getBookingId()
+        ));
+
+        return saved;
+    }
+
     private void assertOwner(Trip trip, String requestingUserId) {
         if (!trip.getOwnerUserId().equals(requestingUserId)) {
             throw new AccessDeniedException("Not authorized to access trip: " + trip.getId());

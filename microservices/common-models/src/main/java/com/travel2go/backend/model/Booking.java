@@ -28,4 +28,11 @@ public class Booking {
     
     private Date bookingDate;
     private String status;
+
+    // Leg-level booking fields (trip-service orchestration) - null for legacy package bookings
+    private String tripId;
+    private String legId;
+    private String quoteToken;
+    private Long amountPaise;
+    private Long feePaise;
 }
