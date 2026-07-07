@@ -14,14 +14,12 @@ services:
       - media-service
       - notification-service
       - trip-service
-      - payment-service
     environment:
       - IDENTITY_SERVICE_URL=http://identity-service:8081
       - PACKAGE_SERVICE_URL=http://package-service:8082
       - BOOKING_SERVICE_URL=http://booking-service:8083
       - MEDIA_SERVICE_URL=http://media-service:8084
       - TRIP_SERVICE_URL=http://trip-service:8087
-      - PAYMENT_SERVICE_URL=http://payment-service:8088
 
   identity-service:
     build: ./microservices/identity-service
