@@ -36,6 +36,9 @@ const Navbar = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
+            <Link to="/trust" className="text-gray-600 hover:text-blue-600 text-sm font-semibold transition-colors mr-2">
+              Trust & Waitlist Portal
+            </Link>
             {userProfile ? (
               <>
                 <div className="flex items-center space-x-2">

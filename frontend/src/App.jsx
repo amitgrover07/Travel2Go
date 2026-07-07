@@ -10,6 +10,7 @@ import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler';
 import Admin from './pages/Admin';
 import ImageGallery from './pages/ImageGallery';
 import PackageDetails from './pages/PackageDetails';
+import TrustPortal from './pages/TrustPortal';
 
 import MainLayout from './components/MainLayout';
 
@@ -28,6 +29,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout><Home /></MainLayout>} />
         <Route path="/packages/:id" element={<MainLayout><PackageDetails /></MainLayout>} />
+        <Route path="/trust" element={<MainLayout><TrustPortal /></MainLayout>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
