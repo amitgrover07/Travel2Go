@@ -121,6 +121,49 @@ jobs:
             set_env "FINAL_RABBITMQ_VIRTUAL_HOST" "" "/"
           fi
 
+      - name: Build service-scoped env vars
+        shell: bash
+        run: |
+          {
+            echo "CR_ENV_VARS<<ENVVARS_EOF"
+            echo "JWT_SECRET=${FINAL_JWT_SECRET}"
+            echo "GOOGLE_CLIENT_ID=${FINAL_GOOGLE_CLIENT_ID}"
+            echo "GOOGLE_CLIENT_SECRET=${FINAL_GOOGLE_CLIENT_SECRET}"
+            echo "MAIL_USERNAME=${FINAL_MAIL_USERNAME}"
+            echo "MAIL_PASSWORD=${FINAL_MAIL_PASSWORD}"
+            echo "TWILIO_ACCOUNT_SID=${FINAL_TWILIO_ACCOUNT_SID}"
+            echo "TWILIO_AUTH_TOKEN=${FINAL_TWILIO_AUTH_TOKEN}"
+            echo "TWILIO_PHONE_NUMBER=${FINAL_TWILIO_PHONE_NUMBER}"
+            echo "OAUTH2_REDIRECT_URI=https://travel2go.in/oauth2/redirect"
+            echo "IDENTITY_SERVICE_URL=${FINAL_IDENTITY_URL}"
+            echo "PACKAGE_SERVICE_URL=${FINAL_PACKAGE_URL}"
+            echo "BOOKING_SERVICE_URL=${FINAL_BOOKING_URL}"
+            echo "MEDIA_SERVICE_URL=${FINAL_MEDIA_URL}"
+            echo "NOTIFICATION_SERVICE_URL=${FINAL_NOTIFICATION_URL}"
+            echo "SPRING_REDIS_HOST=${FINAL_REDIS_HOST}"
+            echo "SPRING_REDIS_PORT=${FINAL_REDIS_PORT}"
+            echo "SPRING_REDIS_PASSWORD=${FINAL_REDIS_PASSWORD}"
+            echo "SPRING_REDIS_SSL_ENABLED=${FINAL_REDIS_SSL_ENABLED}"
+            echo "SPRING_RABBITMQ_HOST=${FINAL_RABBITMQ_HOST}"
+            echo "SPRING_RABBITMQ_PORT=${FINAL_RABBITMQ_PORT}"
+            echo "SPRING_RABBITMQ_USERNAME=${FINAL_RABBITMQ_USERNAME}"
+            echo "SPRING_RABBITMQ_PASSWORD=${FINAL_RABBITMQ_PASSWORD}"
+            echo "SPRING_RABBITMQ_SSL_ENABLED=${FINAL_RABBITMQ_SSL_ENABLED}"
+            echo "SPRING_RABBITMQ_VIRTUAL_HOST=${FINAL_RABBITMQ_VIRTUAL_HOST}"
+            # Scoped: only the services that actually read these get them, unlike
+            # the block above (a pre-existing sprawl pattern this fix doesn't
+            # touch). api-gateway is the only caller of trip-service, so it's the
+            # only one that needs to know its URL. QUOTE_TOKEN_SECRET only needs
+            # to reach the two services that sign/verify quote tokens.
+            if [ "${{ matrix.service }}" = "api-gateway" ]; then
+              echo "TRIP_SERVICE_URL=${FINAL_TRIP_URL}"
+            fi
+            if [ "${{ matrix.service }}" = "trip-service" ] || [ "${{ matrix.service }}" = "payment-service" ]; then
+              echo "QUOTE_TOKEN_SECRET=${FINAL_QUOTE_TOKEN_SECRET}"
+            fi
+            echo "ENVVARS_EOF"
+          } >> "$GITHUB_ENV"
+
       - name: Set Cloud Run flags per service
         shell: bash
         run: |
@@ -143,43 +186,25 @@ jobs:
           region: ${{ env.REGION }}
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ matrix.service }}:${{ github.sha }}
           flags: ${{ env.CR_FLAGS }}
-          env_vars: |
-            JWT_SECRET=${{ env.FINAL_JWT_SECRET }}
-            GOOGLE_CLIENT_ID=${{ env.FINAL_GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ env.FINAL_GOOGLE_CLIENT_SECRET }}
-            MAIL_USERNAME=${{ env.FINAL_MAIL_USERNAME }}
-            MAIL_PASSWORD=${{ env.FINAL_MAIL_PASSWORD }}
-            TWILIO_ACCOUNT_SID=${{ env.FINAL_TWILIO_ACCOUNT_SID }}
-            TWILIO_AUTH_TOKEN=${{ env.FINAL_TWILIO_AUTH_TOKEN }}
-            TWILIO_PHONE_NUMBER=${{ env.FINAL_TWILIO_PHONE_NUMBER }}
-            OAUTH2_REDIRECT_URI=https://travel2go.in/oauth2/redirect
-            IDENTITY_SERVICE_URL=${{ env.FINAL_IDENTITY_URL }}
-            PACKAGE_SERVICE_URL=${{ env.FINAL_PACKAGE_URL }}
-            BOOKING_SERVICE_URL=${{ env.FINAL_BOOKING_URL }}
-            MEDIA_SERVICE_URL=${{ env.FINAL_MEDIA_URL }}
-            NOTIFICATION_SERVICE_URL=${{ env.FINAL_NOTIFICATION_URL }}
-            TRIP_SERVICE_URL=${{ env.FINAL_TRIP_URL }}
-            QUOTE_TOKEN_SECRET=${{ env.FINAL_QUOTE_TOKEN_SECRET }}
-            SPRING_REDIS_HOST=${{ env.FINAL_REDIS_HOST }}
-            SPRING_REDIS_PORT=${{ env.FINAL_REDIS_PORT }}
-            SPRING_REDIS_PASSWORD=${{ env.FINAL_REDIS_PASSWORD }}
-            SPRING_REDIS_SSL_ENABLED=${{ env.FINAL_REDIS_SSL_ENABLED }}
-            SPRING_RABBITMQ_HOST=${{ env.FINAL_RABBITMQ_HOST }}
-            SPRING_RABBITMQ_PORT=${{ env.FINAL_RABBITMQ_PORT }}
-            SPRING_RABBITMQ_USERNAME=${{ env.FINAL_RABBITMQ_USERNAME }}
-            SPRING_RABBITMQ_PASSWORD=${{ env.FINAL_RABBITMQ_PASSWORD }}
-            SPRING_RABBITMQ_SSL_ENABLED=${{ env.FINAL_RABBITMQ_SSL_ENABLED }}
-            SPRING_RABBITMQ_VIRTUAL_HOST=${{ env.FINAL_RABBITMQ_VIRTUAL_HOST }}
+          env_vars: ${{ env.CR_ENV_VARS }}
 
       - name: Restrict invoker to internal callers
         if: matrix.service == 'trip-service' || matrix.service == 'payment-service' || matrix.service == 'booking-service'
         shell: bash
         run: |
-          # Every Cloud Run service in this project runs as the default compute
-          # service account (none of the deploy steps set --service-account), so
-          # granting invoker to that one identity covers api-gateway and the other
-          # services calling in. If any service is later moved to a dedicated
-          # service account, add its own binding here instead of relying on this one.
+          # NOTE - this is a partial mitigation, not true per-service isolation.
+          # Every Cloud Run service in this project runs as the SAME default
+          # compute service account (none of the deploy steps set
+          # --service-account), so this binding grants invoker to every service
+          # in the project equally - it narrows the caller set from "the entire
+          # public internet" down to "any Cloud Run workload in this GCP
+          # project," not down to "only api-gateway/trip-service." Achieving
+          # real per-service isolation (only api-gateway can call trip-service,
+          # only trip-service can call booking-service, etc.) requires creating
+          # dedicated service accounts per service and assigning them via
+          # --service-account on deploy - a bigger change, tracked in
+          # OPEN_QUESTIONS.md, not done here without confirming it won't strip
+          # IAM roles the default SA currently has (Firestore/GCS/Pub-Sub access).
           PROJECT_NUMBER=$(gcloud projects describe ${PROJECT_ID} --format='value(projectNumber)')
           gcloud run services add-iam-policy-binding ${{ matrix.service }} \
             --region=${REGION} \
