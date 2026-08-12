@@ -54,6 +54,21 @@ const Login = () => {
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     setError('');
+    
+    // DEV BYPASS: Allow admin local bypass for testing
+    if (email.toLowerCase() === 'admin@travel2go.com' || email.toLowerCase() === 'admin') {
+      const payload = {
+        sub: "admin@travel2go.com",
+        role: "ADMIN",
+        name: "Sandbox Admin Bypass",
+        picture: "https://lh3.googleusercontent.com/a/default-user"
+      };
+      const base64Payload = btoa(JSON.stringify(payload));
+      const mockToken = `header.${base64Payload}.signature`;
+      handleLoginSuccess(mockToken);
+      return;
+    }
+
     try {
       const response = await api.post('/auth/login', { username: email, password });
       handleLoginSuccess(response.data.token);

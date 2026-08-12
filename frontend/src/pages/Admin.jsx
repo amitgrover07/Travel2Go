@@ -1,7 +1,7 @@
 // redeploy: 2026-05-16
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star, Users, Menu, Sliders, List } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, X, Upload, Image, Settings, FileText, Copy, Search, ChevronDown, ChevronUp, GripVertical, Mail, User, Phone, MapPinIcon, Send, Globe, Package, Star, Users, Menu, Sliders, List, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -13,6 +13,7 @@ import { AdminSkeleton } from '../components/SkeletonLoader';
 import AdminConfigurator from '../components/AdminConfigurator';
 import AdminConfiguratorCategories from '../components/AdminConfiguratorCategories';
 import AdminAllocationRules from '../components/AdminAllocationRules';
+import AdminPMPlayground from '../components/AdminPMPlayground';
 
 const quillModules = {
   toolbar: [
@@ -804,6 +805,17 @@ const Admin = () => {
                   <span>Leads CRM</span>
                 </button>
 
+                {/* PM Playground Button */}
+                <button
+                  onClick={() => setView('pmPlayground')}
+                  className={`p-2 px-2.5 rounded-md flex items-center justify-center gap-1.5 transition-colors text-sm font-semibold ${
+                    view === 'pmPlayground' ? 'text-pink-700 bg-pink-100' : 'text-pink-600 hover:text-pink-800 hover:bg-pink-50'
+                  }`}
+                >
+                  <Activity className="h-5 w-5 shrink-0" />
+                  <span>PM Playground</span>
+                </button>
+
                 {/* Configurator Dropdown */}
                 <div className="nav-dropdown-container relative">
                   <button
@@ -955,6 +967,15 @@ const Admin = () => {
             >
               <Users className="h-5 w-5 shrink-0" />
               <span>Leads CRM</span>
+            </button>
+            <button
+              onClick={() => { setView('pmPlayground'); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                view === 'pmPlayground' ? 'text-pink-700 bg-pink-55/10' : 'text-pink-600 hover:bg-pink-50/50'
+              }`}
+            >
+              <Activity className="h-5 w-5 shrink-0 text-pink-500" />
+              <span>PM Playground</span>
             </button>
             <button
               onClick={() => { setView('users'); setMobileMenuOpen(false); }}
@@ -1917,6 +1938,12 @@ const Admin = () => {
           {view === 'allocationRules' && (
             <div className="w-full">
               <AdminAllocationRules />
+            </div>
+          )}
+
+          {view === 'pmPlayground' && (
+            <div className="w-full">
+              <AdminPMPlayground />
             </div>
           )}
           
