@@ -2542,8 +2542,8 @@ const AdminPMPlayground = () => {
                   
                   {/* Left Column: Visual Chart representation */}
                   {(() => {
-                    if (activeTab === "RICE") return <RiceBarChart data={frameworkData.RICE.rows} setTooltip={setTooltip} />;
-                    if (activeTab === "WeightedScoring") return <WeightedBarChart data={frameworkData.WeightedScoring.rows} setTooltip={setTooltip} />;
+                    if (activeTab === "RICE") return <RiceBarChart data={PM_TEMPLATES.RICE.calculate(frameworkData.RICE.rows)} setTooltip={setTooltip} />;
+                    if (activeTab === "WeightedScoring") return <WeightedBarChart data={PM_TEMPLATES.WeightedScoring.calculate(frameworkData.WeightedScoring.rows, frameworkData.WeightedScoring.weights)} setTooltip={setTooltip} />;
                     if (activeTab === "ValueVsEffort") return <ValueVsEffortChart data={frameworkData.ValueVsEffort.rows} onUpdateRow={(id, fields) => handleRowDataUpdate("ValueVsEffort", id, fields)} setTooltip={setTooltip} />;
                     if (activeTab === "KanoModel") return <KanoScatterPlot data={PM_TEMPLATES.KanoModel.calculate(frameworkData.KanoModel.rows)} setTooltip={setTooltip} />;
                     if (activeTab === "WSJF") {
