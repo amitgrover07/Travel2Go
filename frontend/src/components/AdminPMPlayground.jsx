@@ -11,64 +11,36 @@ import {
   BookOpen, 
   TrendingUp, 
   Target, 
-  PieChart, 
-  Users, 
   Info, 
   Search, 
   CheckCircle2, 
-  AlertTriangle,
-  HelpCircle,
-  Activity
+  Activity,
+  Maximize2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PM_TEMPLATES } from '../utils/pmTemplates';
 
-// --- GOOGLE CHARTS DYNAMIC LOADER ---
-let googleChartsLoading = false;
-let googleChartsLoaded = false;
-const loadGoogleCharts = (callback) => {
-  if (window.google && window.google.charts) {
-    if (!googleChartsLoaded) {
-      window.google.charts.load('current', { packages: ['corechart', 'radar'] });
-      window.google.charts.setOnLoadCallback(() => {
-        googleChartsLoaded = true;
-        callback();
-      });
-    } else {
-      callback();
-    }
-    return;
-  }
-  if (googleChartsLoading) {
-    const checkInterval = setInterval(() => {
-      if (window.google && window.google.charts && googleChartsLoaded) {
-        clearInterval(checkInterval);
-        callback();
-      }
-    }, 100);
-    return;
-  }
-  googleChartsLoading = true;
-  const script = document.createElement('script');
-  script.src = 'https://www.gstatic.com/charts/loader.js';
-  script.async = true;
-  script.onload = () => {
-    window.google.charts.load('current', { packages: ['corechart'] });
-    window.google.charts.setOnLoadCallback(() => {
-      googleChartsLoaded = true;
-      googleChartsLoading = false;
-      callback();
-    });
-  };
-  document.head.appendChild(script);
+// ============================================================================
+// --- CENTRAL STATE TOOLTIP CONTEXT ---
+// ============================================================================
+// A single floating HTML tooltip component.
+const Tooltip = ({ tooltip }) => {
+  if (!tooltip.show) return null;
+  return (
+    <div 
+      className="absolute bg-slate-900 text-slate-100 p-3 rounded-lg shadow-xl text-xs pointer-events-none z-[100] border border-slate-800 max-w-xs transition-all duration-75 select-none"
+      style={{ left: tooltip.x + 15, top: tooltip.y - 20 }}
+      dangerouslySetInnerHTML={{ __html: tooltip.content }}
+    />
+  );
 };
 
 // ============================================================================
-// --- CUSTOM D3 & SVG CHART COMPONENTS ---
+// --- CUSTOM D3 CHART COMPONENTS ---
 // ============================================================================
 
-// 1. RICE Bar Chart
-const RiceBarChart = ({ data }) => {
+// 1. RICE / WSJF / Opportunity Bar Chart (Vertical Bars)
+const RiceBarChart = ({ data, setTooltip }) => {
   const svgRef = useRef(null);
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
@@ -83,8 +55,6 @@ const RiceBarChart = ({ data }) => {
     const chartHeight = height - margin.top - margin.bottom;
 
     const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
-
-    // Sort descending
     const sortedData = [...data].sort((a, b) => b.score - a.score);
 
     const xScale = d3.scaleLinear()
@@ -99,61 +69,78 @@ const RiceBarChart = ({ data }) => {
     g.append("g")
       .attr("transform", `translate(0, ${chartHeight})`)
       .call(d3.axisBottom(xScale).ticks(5))
-      .attr("color", "#94a3b8");
+      .attr("color", "#cbd5e1")
+      .selectAll("text")
+      .attr("fill", "#64748b");
 
     g.append("g")
       .call(d3.axisLeft(yScale))
-      .attr("color", "#94a3b8")
+      .attr("color", "#cbd5e1")
       .selectAll("text")
       .attr("font-size", "10px")
       .attr("font-weight", "500")
-      .attr("fill", "#94a3b8");
+      .attr("fill", "#334155");
 
-    // Drawing gradient
     const grad = svg.append("defs")
       .append("linearGradient")
       .attr("id", "riceGrad")
       .attr("x1", "0%").attr("y1", "0%")
       .attr("x2", "100%").attr("y2", "0%");
-    grad.append("stop").attr("offset", "0%").attr("stop-color", "#6366f1");
+    grad.append("stop").attr("offset", "0%").attr("stop-color", "#818cf8");
     grad.append("stop").attr("offset", "100%").attr("stop-color", "#4f46e5");
 
     g.selectAll(".bar")
       .data(sortedData)
       .enter()
       .append("rect")
-      .attr("class", "bar")
+      .attr("class", "bar cursor-help transition-all duration-100")
       .attr("y", d => yScale(d.name))
       .attr("x", 0)
       .attr("height", yScale.bandwidth())
       .attr("width", d => xScale(d.score))
       .attr("fill", "url(#riceGrad)")
-      .attr("rx", 4);
+      .attr("rx", 4)
+      .on("mouseover", (event, d) => {
+        d3.select(event.currentTarget).attr("fill", "#312e81");
+        setTooltip({
+          show: true,
+          x: event.pageX,
+          y: event.pageY,
+          content: `<strong>${d.name}</strong><br/>Score: ${Math.round(d.score)}<br/>Rank: #${d.rank || '-'}`
+        });
+      })
+      .on("mousemove", (event) => {
+        setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+      })
+      .on("mouseout", (event) => {
+        d3.select(event.currentTarget).attr("fill", "url(#riceGrad)");
+        setTooltip({ show: false, x: 0, y: 0, content: "" });
+      });
 
     g.selectAll(".label")
       .data(sortedData)
       .enter()
       .append("text")
-      .attr("class", "label")
+      .attr("class", "pointer-events-none")
       .attr("y", d => yScale(d.name) + yScale.bandwidth() / 2 + 4)
       .attr("x", d => Math.min(xScale(d.score) + 5, chartWidth - 35))
-      .attr("fill", d => xScale(d.score) > chartWidth - 50 ? "#fff" : "#f1f5f9")
+      .attr("fill", d => xScale(d.score) > chartWidth - 50 ? "#fff" : "#1e293b")
       .attr("font-size", "9px")
       .attr("font-weight", "bold")
       .text(d => Math.round(d.score));
 
-  }, [data]);
+  }, [data, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Features Ranked by RICE Score</span>
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <span className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">Prioritisation Scoreboard</span>
       <svg ref={svgRef} width="450" height="280" className="max-w-full" />
     </div>
   );
 };
 
 // 2. Weighted Scoring Bar Chart
-const WeightedBarChart = ({ data }) => {
+const WeightedBarChart = ({ data, setTooltip }) => {
   const svgRef = useRef(null);
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
@@ -176,14 +163,16 @@ const WeightedBarChart = ({ data }) => {
     g.append("g")
       .attr("transform", `translate(0, ${chartHeight})`)
       .call(d3.axisBottom(xScale).ticks(5))
-      .attr("color", "#94a3b8");
+      .attr("color", "#cbd5e1")
+      .selectAll("text")
+      .attr("fill", "#64748b");
 
     g.append("g")
       .call(d3.axisLeft(yScale))
-      .attr("color", "#94a3b8")
+      .attr("color", "#cbd5e1")
       .selectAll("text")
       .attr("font-size", "10px")
-      .attr("fill", "#94a3b8");
+      .attr("fill", "#334155");
 
     const grad = svg.append("defs")
       .append("linearGradient")
@@ -197,37 +186,58 @@ const WeightedBarChart = ({ data }) => {
       .data(sortedData)
       .enter()
       .append("rect")
+      .attr("class", "cursor-help")
       .attr("y", d => yScale(d.name))
       .attr("x", 0)
       .attr("height", yScale.bandwidth())
       .attr("width", d => xScale(d.score || 0))
       .attr("fill", "url(#weightedGrad)")
-      .attr("rx", 4);
+      .attr("rx", 4)
+      .on("mouseover", (event, d) => {
+        d3.select(event.currentTarget).attr("fill", "#0f766e");
+        setTooltip({
+          show: true,
+          x: event.pageX,
+          y: event.pageY,
+          content: `<strong>${d.name}</strong><br/>Weighted Total: ${d.score?.toFixed(2)}`
+        });
+      })
+      .on("mousemove", (event) => {
+        setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+      })
+      .on("mouseout", (event) => {
+        d3.select(event.currentTarget).attr("fill", "url(#weightedGrad)");
+        setTooltip({ show: false, x: 0, y: 0, content: "" });
+      });
 
     g.selectAll(".label")
       .data(sortedData)
       .enter()
       .append("text")
+      .attr("class", "pointer-events-none")
       .attr("y", d => yScale(d.name) + yScale.bandwidth() / 2 + 4)
       .attr("x", d => xScale(d.score || 0) + 5)
-      .attr("fill", "#f1f5f9")
+      .attr("fill", "#1e293b")
       .attr("font-size", "10px")
       .attr("font-weight", "bold")
       .text(d => d.score?.toFixed(2));
 
-  }, [data]);
+  }, [data, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Weighted Total Scores</span>
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <span className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">Weighted Performance</span>
       <svg ref={svgRef} width="450" height="280" className="max-w-full" />
     </div>
   );
 };
 
-// 3. Value vs Effort (2x2 Scatter Plot)
-const ValueVsEffortChart = ({ data }) => {
+// 3. Value vs Effort (2x2 DRAGGABLE Scatter Plot)
+const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip }) => {
   const svgRef = useRef(null);
+  const dataRef = useRef(data);
+  dataRef.current = data;
+
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
     const svg = d3.select(svgRef.current);
@@ -245,82 +255,115 @@ const ValueVsEffortChart = ({ data }) => {
     const xScale = d3.scaleLinear().domain([0, 10]).range([0, chartWidth]);
     const yScale = d3.scaleLinear().domain([0, 10]).range([chartHeight, 0]);
 
-    // Draw quadrant fills
-    // Top-Left (Quick Wins): Value >= 5, Effort < 5
+    // Background quadrant fills
     g.append("rect")
       .attr("x", xScale(0)).attr("y", yScale(10))
       .attr("width", xScale(5) - xScale(0))
       .attr("height", yScale(5) - yScale(10))
-      .attr("fill", "#22c55e").attr("opacity", 0.08);
+      .attr("fill", "#22c55e").attr("opacity", 0.06);
 
-    // Top-Right (Big Bets): Value >= 5, Effort >= 5
     g.append("rect")
       .attr("x", xScale(5)).attr("y", yScale(10))
       .attr("width", xScale(10) - xScale(5))
       .attr("height", yScale(5) - yScale(10))
-      .attr("fill", "#3b82f6").attr("opacity", 0.08);
+      .attr("fill", "#3b82f6").attr("opacity", 0.06);
 
-    // Bottom-Left (Fill-ins): Value < 5, Effort < 5
     g.append("rect")
       .attr("x", xScale(0)).attr("y", yScale(5))
       .attr("width", xScale(5) - xScale(0))
       .attr("height", yScale(0) - yScale(5))
-      .attr("fill", "#64748b").attr("opacity", 0.08);
+      .attr("fill", "#64748b").attr("opacity", 0.06);
 
-    // Bottom-Right (Money Pits): Value < 5, Effort >= 5
     g.append("rect")
       .attr("x", xScale(5)).attr("y", yScale(5))
       .attr("width", xScale(10) - xScale(5))
       .attr("height", yScale(0) - yScale(5))
-      .attr("fill", "#ef4444").attr("opacity", 0.08);
+      .attr("fill", "#ef4444").attr("opacity", 0.06);
 
     // Divider Lines
     g.append("line")
       .attr("x1", xScale(5)).attr("y1", yScale(0))
       .attr("x2", xScale(5)).attr("y2", yScale(10))
-      .attr("stroke", "#475569").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
+      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
 
     g.append("line")
       .attr("x1", xScale(0)).attr("y1", yScale(5))
       .attr("x2", xScale(10)).attr("y2", yScale(5))
-      .attr("stroke", "#475569").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
+      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
 
-    // Grid labels
-    g.append("text").attr("x", xScale(2.5)).attr("y", yScale(9.4)).attr("text-anchor", "middle").attr("fill", "#22c55e").attr("font-size", "11px").attr("font-weight", "bold").text("Quick Wins (Do First)");
-    g.append("text").attr("x", xScale(7.5)).attr("y", yScale(9.4)).attr("text-anchor", "middle").attr("fill", "#3b82f6").attr("font-size", "11px").attr("font-weight", "bold").text("Big Bets (Strategic)");
-    g.append("text").attr("x", xScale(2.5)).attr("y", yScale(0.6)).attr("text-anchor", "middle").attr("fill", "#94a3b8").attr("font-size", "11px").attr("font-weight", "bold").text("Fill-ins (Nice to Have)");
-    g.append("text").attr("x", xScale(7.5)).attr("y", yScale(0.6)).attr("text-anchor", "middle").attr("fill", "#f43f5e").attr("font-size", "11px").attr("font-weight", "bold").text("Money Pits (Drop)");
+    // Quadrant titles
+    g.append("text").attr("x", xScale(2.5)).attr("y", yScale(9.4)).attr("text-anchor", "middle").attr("fill", "#15803d").attr("font-size", "10px").attr("font-weight", "bold").text("Quick Wins");
+    g.append("text").attr("x", xScale(7.5)).attr("y", yScale(9.4)).attr("text-anchor", "middle").attr("fill", "#1d4ed8").attr("font-size", "10px").attr("font-weight", "bold").text("Big Bets");
+    g.append("text").attr("x", xScale(2.5)).attr("y", yScale(0.6)).attr("text-anchor", "middle").attr("fill", "#475569").attr("font-size", "10px").attr("font-weight", "bold").text("Fill-ins");
+    g.append("text").attr("x", xScale(7.5)).attr("y", yScale(0.6)).attr("text-anchor", "middle").attr("fill", "#b91c1c").attr("font-size", "10px").attr("font-weight", "bold").text("Money Pits");
 
     // Axes
     g.append("g")
       .attr("transform", `translate(0, ${chartHeight})`)
       .call(d3.axisBottom(xScale).ticks(10))
-      .attr("color", "#475569");
+      .attr("color", "#94a3b8");
 
     g.append("g")
       .call(d3.axisLeft(yScale).ticks(10))
-      .attr("color", "#475569");
+      .attr("color", "#94a3b8");
 
-    svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#94a3b8").text("Effort (1-10) →");
-    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 12).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#94a3b8").text("Value (1-10) →");
+    svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Effort (1-10) →");
+    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 12).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Value (1-10) →");
 
-    // Plot items
-    const dots = g.selectAll(".dot")
+    // Drag behaviour
+    const dragHandler = d3.drag()
+      .on("start", (event) => {
+        setTooltip({ show: false, x: 0, y: 0, content: "" });
+      })
+      .on("drag", function(event, d) {
+        const coords = d3.pointer(event, g.node());
+        // Map pointer position back to values clamped between 0.5 and 10
+        const rawEffort = Math.max(0.5, Math.min(10, xScale.invert(coords[0])));
+        const rawValue = Math.max(0.5, Math.min(10, yScale.invert(coords[1])));
+        
+        // Visual updates in DOM for drag responsiveness
+        d3.select(this).select("circle")
+          .attr("cx", xScale(rawEffort))
+          .attr("cy", yScale(rawValue))
+          .attr("fill", "#d946ef"); // color during drag
+
+        d3.select(this).select("text")
+          .attr("x", xScale(rawEffort) + 9)
+          .attr("y", yScale(rawValue) + 4);
+      })
+      .on("end", function(event, d) {
+        const coords = d3.pointer(event, g.node());
+        const effort = Math.max(1, Math.min(10, Math.round(xScale.invert(coords[0]))));
+        const value = Math.max(1, Math.min(10, Math.round(yScale.invert(coords[1]))));
+        
+        // Restore standard dot coloring
+        const defaultColor = (value >= 5 && effort < 5) ? "#22c55e" :
+                            (value >= 5 && effort >= 5) ? "#3b82f6" :
+                            (value < 5 && effort < 5) ? "#64748b" : "#ef4444";
+        
+        d3.select(this).select("circle").attr("fill", defaultColor);
+        onUpdateRow(d.id, { effort, value });
+      });
+
+    // Plot groups
+    const dots = g.selectAll(".dot-group")
       .data(data)
       .enter()
-      .append("g");
+      .append("g")
+      .attr("class", "dot-group cursor-grab active:cursor-grabbing")
+      .call(dragHandler);
 
     dots.append("circle")
       .attr("cx", d => xScale(Number(d.effort) || 0))
       .attr("cy", d => yScale(Number(d.value) || 0))
-      .attr("r", 6.5)
+      .attr("r", 7)
       .attr("fill", d => {
         const val = Number(d.value) || 0;
         const eff = Number(d.effort) || 0;
         if (val >= 5 && eff < 5) return "#22c55e";
         if (val >= 5 && eff >= 5) return "#3b82f6";
-        if (val < 5 && eff < 5) return "#94a3b8";
-        return "#f43f5e";
+        if (val < 5 && eff < 5) return "#64748b";
+        return "#ef4444";
       })
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5);
@@ -330,21 +373,40 @@ const ValueVsEffortChart = ({ data }) => {
       .attr("y", d => yScale(Number(d.value) || 0) + 4)
       .text(d => d.name)
       .attr("font-size", "9px")
-      .attr("font-weight", "600")
-      .attr("fill", "#cbd5e1");
+      .attr("font-weight", "700")
+      .attr("fill", "#334155");
 
-  }, [data]);
+    // Add tooltips to dots
+    dots.on("mouseover", (event, d) => {
+      setTooltip({
+        show: true,
+        x: event.pageX,
+        y: event.pageY,
+        content: `<strong>${d.name}</strong><br/>Value: ${d.value}/10<br/>Effort: ${d.effort}/10<br/><span class="text-indigo-400 font-bold">Drag dot to edit!</span>`
+      });
+    })
+    .on("mousemove", (event) => {
+      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+    })
+    .on("mouseout", () => {
+      setTooltip({ show: false, x: 0, y: 0, content: "" });
+    });
+
+  }, [data, onUpdateRow, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Value vs Effort 2x2 Map</span>
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <div className="flex items-center gap-1.5 mb-2">
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Value vs Effort Interactive 2x2</span>
+        <span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Dots to Edit Table</span>
+      </div>
       <svg ref={svgRef} width="450" height="320" className="max-w-full" />
     </div>
   );
 };
 
 // 4. Kano Model Better vs Worse Scatter Plot
-const KanoScatterPlot = ({ data }) => {
+const KanoScatterPlot = ({ data, setTooltip }) => {
   const svgRef = useRef(null);
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
@@ -363,46 +425,49 @@ const KanoScatterPlot = ({ data }) => {
     const xScale = d3.scaleLinear().domain([-1, 0]).range([0, chartWidth]);
     const yScale = d3.scaleLinear().domain([0, 1]).range([chartHeight, 0]);
 
-    // Draw quadrant divider lines
+    // Draw dividers
     g.append("line")
       .attr("x1", xScale(-0.5)).attr("y1", yScale(0))
       .attr("x2", xScale(-0.5)).attr("y2", yScale(1))
-      .attr("stroke", "#475569").attr("stroke-dasharray", "3,3");
+      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "3,3");
 
     g.append("line")
       .attr("x1", xScale(-1)).attr("y1", yScale(0.5))
       .attr("x2", xScale(0)).attr("y2", yScale(0.5))
-      .attr("stroke", "#475569").attr("stroke-dasharray", "3,3");
+      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "3,3");
 
     // Grid labels
     g.append("text").attr("x", xScale(-0.25)).attr("y", yScale(0.85)).attr("text-anchor", "middle").attr("fill", "#6366f1").attr("font-size", "10px").attr("font-weight", "bold").text("Delighters");
     g.append("text").attr("x", xScale(-0.75)).attr("y", yScale(0.85)).attr("text-anchor", "middle").attr("fill", "#06b6d4").attr("font-size", "10px").attr("font-weight", "bold").text("Performance");
     g.append("text").attr("x", xScale(-0.75)).attr("y", yScale(0.15)).attr("text-anchor", "middle").attr("fill", "#e11d48").attr("font-size", "10px").attr("font-weight", "bold").text("Must-be");
-    g.append("text").attr("x", xScale(-0.25)).attr("y", yScale(0.15)).attr("text-anchor", "middle").attr("fill", "#94a3b8").attr("font-size", "10px").attr("font-weight", "bold").text("Indifferent");
+    g.append("text").attr("x", xScale(-0.25)).attr("y", yScale(0.15)).attr("text-anchor", "middle").attr("fill", "#64748b").attr("font-size", "10px").attr("font-weight", "bold").text("Indifferent");
 
     // Axes
     g.append("g")
       .attr("transform", `translate(0, ${chartHeight})`)
       .call(d3.axisBottom(xScale).ticks(5))
-      .attr("color", "#475569");
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
 
     g.append("g")
       .call(d3.axisLeft(yScale).ticks(5))
-      .attr("color", "#475569");
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
 
-    svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#94a3b8").text("Worse Coefficient (Dissatisfaction) →");
-    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 12).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#94a3b8").text("Better Coefficient (Satisfaction) →");
+    svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Worse Coefficient (Dissatisfaction) →");
+    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 12).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Better Coefficient (Satisfaction) →");
 
     // Plot
     const dots = g.selectAll(".dot")
       .data(data)
       .enter()
-      .append("g");
+      .append("g")
+      .attr("class", "cursor-help");
 
     dots.append("circle")
       .attr("cx", d => xScale(Number(d.worse) || 0))
       .attr("cy", d => yScale(Number(d.better) || 0))
-      .attr("r", 6)
+      .attr("r", 6.5)
       .attr("fill", d => {
         if (d.classification === "Delighter") return "#6366f1";
         if (d.classification === "Performance") return "#06b6d4";
@@ -417,21 +482,36 @@ const KanoScatterPlot = ({ data }) => {
       .attr("y", d => yScale(Number(d.better) || 0) + 3)
       .text(d => d.name)
       .attr("font-size", "9px")
-      .attr("font-weight", "600")
-      .attr("fill", "#cbd5e1");
+      .attr("font-weight", "650")
+      .attr("fill", "#334155");
 
-  }, [data]);
+    dots.on("mouseover", (event, d) => {
+      setTooltip({
+        show: true,
+        x: event.pageX,
+        y: event.pageY,
+        content: `<strong>${d.name}</strong><br/>Category: <strong>${d.classification}</strong><br/>Better: ${d.better}<br/>Worse: ${d.worse}`
+      });
+    })
+    .on("mousemove", (event) => {
+      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+    })
+    .on("mouseout", () => {
+      setTooltip({ show: false, x: 0, y: 0, content: "" });
+    });
+
+  }, [data, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Kano Better vs Worse Matrix</span>
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Kano Better vs Worse Matrix</span>
       <svg ref={svgRef} width="450" height="320" className="max-w-full" />
     </div>
   );
 };
 
-// 5. BCG Matrix (Bubble Chart)
-const BCGBubbleChart = ({ data }) => {
+// 5. BCG Matrix (DRAGGABLE Bubble Chart)
+const BCGBubbleChart = ({ data, onUpdateRow, setTooltip }) => {
   const svgRef = useRef(null);
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
@@ -449,43 +529,73 @@ const BCGBubbleChart = ({ data }) => {
 
     const xScale = d3.scaleLinear().domain([0, 2.0]).range([0, chartWidth]);
     const yScale = d3.scaleLinear().domain([0, 0.40]).range([chartHeight, 0]);
-    const rScale = d3.scaleSqrt().domain([0, d3.max(data, d => d.revenue) || 100]).range([4, 24]);
+    const rScale = d3.scaleSqrt().domain([0, d3.max(data, d => d.revenue) || 100]).range([5, 25]);
 
-    // Dividers (Share = 1.0x, Growth = 10%)
+    // Dividers
     g.append("line")
       .attr("x1", xScale(1.0)).attr("y1", yScale(0))
       .attr("x2", xScale(1.0)).attr("y2", yScale(0.40))
-      .attr("stroke", "#475569").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
+      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
 
     g.append("line")
       .attr("x1", xScale(0)).attr("y1", yScale(0.10))
       .attr("x2", xScale(2.0)).attr("y2", yScale(0.10))
-      .attr("stroke", "#475569").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
+      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
 
     // Quad Labels
     g.append("text").attr("x", xScale(1.5)).attr("y", yScale(0.35)).attr("text-anchor", "middle").attr("fill", "#6366f1").attr("font-size", "11px").attr("font-weight", "bold").text("★ Star");
     g.append("text").attr("x", xScale(0.5)).attr("y", yScale(0.35)).attr("text-anchor", "middle").attr("fill", "#e11d48").attr("font-size", "11px").attr("font-weight", "bold").text("? Question Mark");
     g.append("text").attr("x", xScale(1.5)).attr("y", yScale(0.04)).attr("text-anchor", "middle").attr("fill", "#16a34a").attr("font-size", "11px").attr("font-weight", "bold").text("$ Cash Cow");
-    g.append("text").attr("x", xScale(0.5)).attr("y", yScale(0.04)).attr("text-anchor", "middle").attr("fill", "#94a3b8").attr("font-size", "11px").attr("font-weight", "bold").text("Dog");
+    g.append("text").attr("x", xScale(0.5)).attr("y", yScale(0.04)).attr("text-anchor", "middle").attr("fill", "#64748b").attr("font-size", "11px").attr("font-weight", "bold").text("Dog");
 
     // Axes
     g.append("g")
       .attr("transform", `translate(0, ${chartHeight})`)
       .call(d3.axisBottom(xScale).ticks(5).tickFormat(d => d + "x"))
-      .attr("color", "#475569");
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
 
     g.append("g")
       .call(d3.axisLeft(yScale).ticks(5).tickFormat(d => (d * 100) + "%"))
-      .attr("color", "#475569");
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
 
-    svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#94a3b8").text("Relative Market Share (x) →");
-    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 12).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#94a3b8").text("Market Growth Rate (%) →");
+    svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Relative Market Share (x) →");
+    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 12).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Market Growth Rate (%) →");
+
+    // Drag Listener
+    const dragHandler = d3.drag()
+      .on("start", () => {
+        setTooltip({ show: false, x: 0, y: 0, content: "" });
+      })
+      .on("drag", function(event, d) {
+        const coords = d3.pointer(event, g.node());
+        const rawShare = Math.max(0.1, Math.min(2.0, xScale.invert(coords[0])));
+        const rawGrowth = Math.max(0.01, Math.min(0.40, yScale.invert(coords[1])));
+
+        d3.select(this).select("circle")
+          .attr("cx", xScale(rawShare))
+          .attr("cy", yScale(rawGrowth))
+          .attr("fill", "#d946ef");
+
+        d3.select(this).select("text")
+          .attr("x", xScale(rawShare))
+          .attr("y", yScale(rawGrowth) + 4);
+      })
+      .on("end", function(event, d) {
+        const coords = d3.pointer(event, g.node());
+        const share = Number(Math.max(0.1, Math.min(2.0, xScale.invert(coords[0]))).toFixed(2));
+        const growth = Number(Math.max(0.0, Math.min(0.40, yScale.invert(coords[1]))).toFixed(3));
+        onUpdateRow(d.id, { share, growth });
+      });
 
     // Bubbles
-    const bubbles = g.selectAll(".bubble")
+    const bubbles = g.selectAll(".bubble-group")
       .data(data)
       .enter()
-      .append("g");
+      .append("g")
+      .attr("class", "bubble-group cursor-grab active:cursor-grabbing")
+      .call(dragHandler);
 
     bubbles.append("circle")
       .attr("cx", d => xScale(Number(d.share) || 0))
@@ -514,18 +624,36 @@ const BCGBubbleChart = ({ data }) => {
       .style("stroke-width", "2.5px")
       .style("stroke-linejoin", "round");
 
-  }, [data]);
+    bubbles.on("mouseover", (event, d) => {
+      setTooltip({
+        show: true,
+        x: event.pageX,
+        y: event.pageY,
+        content: `<strong>${d.name}</strong><br/>Market Growth: ${(d.growth * 100).toFixed(1)}%<br/>Mkt Share: ${d.share}x<br/>Revenue: ₹${d.revenue} cr<br/><span class="text-indigo-400 font-bold block mt-1">Drag bubble to edit!</span>`
+      });
+    })
+    .on("mousemove", (event) => {
+      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+    })
+    .on("mouseout", () => {
+      setTooltip({ show: false, x: 0, y: 0, content: "" });
+    });
+
+  }, [data, onUpdateRow, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">BCG Portfolio Matrix (Bubble Size = Rev)</span>
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <div className="flex items-center gap-1.5 mb-2">
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">BCG Bubble Matrix</span>
+        <span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bubbles to Edit</span>
+      </div>
       <svg ref={svgRef} width="450" height="320" className="max-w-full" />
     </div>
   );
 };
 
 // 6. AARRR Funnel Visual Chart
-const AARRRFunnelChart = ({ data }) => {
+const AARRRFunnelChart = ({ data, setTooltip }) => {
   const svgRef = useRef(null);
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
@@ -543,7 +671,6 @@ const AARRRFunnelChart = ({ data }) => {
     const count = data.length;
     const rowHeight = chartHeight / count;
 
-    // Funnel blocks
     data.forEach((d, idx) => {
       const topWidth = chartWidth * (idx === 0 ? 1.0 : Number(data[idx - 1].totalConv) || 0.1);
       const bottomWidth = chartWidth * (Number(d.totalConv) || 0.1);
@@ -558,49 +685,65 @@ const AARRRFunnelChart = ({ data }) => {
 
       const pathString = `M ${xTopStart} ${yTop} L ${xTopEnd} ${yTop} L ${xBottomEnd} ${yBottom} L ${xBottomStart} ${yBottom} Z`;
 
-      // Draw block
+      const blockColor = d3.interpolatePurples(0.3 + (idx * 0.14));
+
       g.append("path")
         .attr("d", pathString)
-        .attr("fill", d3.interpolatePurples(0.3 + (idx * 0.15)))
-        .attr("opacity", 0.95)
-        .attr("stroke", "#1e293b")
-        .attr("stroke-width", 1.5);
+        .attr("fill", blockColor)
+        .attr("opacity", 0.9)
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 1.5)
+        .attr("class", "cursor-help transition-all duration-100 hover:opacity-100")
+        .on("mouseover", (event) => {
+          setTooltip({
+            show: true,
+            x: event.pageX,
+            y: event.pageY,
+            content: `<strong>${d.stage}</strong><br/>Users: ${(d.users).toLocaleString()}<br/>Step Conv: ${idx === 0 ? '-' : (d.stepConv * 100).toFixed(1) + '%'}<br/>Conversion of Top: ${(d.totalConv * 100).toFixed(1)}%`
+          });
+        })
+        .on("mousemove", (event) => {
+          setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+        })
+        .on("mouseout", () => {
+          setTooltip({ show: false, x: 0, y: 0, content: "" });
+        });
 
-      // Draw label
+      // Label inside funnel
       g.append("text")
+        .attr("class", "pointer-events-none")
         .attr("x", chartWidth / 2)
         .attr("y", yTop + rowHeight / 2 - 1)
         .attr("text-anchor", "middle")
         .attr("fill", "#ffffff")
         .attr("font-size", "11px")
         .attr("font-weight", "bold")
-        .text(`${d.stage}: ${(d.users).toLocaleString()} (${Math.round(d.totalConv * 100)}%)`);
+        .text(`${d.stage}: ${(d.users).toLocaleString()}`);
 
-      // Draw conversion steps on the side
       if (idx > 0) {
         g.append("text")
           .attr("x", xTopStart - 10)
           .attr("y", yTop + 3)
           .attr("text-anchor", "end")
-          .attr("fill", "#a78bfa")
+          .attr("fill", "#6d28d9")
           .attr("font-size", "10px")
           .attr("font-weight", "bold")
           .text(`↳ ${Math.round(d.stepConv * 100)}%`);
       }
     });
 
-  }, [data]);
+  }, [data, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">AARRR Pirate Funnel Conversion</span>
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">AARRR Pirate Funnel Conversion</span>
       <svg ref={svgRef} width="450" height="300" className="max-w-full" />
     </div>
   );
 };
 
 // 7. A/B Test Rates Chart
-const ABTestChart = ({ data }) => {
+const ABTestChart = ({ data, setTooltip }) => {
   const svgRef = useRef(null);
   useEffect(() => {
     if (!svgRef.current || !data) return;
@@ -625,17 +768,17 @@ const ABTestChart = ({ data }) => {
     const yScale = d3.scaleLinear().domain([0, maxRate * 1.3]).range([chartHeight, 0]);
     const xScale = d3.scaleBand().domain(["Control", "Variant"]).range([0, chartWidth]).padding(0.45);
 
-    // Axes
     g.append("g")
       .attr("transform", `translate(0, ${chartHeight})`)
       .call(d3.axisBottom(xScale))
-      .attr("color", "#475569");
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
 
     g.append("g")
       .call(d3.axisLeft(yScale).tickFormat(d3.format(".1%")))
-      .attr("color", "#475569");
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
 
-    // Bars
     g.selectAll(".bar")
       .data(chartData)
       .enter()
@@ -644,8 +787,23 @@ const ABTestChart = ({ data }) => {
       .attr("y", d => yScale(d.rate))
       .attr("width", xScale.bandwidth())
       .attr("height", d => chartHeight - yScale(d.rate))
-      .attr("fill", d => d.name === "Control" ? "#475569" : "#6366f1")
-      .attr("rx", 5);
+      .attr("fill", d => d.name === "Control" ? "#64748b" : "#6366f1")
+      .attr("rx", 5)
+      .attr("class", "cursor-help hover:opacity-90")
+      .on("mouseover", (event, d) => {
+        setTooltip({
+          show: true,
+          x: event.pageX,
+          y: event.pageY,
+          content: `<strong>${d.name}</strong><br/>Conv. Rate: ${(d.rate * 100).toFixed(2)}%<br/>Visitors: ${d.visitors.toLocaleString()}<br/>Conversions: ${d.conv.toLocaleString()}`
+        });
+      })
+      .on("mousemove", (event) => {
+        setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+      })
+      .on("mouseout", () => {
+        setTooltip({ show: false, x: 0, y: 0, content: "" });
+      });
 
     // Error bars / confidence intervals (95%)
     chartData.forEach(d => {
@@ -658,25 +816,22 @@ const ABTestChart = ({ data }) => {
 
       const x = xScale(d.name) + xScale.bandwidth() / 2;
 
-      // Vertical line
       g.append("line")
         .attr("x1", x).attr("y1", yScale(lower))
         .attr("x2", x).attr("y2", yScale(upper))
-        .attr("stroke", "#cbd5e1")
+        .attr("stroke", "#1e293b")
         .attr("stroke-width", 1.5);
 
-      // Top cap
       g.append("line")
         .attr("x1", x - 6).attr("y1", yScale(upper))
         .attr("x2", x + 6).attr("y2", yScale(upper))
-        .attr("stroke", "#cbd5e1")
+        .attr("stroke", "#1e293b")
         .attr("stroke-width", 1.5);
 
-      // Bottom cap
       g.append("line")
         .attr("x1", x - 6).attr("y1", yScale(lower))
         .attr("x2", x + 6).attr("y2", yScale(lower))
-        .attr("stroke", "#cbd5e1")
+        .attr("stroke", "#1e293b")
         .attr("stroke-width", 1.5);
     });
 
@@ -685,26 +840,27 @@ const ABTestChart = ({ data }) => {
       .data(chartData)
       .enter()
       .append("text")
+      .attr("class", "pointer-events-none")
       .attr("x", d => xScale(d.name) + xScale.bandwidth() / 2)
       .attr("y", d => yScale(d.rate) - 8)
       .attr("text-anchor", "middle")
-      .attr("fill", "#fff")
+      .attr("fill", "#1e293b")
       .attr("font-size", "11px")
       .attr("font-weight", "bold")
       .text(d => (d.rate * 100).toFixed(2) + "%");
 
-  }, [data]);
+  }, [data, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Conversion Rate Comparison (95% CI Error Bars)</span>
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Conversion Comparison (95% CI error bars)</span>
       <svg ref={svgRef} width="450" height="280" className="max-w-full" />
     </div>
   );
 };
 
-// 8. Custom D3 Radar Chart for Porter's 5 Forces
-const PorterRadarChart = ({ data }) => {
+// 8. Custom D3 INTERACTIVE SLIDER Bar Chart for Porter's 5 Forces
+const PorterForcesChart = ({ data, onUpdateRow, setTooltip }) => {
   const svgRef = useRef(null);
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
@@ -712,256 +868,529 @@ const PorterRadarChart = ({ data }) => {
     svg.selectAll("*").remove();
 
     const width = 450;
-    const height = 300;
-    const margin = { top: 30, right: 60, bottom: 30, left: 60 };
+    const height = 280;
+    const margin = { top: 20, right: 30, bottom: 40, left: 135 };
 
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
-    const radius = Math.min(chartWidth, chartHeight) / 2;
 
-    const g = svg.append("g")
-      .attr("transform", `translate(${width / 2}, ${height / 2 + 10})`);
+    const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-    const axisCount = data.length;
-    const angleSlice = (Math.PI * 2) / axisCount;
+    const xScale = d3.scaleLinear().domain([0, 5]).range([0, chartWidth]);
+    const yScale = d3.scaleBand().domain(data.map(d => d.force)).range([0, chartHeight]).padding(0.3);
 
-    const rScale = d3.scaleLinear().domain([0, 5]).range([0, radius]);
+    // Draw background ticks
+    g.append("g")
+      .attr("transform", `translate(0, ${chartHeight})`)
+      .call(d3.axisBottom(xScale).ticks(5))
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
 
-    // Draw circular grid levels
-    const levels = [1, 2, 3, 4, 5];
-    levels.forEach(level => {
-      const r = rScale(level);
-      g.append("circle")
-        .attr("cx", 0).attr("cy", 0)
-        .attr("r", r)
-        .attr("fill", "none")
-        .attr("stroke", "#334155")
-        .attr("stroke-width", 1);
+    g.append("g")
+      .call(d3.axisLeft(yScale))
+      .attr("color", "#cbd5e1")
+      .selectAll("text")
+      .attr("font-size", "9.5px")
+      .attr("font-weight", "500")
+      .attr("fill", "#334155")
+      .each(function(d) {
+        const text = d3.select(this);
+        const nameShort = d.replace("Supplier power ", "Suppliers ").replace("Buyer power ", "Buyers ").replace("Threat of ", "Threat ");
+        text.text(nameShort);
+      });
 
-      g.append("text")
-        .attr("x", 4)
-        .attr("y", -r + 3)
-        .attr("fill", "#64748b")
-        .attr("font-size", "8px")
-        .text(level);
+    // Drag behaviour to increase/decrease threat
+    const dragHandler = d3.drag()
+      .on("drag", function(event, d) {
+        const coords = d3.pointer(event, g.node());
+        const rawThreat = Math.max(1, Math.min(5, xScale.invert(coords[0])));
+        
+        // Instant visual feedback
+        d3.select(this).select("rect")
+          .attr("width", xScale(rawThreat));
+        
+        d3.select(this).select("text")
+          .attr("x", xScale(rawThreat) + 6)
+          .text(rawThreat.toFixed(1));
+      })
+      .on("end", function(event, d) {
+        const coords = d3.pointer(event, g.node());
+        const threat = Math.max(1, Math.min(5, Math.round(xScale.invert(coords[0]))));
+        
+        const idx = data.findIndex(r => r.id === d.id);
+        onUpdateRow(idx, { threat });
+      });
+
+    // Groups
+    const bars = g.selectAll(".force-bar")
+      .data(data)
+      .enter()
+      .append("g")
+      .attr("class", "force-bar cursor-ew-resize select-none")
+      .call(dragHandler);
+
+    bars.append("rect")
+      .attr("y", d => yScale(d.force))
+      .attr("x", 0)
+      .attr("height", yScale.bandwidth())
+      .attr("width", d => xScale(Number(d.threat) || 0))
+      .attr("fill", d => d.threat >= 4 ? "#ef4444" : d.threat >= 2.5 ? "#f59e0b" : "#10b981")
+      .attr("rx", 3);
+
+    bars.append("text")
+      .attr("x", d => xScale(Number(d.threat) || 0) + 6)
+      .attr("y", d => yScale(d.force) + yScale.bandwidth() / 2 + 3.5)
+      .attr("fill", "#475569")
+      .attr("font-size", "10px")
+      .attr("font-weight", "bold")
+      .text(d => Number(d.threat).toFixed(0));
+
+    // Tooltips
+    bars.on("mouseover", (event, d) => {
+      setTooltip({
+        show: true,
+        x: event.pageX,
+        y: event.pageY,
+        content: `<strong>${d.force}</strong><br/>Threat: ${d.threat}/5<br/>Notes: ${d.notes || 'None'}<br/><span class="text-indigo-400 font-bold block mt-1">Drag bar horizontal to edit!</span>`
+      });
+    })
+    .on("mousemove", (event) => {
+      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+    })
+    .on("mouseout", () => {
+      setTooltip({ show: false, x: 0, y: 0, content: "" });
     });
 
-    // Draw axis lines and labels
-    data.forEach((d, idx) => {
-      const angle = idx * angleSlice - Math.PI / 2;
-      const x = Math.cos(angle) * rScale(5);
-      const y = Math.sin(angle) * rScale(5);
-
-      g.append("line")
-        .attr("x1", 0).attr("y1", 0)
-        .attr("x2", x).attr("y2", y)
-        .attr("stroke", "#334155")
-        .attr("stroke-width", 1);
-
-      const labelDistance = rScale(5) + 18;
-      const lx = Math.cos(angle) * labelDistance;
-      const ly = Math.sin(angle) * labelDistance;
-
-      let textAnchor = "middle";
-      if (Math.abs(Math.cos(angle)) > 0.1) {
-        textAnchor = Math.cos(angle) > 0 ? "start" : "end";
-      }
-
-      const forceNameShort = d.force.replace("Supplier power ", "Suppliers ").replace("Buyer power ", "Buyers ").replace("Threat of ", "Threat ");
-      g.append("text")
-        .attr("x", lx)
-        .attr("y", ly + 4)
-        .attr("text-anchor", textAnchor)
-        .attr("font-size", "9px")
-        .attr("font-weight", "600")
-        .attr("fill", "#94a3b8")
-        .text(forceNameShort);
-    });
-
-    // Coordinates for threat polygon
-    const points = data.map((d, idx) => {
-      const angle = idx * angleSlice - Math.PI / 2;
-      const score = Number(d.threat) || 0;
-      return [
-        Math.cos(angle) * rScale(score),
-        Math.sin(angle) * rScale(score)
-      ];
-    });
-
-    const polygonString = points.map(p => p.join(",")).join(" ");
-    
-    g.append("polygon")
-      .attr("points", polygonString)
-      .attr("fill", "#f43f5e")
-      .attr("fill-opacity", 0.25)
-      .attr("stroke", "#e11d48")
-      .attr("stroke-width", 2.5);
-
-    points.forEach((p) => {
-      g.append("circle")
-        .attr("cx", p[0])
-        .attr("cy", p[1])
-        .attr("r", 4.5)
-        .attr("fill", "#e11d48")
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 1);
-    });
-
-  }, [data]);
+  }, [data, onUpdateRow, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Five Forces Threat Profile</span>
-      <svg ref={svgRef} width="450" height="300" className="max-w-full" />
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <div className="flex items-center gap-1.5 mb-2">
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Five Forces Interactive Bars</span>
+        <span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bars to Edit</span>
+      </div>
+      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
     </div>
   );
 };
 
-
-// ============================================================================
-// --- GOOGLE CHART WRAPPERS ---
-// ============================================================================
-
-// 1. Google Pie Chart (MoSCoW)
-const MoscowPieChart = ({ data }) => {
-  const chartRef = useRef(null);
-
+// 9. Custom D3 Donut Chart with Exploding Slices (Replaces MoSCoW Pie Chart)
+const MoscowDonutChart = ({ data, setTooltip }) => {
+  const svgRef = useRef(null);
   useEffect(() => {
     if (!data) return;
-    loadGoogleCharts(() => {
-      if (!chartRef.current) return;
-      
-      const chartData = [
-        ['Category', 'Effort (days)'],
-        ['Must-have', data.summary.M.effort],
-        ['Should-have', data.summary.S.effort],
-        ['Could-have', data.summary.C.effort],
-        ['Won\'t-have', data.summary.W.effort]
-      ];
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
 
-      const dataTable = window.google.visualization.arrayToDataTable(chartData);
+    const width = 450;
+    const height = 280;
+    const radius = Math.min(width, height) / 2 - 20;
 
-      const options = {
-        title: 'Effort Distribution by Priority',
-        pieHole: 0.45,
-        colors: ['#ef4444', '#3b82f6', '#10b981', '#475569'],
-        chartArea: { left: 20, top: 40, width: '90%', height: '80%' },
-        legend: { position: 'bottom', textStyle: { fontSize: 10, color: '#94a3b8' } },
-        titleTextStyle: { fontSize: 12, bold: true, color: '#f1f5f9' },
-        backgroundColor: 'transparent'
-      };
+    const g = svg.append("g")
+      .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-      const chart = new window.google.visualization.PieChart(chartRef.current);
-      chart.draw(dataTable, options);
-    });
-  }, [data]);
+    const chartData = [
+      { key: "Must-have", val: data.summary.M.effort, count: data.summary.M.count, color: "#ef4444" },
+      { key: "Should-have", val: data.summary.S.effort, count: data.summary.S.count, color: "#3b82f6" },
+      { key: "Could-have", val: data.summary.C.effort, count: data.summary.C.count, color: "#10b981" },
+      { key: "Won't-have", val: data.summary.W.effort, count: data.summary.W.count, color: "#94a3b8" }
+    ].filter(d => d.val > 0);
+
+    const pie = d3.pie().value(d => d.val).sort(null);
+    const arc = d3.arc().innerRadius(radius * 0.45).outerRadius(radius);
+    const hoverArc = d3.arc().innerRadius(radius * 0.45).outerRadius(radius + 8);
+
+    const paths = g.selectAll(".slice")
+      .data(pie(chartData))
+      .enter()
+      .append("g")
+      .attr("class", "slice cursor-help");
+
+    paths.append("path")
+      .attr("d", arc)
+      .attr("fill", d => d.data.color)
+      .attr("stroke", "#ffffff")
+      .attr("stroke-width", 2)
+      .on("mouseover", function(event, d) {
+        d3.select(this)
+          .transition().duration(150)
+          .attr("d", hoverArc);
+        
+        const pct = data.totalEffort > 0 ? (d.data.val / data.totalEffort * 100).toFixed(0) : 0;
+        setTooltip({
+          show: true,
+          x: event.pageX,
+          y: event.pageY,
+          content: `<strong>${d.data.key}</strong><br/>Effort: ${d.data.val} days (${pct}%)<br/>Items: ${d.data.count}`
+        });
+      })
+      .on("mousemove", (event) => {
+        setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+      })
+      .on("mouseout", function() {
+        d3.select(this)
+          .transition().duration(150)
+          .attr("d", arc);
+        setTooltip({ show: false, x: 0, y: 0, content: "" });
+      });
+
+    // Add labels outside donut
+    paths.append("text")
+      .attr("transform", d => `translate(${arc.centroid(d)})`)
+      .attr("dy", "0.35em")
+      .attr("text-anchor", "middle")
+      .attr("fill", "#ffffff")
+      .attr("font-size", "10px")
+      .attr("font-weight", "bold")
+      .text(d => d.data.val > 2 ? `${d.data.val}d` : "");
+
+    // Center text total effort
+    g.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "-0.2em")
+      .attr("fill", "#64748b")
+      .attr("font-size", "9px")
+      .attr("font-weight", "bold")
+      .text("TOTAL EFFORT");
+
+    g.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "1em")
+      .attr("fill", "#1e293b")
+      .attr("font-size", "16px")
+      .attr("font-weight", "900")
+      .text(`${data.totalEffort} days`);
+
+  }, [data, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center w-full">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">MoSCoW Effort Share</span>
-      <div ref={chartRef} className="w-full h-64" />
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Moscow Effort Donut Distribution</span>
+      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
     </div>
   );
 };
 
-// 2. Google Line Chart (North Star Trajectory)
-const NorthStarLineChart = ({ trajectory }) => {
-  const chartRef = useRef(null);
-
+// 10. Custom D3 Line Chart with Interactive Mouse Tracker Focus Rule (Replaces North Star Google Line Chart)
+const NorthStarLineChart = ({ trajectory, setTooltip }) => {
+  const svgRef = useRef(null);
   useEffect(() => {
     if (!trajectory) return;
-    loadGoogleCharts(() => {
-      if (!chartRef.current) return;
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
 
-      const chartData = [['Month', 'Actual NSM (mn)', 'Target NSM (mn)']];
-      trajectory.forEach(t => {
-        chartData.push([
-          t.month, 
-          t.actual === null ? null : Number(t.actual), 
-          t.target === null ? null : Number(t.target)
-        ]);
+    const width = 450;
+    const height = 280;
+    const margin = { top: 20, right: 35, bottom: 40, left: 45 };
+
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+
+    const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+    // filter valid elements
+    const validData = trajectory.map((t, i) => ({
+      month: t.month,
+      idx: i,
+      actual: t.actual !== null ? Number(t.actual) : null,
+      target: t.target !== null ? Number(t.target) : null
+    }));
+
+    const maxVal = d3.max(validData, d => Math.max(d.actual || 0, d.target || 0)) || 5.0;
+    const xScale = d3.scalePoint().domain(validData.map(d => d.month)).range([0, chartWidth]);
+    const yScale = d3.scaleLinear().domain([0, maxVal * 1.15]).range([chartHeight, 0]);
+
+    // Grid lines horizontal
+    g.append("g")
+      .attr("class", "grid-lines opacity-10")
+      .call(d3.axisLeft(yScale).ticks(5).tickSize(-chartWidth).tickFormat(""));
+
+    // Axes
+    g.append("g")
+      .attr("transform", `translate(0, ${chartHeight})`)
+      .call(d3.axisBottom(xScale))
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
+
+    g.append("g")
+      .call(d3.axisLeft(yScale).ticks(5))
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
+
+    // Line calculators
+    const lineActual = d3.line()
+      .defined(d => d.actual !== null)
+      .x(d => xScale(d.month))
+      .y(d => yScale(d.actual));
+
+    const lineTarget = d3.line()
+      .defined(d => d.target !== null)
+      .x(d => xScale(d.month))
+      .y(d => yScale(d.target));
+
+    // Area actual
+    const areaActual = d3.area()
+      .defined(d => d.actual !== null)
+      .x(d => xScale(d.month))
+      .y0(chartHeight)
+      .y1(d => yScale(d.actual));
+
+    // Draw target line
+    g.append("path")
+      .datum(validData)
+      .attr("fill", "none")
+      .attr("stroke", "#94a3b8")
+      .attr("stroke-dasharray", "4,4")
+      .attr("stroke-width", 2)
+      .attr("d", lineTarget);
+
+    // Draw actual area & line
+    g.append("path")
+      .datum(validData)
+      .attr("fill", "url(#nsAreaGrad)")
+      .attr("opacity", 0.15)
+      .attr("d", areaActual);
+
+    g.append("path")
+      .datum(validData)
+      .attr("fill", "none")
+      .attr("stroke", "#6366f1")
+      .attr("stroke-width", 3)
+      .attr("d", lineActual);
+
+    // Gradient definition
+    const defs = svg.append("defs");
+    const areaGrad = defs.append("linearGradient")
+      .attr("id", "nsAreaGrad")
+      .attr("x1", "0%").attr("y1", "0%")
+      .attr("x2", "0%").attr("y2", "100%");
+    areaGrad.append("stop").attr("offset", "0%").attr("stop-color", "#6366f1");
+    areaGrad.append("stop").attr("offset", "100%").attr("stop-color", "#ffffff");
+
+    // Trajectory Hover overlay elements
+    const focusLine = g.append("line")
+      .attr("y1", 0).attr("y2", chartHeight)
+      .attr("stroke", "#475569")
+      .attr("stroke-width", 1.5)
+      .attr("stroke-dasharray", "3,3")
+      .style("display", "none");
+
+    const circleActual = g.append("circle")
+      .attr("r", 5)
+      .attr("fill", "#6366f1")
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1.5)
+      .style("display", "none");
+
+    const circleTarget = g.append("circle")
+      .attr("r", 5)
+      .attr("fill", "#94a3b8")
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1.5)
+      .style("display", "none");
+
+    // Capture mouse moves
+    svg.append("rect")
+      .attr("width", chartWidth)
+      .attr("height", chartHeight)
+      .attr("transform", `translate(${margin.left}, ${margin.top})`)
+      .attr("fill", "none")
+      .attr("pointer-events", "all")
+      .on("mouseover", () => {
+        focusLine.style("display", null);
+        circleActual.style("display", null);
+        circleTarget.style("display", null);
+      })
+      .on("mousemove", (event) => {
+        const mouseX = d3.pointer(event)[0] - margin.left;
+        
+        // Find closest point by dividing width
+        const step = chartWidth / (validData.length - 1);
+        const closestIdx = Math.max(0, Math.min(validData.length - 1, Math.round(mouseX / step)));
+        
+        const pt = validData[closestIdx];
+        const xPos = xScale(pt.month);
+
+        focusLine.attr("x1", xPos).attr("x2", xPos);
+        
+        if (pt.actual !== null) {
+          circleActual.attr("cx", xPos).attr("cy", yScale(pt.actual)).style("display", null);
+        } else {
+          circleActual.style("display", "none");
+        }
+        
+        if (pt.target !== null) {
+          circleTarget.attr("cx", xPos).attr("cy", yScale(pt.target)).style("display", null);
+        } else {
+          circleTarget.style("display", "none");
+        }
+
+        setTooltip({
+          show: true,
+          x: event.pageX,
+          y: event.pageY,
+          content: `<strong>Month: ${pt.month}</strong><br/>Actual: ${pt.actual !== null ? pt.actual.toFixed(2) + ' mn' : '—'}<br/>Target: ${pt.target !== null ? pt.target.toFixed(2) + ' mn' : '—'}`
+        });
+      })
+      .on("mouseout", () => {
+        focusLine.style("display", "none");
+        circleActual.style("display", "none");
+        circleTarget.style("display", "none");
+        setTooltip({ show: false, x: 0, y: 0, content: "" });
       });
 
-      const dataTable = window.google.visualization.arrayToDataTable(chartData);
-
-      const options = {
-        title: 'North Star Metric Trajectory (mn)',
-        curveType: 'function',
-        legend: { position: 'bottom', textStyle: { color: '#94a3b8' } },
-        colors: ['#6366f1', '#475569'],
-        hAxis: { title: 'Month', textStyle: { fontSize: 10, color: '#94a3b8' }, titleTextStyle: { color: '#64748b' } },
-        vAxis: { title: 'NSM Orders (mn)', textStyle: { fontSize: 10, color: '#94a3b8' }, titleTextStyle: { color: '#64748b' } },
-        chartArea: { left: 50, top: 30, width: '85%', height: '70%' },
-        backgroundColor: 'transparent',
-        pointsVisible: true
-      };
-
-      const chart = new window.google.visualization.LineChart(chartRef.current);
-      chart.draw(dataTable, options);
-    });
-  }, [trajectory]);
+  }, [trajectory, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center w-full">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Trajectory (Actual vs Target)</span>
-      <div ref={chartRef} className="w-full h-64" />
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">NSM Trajectory (Interactive Focus line)</span>
+      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
     </div>
   );
 };
 
-// 3. Google Line Chart (Cohort Retention Curves)
-const CohortRetentionChart = ({ data }) => {
-  const chartRef = useRef(null);
-
+// 11. Custom D3 Multi-line Curves with Curve Highlighting (Replaces Cohort Curves Google Line Chart)
+const CohortRetentionChart = ({ data, setTooltip }) => {
+  const svgRef = useRef(null);
   useEffect(() => {
     if (!data || !data.calculated) return;
-    loadGoogleCharts(() => {
-      if (!chartRef.current) return;
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
 
-      const columns = ['Month', 'Jan Cohort', 'Feb Cohort', 'Mar Cohort', 'Apr Cohort', 'Average'];
-      const rows = [];
+    const width = 450;
+    const height = 280;
+    const margin = { top: 25, right: 90, bottom: 40, left: 45 };
 
-      for (let m = 0; m <= 6; m++) {
-        const key = `m${m}`;
-        const row = [`M${m}`];
-        
-        data.calculated.forEach(c => {
-          row.push(c[key] * 100); // Express as percentage
-        });
-        row.push(data.averages[key] * 100);
-        
-        rows.push(row);
-      }
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
 
-      const dataTable = new window.google.visualization.DataTable();
-      dataTable.addColumn('string', 'Month');
-      columns.slice(1).forEach(colName => {
-        dataTable.addColumn('number', colName);
-      });
-      dataTable.addRows(rows);
+    const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-      const options = {
-        title: 'Cohort Retention Curves (%)',
-        curveType: 'function',
-        legend: { position: 'bottom', textStyle: { fontSize: 9, color: '#94a3b8' } },
-        vAxis: { title: 'Retention %', minValue: 0, maxValue: 100, textStyle: { color: '#94a3b8' } },
-        hAxis: { title: 'Period', textStyle: { color: '#94a3b8' } },
-        chartArea: { left: 45, top: 35, width: '85%', height: '70%' },
-        colors: ['#c084fc', '#818cf8', '#38bdf8', '#fb7185', '#f1f5f9'],
-        lineWidth: 2.5,
-        backgroundColor: 'transparent',
-        pointsVisible: true
-      };
+    const months = ["M0", "M1", "M2", "M3", "M4", "M5", "M6"];
+    const xScale = d3.scalePoint().domain(months).range([0, chartWidth]);
+    const yScale = d3.scaleLinear().domain([0, 100]).range([chartHeight, 0]);
 
-      const chart = new window.google.visualization.LineChart(chartRef.current);
-      chart.draw(dataTable, options);
+    // Prepare line data structures
+    const cohorts = data.calculated.map(c => ({
+      name: `${c.cohort} Cohort`,
+      color: c.cohort === "Jan" ? "#c084fc" : c.cohort === "Feb" ? "#818cf8" : c.cohort === "Mar" ? "#38bdf8" : "#fb7185",
+      points: months.map((m, idx) => ({
+        month: m,
+        val: c[`m${idx}`] * 100
+      }))
+    }));
+
+    // Add Average line
+    cohorts.push({
+      name: "Average Curve",
+      color: "#1e293b",
+      isAverage: true,
+      points: months.map((m, idx) => ({
+        month: m,
+        val: data.averages[`m${idx}`] * 100
+      }))
     });
-  }, [data]);
+
+    // Grid lines horizontal
+    g.append("g")
+      .attr("class", "grid-lines opacity-10")
+      .call(d3.axisLeft(yScale).ticks(5).tickSize(-chartWidth).tickFormat(""));
+
+    // Axes
+    g.append("g")
+      .attr("transform", `translate(0, ${chartHeight})`)
+      .call(d3.axisBottom(xScale))
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
+
+    g.append("g")
+      .call(d3.axisLeft(yScale).ticks(5).tickFormat(d => d + "%"))
+      .attr("color", "#cbd5e1")
+      .selectAll("text").attr("fill", "#64748b");
+
+    const lineGen = d3.line()
+      .x(d => xScale(d.month))
+      .y(d => yScale(d.val))
+      .curve(d3.curveMonotoneX);
+
+    // Draw cohort curves
+    const paths = g.selectAll(".cohort-path")
+      .data(cohorts)
+      .enter()
+      .append("path")
+      .attr("class", "cohort-path cursor-pointer transition-all duration-150")
+      .attr("fill", "none")
+      .attr("stroke", d => d.color)
+      .attr("stroke-width", d => d.isAverage ? 3 : 2)
+      .attr("stroke-dasharray", d => d.isAverage ? "3,3" : "none")
+      .attr("opacity", 0.7)
+      .attr("d", d => lineGen(d.points));
+
+    // Draw interactive legend on the right side
+    const legend = g.selectAll(".cohort-legend")
+      .data(cohorts)
+      .enter()
+      .append("g")
+      .attr("class", "cohort-legend cursor-pointer")
+      .attr("transform", (d, idx) => `translate(${chartWidth + 10}, ${idx * 20 + 20})`);
+
+    legend.append("rect")
+      .attr("width", 10).attr("height", 10)
+      .attr("fill", d => d.color)
+      .attr("rx", 2);
+
+    legend.append("text")
+      .attr("x", 15).attr("y", 9)
+      .attr("fill", "#475569")
+      .attr("font-size", "9px")
+      .attr("font-weight", "bold")
+      .text(d => d.name);
+
+    // Hover Highlight trigger behavior
+    const triggerHighlight = (hoveredName) => {
+      paths.transition().duration(150)
+        .attr("opacity", d => d.name === hoveredName ? 1.0 : 0.12)
+        .attr("stroke-width", d => d.name === hoveredName ? 3.5 : 1.5);
+    };
+
+    const resetHighlight = () => {
+      paths.transition().duration(150)
+        .attr("opacity", 0.7)
+        .attr("stroke-width", d => d.isAverage ? 3 : 2);
+    };
+
+    // Attach highlights
+    legend.on("mouseover", (event, d) => triggerHighlight(d.name))
+          .on("mouseout", resetHighlight);
+
+    paths.on("mouseover", function(event, d) {
+      triggerHighlight(d.name);
+      
+      const ptsDesc = d.points.map(pt => `${pt.month}: ${Math.round(pt.val)}%`).join(" | ");
+      setTooltip({
+        show: true,
+        x: event.pageX,
+        y: event.pageY,
+        content: `<strong>${d.name}</strong><br/><span class="font-mono text-[10px] text-indigo-200">${ptsDesc}</span>`
+      });
+    })
+    .on("mousemove", (event) => {
+      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
+    })
+    .on("mouseout", () => {
+      resetHighlight();
+      setTooltip({ show: false, x: 0, y: 0, content: "" });
+    });
+
+  }, [data, setTooltip]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center w-full">
-      <span className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Retention Performance (Curves)</span>
-      <div ref={chartRef} className="w-full h-64" />
+    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
+      <div className="flex items-center gap-1.5 mb-2">
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Retention Performance (Curves)</span>
+        <span className="text-[9px] bg-purple-50 border border-purple-200 px-2 py-0.5 rounded text-purple-600 font-bold uppercase animate-pulse">Hover Curves/Legend to Highlight</span>
+      </div>
+      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
     </div>
   );
 };
@@ -974,6 +1403,7 @@ const CohortRetentionChart = ({ data }) => {
 const AdminPMPlayground = () => {
   const [activeTab, setActiveTab] = useState('index'); // 'index' | templateKey (e.g. 'RICE')
   const [searchQuery, setSearchQuery] = useState('');
+  const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, content: "" });
 
   // Initialise state from localStorage or load defaults
   const [frameworkData, setFrameworkData] = useState(() => {
@@ -1042,7 +1472,6 @@ const AdminPMPlayground = () => {
     setFrameworkData(prev => {
       const cleared = { ...prev[key] };
       if (cleared.rows) {
-        // Retain headers but empty rows
         cleared.rows = [];
       }
       if (cleared.inputs) {
@@ -1051,7 +1480,6 @@ const AdminPMPlayground = () => {
         });
       }
       if (cleared.weights) {
-        // Keep weights but zero them
         Object.keys(cleared.weights).forEach(k => {
           cleared.weights[k] = 0;
         });
@@ -1102,7 +1530,7 @@ const AdminPMPlayground = () => {
     toast.success("CSV file exported!");
   };
 
-  // Editable Grid Cell Updates
+  // Editable Grid Cell Updates (Direct mutation callbacks)
   const handleCellChange = (frameworkKey, rowIndex, colKey, val) => {
     setFrameworkData(prev => {
       const framework = { ...prev[frameworkKey] };
@@ -1110,6 +1538,28 @@ const AdminPMPlayground = () => {
       updatedRows[rowIndex] = { ...updatedRows[rowIndex], [colKey]: val };
       framework.rows = updatedRows;
       return { ...prev, [frameworkKey]: framework };
+    });
+  };
+
+  // Chart drag callbacks
+  const handleRowDataUpdate = (frameworkKey, rowId, updatedFields) => {
+    setFrameworkData(prev => {
+      const framework = { ...prev[frameworkKey] };
+      const updatedRows = framework.rows.map(r => 
+        r.id === rowId ? { ...r, ...updatedFields } : r
+      );
+      framework.rows = updatedRows;
+      return { ...prev, [frameworkKey]: framework };
+    });
+  };
+
+  const handlePorterRowUpdate = (rowIndex, updatedFields) => {
+    setFrameworkData(prev => {
+      const framework = { ...prev["Porter5Forces"] };
+      const updatedRows = [...framework.rows];
+      updatedRows[rowIndex] = { ...updatedRows[rowIndex], ...updatedFields };
+      framework.rows = updatedRows;
+      return { ...prev, ["Porter5Forces"]: framework };
     });
   };
 
@@ -1161,8 +1611,8 @@ const AdminPMPlayground = () => {
     template.headers.forEach(h => {
       if (h.editable) {
         if (h.type === "number" || h.type === "percent") newRow[h.key] = 0;
-        else if (h.key === "category") newRow[h.key] = "M"; // default MoSCoW
-        else if (h.key === "vector") newRow[h.key] = "Market Penetration"; // default Ansoff
+        else if (h.key === "category") newRow[h.key] = "M";
+        else if (h.key === "vector") newRow[h.key] = "Market Penetration";
         else newRow[h.key] = "";
       }
     });
@@ -1182,35 +1632,33 @@ const AdminPMPlayground = () => {
     });
   };
 
-  // logical groupings for frameworks
   const groups = [
     {
       name: "Prioritisation backlogs",
-      icon: <Sliders className="h-4 w-4 text-purple-400" />,
+      icon: <Sliders className="h-4 w-4 text-purple-600" />,
       color: "purple",
       keys: ["RICE", "WeightedScoring", "ValueVsEffort", "KanoModel", "WSJF", "MoSCoW", "OpportunityScoring"]
     },
     {
       name: "Strategy & Portfolios",
-      icon: <TrendingUp className="h-4 w-4 text-blue-400" />,
+      icon: <TrendingUp className="h-4 w-4 text-blue-600" />,
       color: "blue",
       keys: ["BCGMatrix", "AnsoffMatrix", "Porter5Forces"]
     },
     {
       name: "Metrics & Growth loops",
-      icon: <Activity className="h-4 w-4 text-emerald-450" />,
+      icon: <Activity className="h-4 w-4 text-emerald-600" />,
       color: "emerald",
       keys: ["NorthStar", "AARRR", "HEART", "UnitEconomics", "CohortRetention", "PMFSurvey"]
     },
     {
       name: "Experiments & OKRs",
-      icon: <Target className="h-4 w-4 text-rose-450" />,
+      icon: <Target className="h-4 w-4 text-rose-600" />,
       color: "rose",
       keys: ["ABTest", "OKRTracker"]
     }
   ];
 
-  // Flat list of frameworks to search/display in dashboard
   const allFrameworksList = [];
   groups.forEach(g => {
     g.keys.forEach(k => {
@@ -1223,37 +1671,31 @@ const AdminPMPlayground = () => {
     });
   });
 
-  const filteredFrameworks = allFrameworksList.filter(f => 
-    f.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    f.whenToUse.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    f.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <div className="w-full bg-slate-900 min-h-screen text-slate-100 rounded-xl overflow-hidden shadow-2xl flex border border-slate-800">
+    <div className="w-full bg-slate-50 min-h-screen text-slate-800 rounded-xl overflow-hidden shadow-sm flex border border-slate-200 relative select-none">
       
-      {/* --- PLAYGROUND LEFT NAV SIDEBAR --- */}
-      <aside className="w-64 border-r border-slate-800 bg-slate-950 flex flex-col shrink-0">
-        <div className="p-4 border-b border-slate-800 flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-pink-500/10 border border-pink-500/20 text-pink-500">
-            <Activity className="h-5 w-5" />
+      {/* --- PLAYGROUND LEFT NAV SIDEBAR (LIGHT MODE) --- */}
+      <aside className="w-64 border-r border-slate-200 bg-white flex flex-col shrink-0">
+        <div className="p-4 border-b border-slate-200 flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-pink-50 border border-pink-200 text-pink-600">
+            <Activity className="h-5 w-5 animate-pulse" />
           </div>
           <div>
-            <h2 className="font-bold text-sm text-slate-200">PM Playground</h2>
-            <p className="text-[10px] text-slate-500 font-medium">Sandbox Management Center</p>
+            <h2 className="font-bold text-sm text-slate-800">PM Playground</h2>
+            <p className="text-[10px] text-slate-400 font-bold">Sandbox Management</p>
           </div>
         </div>
 
         {/* Sidebar Search */}
         <div className="p-3">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
               placeholder="Search frameworks..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-350 placeholder-slate-500 focus:outline-none focus:border-pink-500/50"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-pink-500/50"
             />
           </div>
         </div>
@@ -1262,10 +1704,10 @@ const AdminPMPlayground = () => {
         <nav className="flex-1 overflow-y-auto px-2 space-y-4 pb-4">
           <button
             onClick={() => setActiveTab('index')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
               activeTab === 'index' 
-                ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' 
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+                ? 'bg-pink-50 text-pink-600 border border-pink-100' 
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
             }`}
           >
             <BookOpen className="h-4 w-4" />
@@ -1274,7 +1716,7 @@ const AdminPMPlayground = () => {
 
           {groups.map((g, idx) => (
             <div key={idx} className="space-y-1">
-              <span className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+              <span className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                 {g.name}
               </span>
               {g.keys.map(k => {
@@ -1286,8 +1728,8 @@ const AdminPMPlayground = () => {
                     onClick={() => setActiveTab(k)}
                     className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-left text-xs transition-all ${
                       active 
-                        ? 'bg-slate-850 text-pink-400 font-semibold border-l-2 border-pink-500 pl-4' 
-                        : 'text-slate-450 hover:text-slate-200 hover:bg-slate-900/40 pl-3'
+                        ? 'bg-slate-100 text-pink-600 font-bold border-l-2 border-pink-500 pl-4' 
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50 pl-3'
                     }`}
                   >
                     <span className="truncate">{template.title}</span>
@@ -1299,22 +1741,22 @@ const AdminPMPlayground = () => {
         </nav>
       </aside>
 
-      {/* --- PLAYGROUND MAIN SECTION --- */}
-      <section className="flex-1 flex flex-col bg-slate-900 min-w-0">
+      {/* --- PLAYGROUND MAIN SECTION (LIGHT MODE) --- */}
+      <section className="flex-1 flex flex-col bg-slate-50 min-w-0">
         
         {/* TOP BAR */}
-        <header className="h-14 border-b border-slate-800 px-6 flex items-center justify-between shrink-0 bg-slate-950/20">
+        <header className="h-14 border-b border-slate-200 px-6 flex items-center justify-between shrink-0 bg-white shadow-sm">
           <div className="flex items-center gap-3">
             {activeTab !== 'index' && (
               <button 
                 onClick={() => setActiveTab('index')} 
-                className="p-1 rounded bg-slate-850 hover:bg-slate-700 text-slate-350 hover:text-white transition-colors"
+                className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-850 transition-colors"
                 title="Back to Dashboard"
               >
                 <ArrowLeft size={16} />
               </button>
             )}
-            <h1 className="font-bold text-base text-slate-100">
+            <h1 className="font-extrabold text-base text-slate-800">
               {activeTab === 'index' ? "PM Playbook Dashboard" : PM_TEMPLATES[activeTab].title}
             </h1>
           </div>
@@ -1323,21 +1765,21 @@ const AdminPMPlayground = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleReset(activeTab)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-800 border border-slate-700 hover:bg-slate-750 text-xs font-semibold text-slate-300 hover:text-white transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-650 hover:text-slate-800 transition-all shadow-sm"
               >
                 <RotateCcw size={13} />
                 <span>Reset to Example</span>
               </button>
               <button
                 onClick={() => handleClear(activeTab)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-rose-950/40 border border-rose-900/40 hover:bg-rose-900/30 text-xs font-semibold text-rose-450 hover:text-rose-350 transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-rose-50 border border-rose-100 hover:bg-rose-100/50 text-xs font-bold text-rose-600 hover:text-rose-700 transition-all shadow-sm"
               >
                 <Trash2 size={13} />
                 <span>Clear All</span>
               </button>
               <button
                 onClick={() => handleExportCSV(activeTab)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-800 border border-slate-700 hover:bg-slate-750 text-xs font-semibold text-slate-300 hover:text-white transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-655 hover:text-slate-800 transition-all shadow-sm"
               >
                 <Download size={13} />
                 <span>Export CSV</span>
@@ -1355,23 +1797,22 @@ const AdminPMPlayground = () => {
           {activeTab === 'index' && (
             <>
               {/* Header hero section */}
-              <div className="relative p-6 rounded-2xl bg-gradient-to-r from-pink-950/20 via-indigo-950/30 to-slate-900 border border-slate-800 overflow-hidden">
+              <div className="relative p-6 rounded-2xl bg-gradient-to-r from-pink-500/5 via-indigo-500/5 to-white border border-slate-200 overflow-hidden shadow-sm">
                 <div className="relative z-10 max-w-2xl">
-                  <span className="text-[10px] uppercase font-bold text-pink-400 tracking-wider bg-pink-950/60 px-2.5 py-1 rounded border border-pink-900/40">
+                  <span className="text-[10px] uppercase font-bold text-pink-600 tracking-wider bg-pink-100 px-2.5 py-1 rounded border border-pink-200">
                     A Senior Consultant's Field Guide
                   </span>
-                  <h2 className="text-2xl font-black text-white mt-3 mb-2">The Product Manager's Framework Playbook</h2>
-                  <p className="text-slate-300 text-xs leading-relaxed">
+                  <h2 className="text-2xl font-black text-slate-800 mt-3 mb-2">The Product Manager's Framework Playbook</h2>
+                  <p className="text-slate-500 text-xs leading-relaxed font-semibold">
                     Welcome to the Quantitative Assessment Playground. Choose from 18 active formula-based calculators below. Plug in your own figures (yellow fields in sheets) or use the prefilled templates to test your product economics, prioritise backlogs, and run experiments.
                   </p>
                 </div>
-                <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-[radial-gradient(circle_at_right,#f43f5e20,#00000000)]" />
+                <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-[radial-gradient(circle_at_right,#f43f5e10,#00000000)]" />
               </div>
 
               {/* Grid of groups */}
               <div className="space-y-6">
                 {groups.map((g, groupIdx) => {
-                  // Filter based on search query
                   const matches = g.keys.filter(k => {
                     const temp = PM_TEMPLATES[k];
                     return temp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1382,9 +1823,9 @@ const AdminPMPlayground = () => {
 
                   return (
                     <div key={groupIdx} className="space-y-3">
-                      <div className="flex items-center gap-2 border-b border-slate-850 pb-2">
+                      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
                         {g.icon}
-                        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
+                        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">
                           {g.name}
                         </h3>
                       </div>
@@ -1396,29 +1837,29 @@ const AdminPMPlayground = () => {
                             <div
                               key={k}
                               onClick={() => setActiveTab(k)}
-                              className="group p-5 rounded-xl bg-slate-950/40 border border-slate-800 hover:border-pink-500/40 transition-all duration-150 cursor-pointer flex flex-col justify-between hover:translate-y-[-2px] hover:shadow-lg"
+                              className="group p-5 rounded-xl bg-white border border-slate-200 hover:border-pink-500/40 hover:shadow-md transition-all duration-150 cursor-pointer flex flex-col justify-between hover:translate-y-[-2px]"
                             >
                               <div>
                                 <div className="flex justify-between items-center mb-2">
                                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
-                                    g.color === 'purple' ? 'bg-purple-950/80 text-purple-300 border border-purple-900' :
-                                    g.color === 'blue' ? 'bg-blue-950/80 text-blue-300 border border-blue-900' :
-                                    g.color === 'emerald' ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-900' :
-                                    'bg-rose-950/80 text-rose-300 border border-rose-900'
+                                    g.color === 'purple' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
+                                    g.color === 'blue' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                                    g.color === 'emerald' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                    'bg-rose-50 text-rose-600 border border-rose-100'
                                   }`}>
                                     {template.stage}
                                   </span>
-                                  <span className="text-[10px] text-slate-550 font-mono">Calculator Tab</span>
+                                  <span className="text-[10px] text-slate-400 font-mono">Excel Calculator</span>
                                 </div>
-                                <h4 className="font-extrabold text-sm text-slate-100 group-hover:text-pink-400 transition-colors">
+                                <h4 className="font-extrabold text-sm text-slate-800 group-hover:text-pink-600 transition-colors">
                                   {template.title}
                                 </h4>
-                                <p className="text-slate-400 text-xs mt-2 line-clamp-3 leading-relaxed">
+                                <p className="text-slate-500 text-xs mt-2 line-clamp-3 leading-relaxed">
                                   {template.whenToUse}
                                 </p>
                               </div>
-                              <div className="mt-4 pt-3 border-t border-slate-850 flex justify-between items-center">
-                                <span className="text-[10px] text-slate-500 font-semibold group-hover:text-slate-350 transition-colors">
+                              <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                                <span className="text-[10px] text-slate-400 font-bold group-hover:text-slate-600 transition-colors">
                                   Open Calculator →
                                 </span>
                               </div>
@@ -1440,7 +1881,6 @@ const AdminPMPlayground = () => {
             const template = PM_TEMPLATES[activeTab];
             const data = frameworkData[activeTab];
 
-            // Render Framework Guidelines, Data Grid, and Chart
             return (
               <div className="space-y-6">
                 
@@ -1449,35 +1889,35 @@ const AdminPMPlayground = () => {
                   {/* Left Column: Descriptions */}
                   <div className="space-y-4">
                     {/* In Plain Words */}
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-950/40 border border-indigo-900/40">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 border border-indigo-100">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1">
                         <Info size={11} /> In Plain Words
                       </span>
-                      <p className="text-xs text-indigo-200 mt-1 font-semibold leading-relaxed">
+                      <p className="text-xs text-indigo-900 mt-1 font-bold leading-relaxed">
                         {template.inPlainWords}
                       </p>
                     </div>
 
                     {/* When to use */}
-                    <div className="p-4 rounded-xl bg-slate-955/50 border border-slate-800">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-blue-400 block mb-1">
+                    <div className="p-4 rounded-xl bg-white border border-slate-200">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 block mb-1">
                         When to Reach for It
                       </span>
-                      <p className="text-xs text-slate-300 leading-relaxed">
+                      <p className="text-xs text-slate-600 leading-relaxed font-medium">
                         {template.whenToUse}
                       </p>
                     </div>
                   </div>
 
-                  {/* Right Column: Execution steps & Watch outs */}
+                  {/* Right Column: Steps & Watch outs */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* How to run */}
-                    <div className="p-4 rounded-xl bg-slate-955/50 border border-slate-800 flex flex-col justify-between">
+                    <div className="p-4 rounded-xl bg-white border border-slate-200 flex flex-col justify-between">
                       <div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 block mb-2">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-650 block mb-2">
                           How to Run It
                         </span>
-                        <ol className="text-[11px] text-slate-400 space-y-1.5 list-decimal pl-4 leading-normal">
+                        <ol className="text-[11px] text-slate-650 space-y-1.5 list-decimal pl-4 leading-normal font-medium">
                           {template.howToRun.map((step, sIdx) => (
                             <li key={sIdx}>{step}</li>
                           ))}
@@ -1486,12 +1926,12 @@ const AdminPMPlayground = () => {
                     </div>
 
                     {/* Watch out for */}
-                    <div className="p-4 rounded-xl bg-rose-950/10 border border-rose-900/20 flex flex-col justify-between">
+                    <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 flex flex-col justify-between">
                       <div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-400 block mb-2">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-600 block mb-2">
                           Watch Out For (Traps)
                         </span>
-                        <ul className="text-[11px] text-rose-300/80 space-y-1.5 list-disc pl-4 leading-normal">
+                        <ul className="text-[11px] text-rose-700 space-y-1.5 list-disc pl-4 leading-normal font-medium">
                           {template.watchOutFor.map((trap, tIdx) => (
                             <li key={tIdx}>{trap}</li>
                           ))}
@@ -1502,13 +1942,13 @@ const AdminPMPlayground = () => {
                 </div>
 
                 {/* 2. DYNAMIC INPUT & CALCULATION GRID */}
-                <div className="p-5 rounded-xl bg-slate-950/40 border border-slate-800 space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-850 pb-3">
-                    <span className="font-bold text-sm text-slate-200">Assessment Workspace</span>
+                <div className="p-5 rounded-xl bg-white border border-slate-200 space-y-4 shadow-sm">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <span className="font-bold text-sm text-slate-800">Assessment Workspace</span>
                     {template.headers && (
                       <button
                         onClick={() => handleAddRow(activeTab)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded bg-pink-600 hover:bg-pink-700 text-xs font-semibold text-white transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded bg-pink-600 hover:bg-pink-700 text-xs font-semibold text-white transition-colors shadow-sm"
                       >
                         <Plus size={14} />
                         <span>Add Row</span>
@@ -1519,38 +1959,37 @@ const AdminPMPlayground = () => {
                   {/* GRID EDITING WORKSPACE */}
                   {(() => {
                     if (activeTab === "NorthStar") {
-                      // North Star is a unique structured scorecard + trajectory table
                       return (
                         <div className="space-y-6">
                           {/* Part 1: Input Drivers */}
                           <div>
-                            <h4 className="text-xs font-extrabold uppercase text-slate-400 tracking-wider mb-2">
+                            <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider mb-2">
                               1. Inputs & Drivers Decomposition
                             </h4>
                             <div className="overflow-x-auto">
-                              <table className="w-full text-xs text-left border border-slate-850 rounded-lg overflow-hidden">
-                                <thead className="bg-slate-900 text-slate-300 font-bold border-b border-slate-800">
+                              <table className="w-full text-xs text-left border border-slate-200 rounded-lg overflow-hidden">
+                                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                                   <tr>
                                     <th className="p-3">Input Driver</th>
-                                    <th className="p-3 bg-yellow-500/10 text-yellow-400">Current</th>
-                                    <th className="p-3 bg-yellow-500/10 text-yellow-400">90-Day Target</th>
+                                    <th className="p-3 bg-yellow-500/10 text-yellow-750">Current</th>
+                                    <th className="p-3 bg-yellow-500/10 text-yellow-750">90-Day Target</th>
                                     <th className="p-3 text-right">Numeric Change</th>
                                     <th className="p-3 text-right">% Change</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-850">
+                                <tbody className="divide-y divide-slate-100">
                                   {d3.range(3).map(idx => {
                                     const dr = data.drivers[idx];
                                     const calc = template.calculate(data.drivers, data.trajectory).drivers[idx];
                                     return (
-                                      <tr key={idx} className="hover:bg-slate-900/30">
-                                        <td className="p-3 font-semibold text-slate-350">{dr.driver}</td>
+                                      <tr key={idx} className="hover:bg-slate-50/50">
+                                        <td className="p-3 font-semibold text-slate-700">{dr.driver}</td>
                                         <td className="p-3 bg-yellow-500/5">
                                           <input
                                             type="number"
                                             value={dr.current}
                                             onChange={e => handleDriverChange(activeTab, idx, "current", e.target.value)}
-                                            className="w-24 bg-slate-900 border border-slate-700 rounded p-1 text-center font-bold text-yellow-400"
+                                            className="w-24 bg-white border border-slate-200 rounded p-1 text-center font-bold text-yellow-600 focus:outline-none focus:border-pink-500"
                                           />
                                         </td>
                                         <td className="p-3 bg-yellow-500/5">
@@ -1558,13 +1997,13 @@ const AdminPMPlayground = () => {
                                             type="number"
                                             value={dr.target}
                                             onChange={e => handleDriverChange(activeTab, idx, "target", e.target.value)}
-                                            className="w-24 bg-slate-900 border border-slate-700 rounded p-1 text-center font-bold text-yellow-400"
+                                            className="w-24 bg-white border border-slate-200 rounded p-1 text-center font-bold text-yellow-600 focus:outline-none focus:border-pink-500"
                                           />
                                         </td>
-                                        <td className="p-3 text-right font-mono font-bold text-slate-300">
+                                        <td className="p-3 text-right font-mono font-bold text-slate-700">
                                           {calc.change > 0 ? `+${calc.change}` : calc.change}
                                         </td>
-                                        <td className="p-3 text-right font-mono font-bold text-slate-300">
+                                        <td className="p-3 text-right font-mono font-bold text-slate-700">
                                           {(calc.pct * 100).toFixed(1)}%
                                         </td>
                                       </tr>
@@ -1574,20 +2013,20 @@ const AdminPMPlayground = () => {
                                   {(() => {
                                     const summary = template.calculate(data.drivers, data.trajectory).summary;
                                     return (
-                                      <tr className="bg-slate-900 border-t border-slate-750">
-                                        <td className="p-3 font-extrabold text-slate-200">
+                                      <tr className="bg-slate-50/80 border-t border-slate-200 font-extrabold text-slate-800">
+                                        <td className="p-3">
                                           NORTH STAR (monthly on-time orders, mn)
                                         </td>
-                                        <td className="p-3 text-center font-mono font-extrabold text-slate-200">
+                                        <td className="p-3 text-center font-mono">
                                           {summary.current.toFixed(4)}
                                         </td>
-                                        <td className="p-3 text-center font-mono font-extrabold text-slate-200">
+                                        <td className="p-3 text-center font-mono">
                                           {summary.target.toFixed(4)}
                                         </td>
-                                        <td className="p-3 text-right font-mono font-extrabold text-slate-300">
+                                        <td className="p-3 text-right font-mono text-indigo-650">
                                           +{summary.change.toFixed(4)}
                                         </td>
-                                        <td className="p-3 text-right font-mono font-extrabold text-emerald-400">
+                                        <td className="p-3 text-right font-mono text-emerald-600">
                                           +{(summary.pct * 100).toFixed(1)}%
                                         </td>
                                       </tr>
@@ -1600,29 +2039,29 @@ const AdminPMPlayground = () => {
 
                           {/* Part 2: Monthly Trajectory */}
                           <div>
-                            <h4 className="text-xs font-extrabold uppercase text-slate-400 tracking-wider mb-2">
+                            <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider mb-2">
                               2. Monthly Trajectory Actual vs Target
                             </h4>
-                            <div className="overflow-x-auto max-h-60">
-                              <table className="w-full text-xs text-left border border-slate-850 rounded-lg overflow-hidden">
-                                <thead className="bg-slate-900 text-slate-300 font-bold border-b border-slate-800">
+                            <div className="overflow-x-auto max-h-60 border border-slate-200 rounded-lg">
+                              <table className="w-full text-xs text-left border-collapse">
+                                <thead className="bg-slate-50 text-slate-655 font-bold border-b border-slate-200">
                                   <tr>
-                                    <th className="p-2.5">Month</th>
-                                    <th className="p-2.5 bg-yellow-500/10 text-yellow-400">NSM Actual (mn)</th>
-                                    <th className="p-2.5 bg-yellow-500/10 text-yellow-400">NSM Target (mn)</th>
+                                    <th className="p-2.5 pl-4">Month</th>
+                                    <th className="p-2.5 bg-yellow-500/10 text-yellow-750">NSM Actual (mn)</th>
+                                    <th className="p-2.5 bg-yellow-500/10 text-yellow-750">NSM Target (mn)</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-850">
+                                <tbody className="divide-y divide-slate-100">
                                   {data.trajectory.map((t, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-900/30">
-                                      <td className="p-2 font-bold text-slate-400">{t.month}</td>
+                                    <tr key={idx} className="hover:bg-slate-50/30">
+                                      <td className="p-2 pl-4 font-bold text-slate-500">{t.month}</td>
                                       <td className="p-2 bg-yellow-500/5">
                                         <input
                                           type="number"
                                           placeholder="—"
                                           value={t.actual === null ? '' : t.actual}
                                           onChange={e => handleTrajectoryChange(activeTab, idx, "actual", e.target.value)}
-                                          className="w-28 bg-slate-900 border border-slate-700 rounded p-1 text-center font-semibold text-yellow-400"
+                                          className="w-28 bg-white border border-slate-200 rounded p-1 text-center font-bold text-yellow-600"
                                         />
                                       </td>
                                       <td className="p-2 bg-yellow-500/5">
@@ -1631,7 +2070,7 @@ const AdminPMPlayground = () => {
                                           placeholder="—"
                                           value={t.target === null ? '' : t.target}
                                           onChange={e => handleTrajectoryChange(activeTab, idx, "target", e.target.value)}
-                                          className="w-28 bg-slate-900 border border-slate-700 rounded p-1 text-center font-semibold text-yellow-400"
+                                          className="w-28 bg-white border border-slate-200 rounded p-1 text-center font-bold text-yellow-600"
                                         />
                                       </td>
                                     </tr>
@@ -1650,23 +2089,23 @@ const AdminPMPlayground = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {/* Inputs Panel */}
                           <div className="space-y-4">
-                            <h4 className="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                            <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider">
                               Calculator Inputs
                             </h4>
-                            <div className="space-y-3 bg-slate-900/40 p-4 rounded-xl border border-slate-850">
+                            <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                               <div>
-                                <label className="block text-xs text-slate-450 mb-1">
+                                <label className="block text-xs text-slate-500 mb-1">
                                   ARPU (Average Revenue Per User / month)
                                 </label>
                                 <input
                                   type="number"
                                   value={data.inputs.arpu}
                                   onChange={e => handleInputChange(activeTab, "arpu", e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-yellow-400 font-bold text-sm"
+                                  className="w-full bg-white border border-slate-200 rounded p-2 text-yellow-600 font-bold text-sm focus:outline-none focus:border-pink-500"
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs text-slate-450 mb-1">
+                                <label className="block text-xs text-slate-500 mb-1">
                                   Gross Margin (e.g. 0.30 for 30%)
                                 </label>
                                 <input
@@ -1674,11 +2113,11 @@ const AdminPMPlayground = () => {
                                   step="0.05"
                                   value={data.inputs.margin}
                                   onChange={e => handleInputChange(activeTab, "margin", e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-yellow-400 font-bold text-sm"
+                                  className="w-full bg-white border border-slate-200 rounded p-2 text-yellow-600 font-bold text-sm focus:outline-none focus:border-pink-500"
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs text-slate-450 mb-1">
+                                <label className="block text-xs text-slate-500 mb-1">
                                   Monthly Churn Rate (e.g. 0.05 for 5%)
                                 </label>
                                 <input
@@ -1686,18 +2125,18 @@ const AdminPMPlayground = () => {
                                   step="0.01"
                                   value={data.inputs.churn}
                                   onChange={e => handleInputChange(activeTab, "churn", e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-yellow-400 font-bold text-sm"
+                                  className="w-full bg-white border border-slate-200 rounded p-2 text-yellow-600 font-bold text-sm focus:outline-none focus:border-pink-500"
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs text-slate-450 mb-1">
+                                <label className="block text-xs text-slate-500 mb-1">
                                   CAC (Customer Acquisition Cost)
                                 </label>
                                 <input
                                   type="number"
                                   value={data.inputs.cac}
                                   onChange={e => handleInputChange(activeTab, "cac", e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-yellow-400 font-bold text-sm"
+                                  className="w-full bg-white border border-slate-200 rounded p-2 text-yellow-600 font-bold text-sm focus:outline-none focus:border-pink-500"
                                 />
                               </div>
                             </div>
@@ -1705,57 +2144,55 @@ const AdminPMPlayground = () => {
 
                           {/* Calculations & Results */}
                           <div className="space-y-4">
-                            <h4 className="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                            <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider">
                               Results & Sensitivity Analysis
                             </h4>
                             
-                            {/* KPI Metrics */}
                             <div className="grid grid-cols-2 gap-3">
-                              <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 text-center">
-                                <span className="text-[10px] text-slate-500 font-bold uppercase">Customer Lifetime</span>
-                                <div className="text-lg font-black text-slate-200 mt-1">{res.lifetime} mo</div>
+                              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">Customer Lifetime</span>
+                                <div className="text-lg font-black text-slate-800 mt-1">{res.lifetime} mo</div>
                               </div>
-                              <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 text-center">
-                                <span className="text-[10px] text-slate-500 font-bold uppercase">LTV (Lifetime Value)</span>
-                                <div className="text-lg font-black text-slate-200 mt-1">₹{res.ltv.toFixed(1)}</div>
+                              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">LTV (Lifetime Value)</span>
+                                <div className="text-lg font-black text-slate-800 mt-1">₹{res.ltv.toFixed(1)}</div>
                               </div>
-                              <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 text-center">
-                                <span className="text-[10px] text-slate-500 font-bold uppercase">CAC Payback</span>
-                                <div className="text-lg font-black text-slate-200 mt-1">{res.payback} mo</div>
+                              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">CAC Payback</span>
+                                <div className="text-lg font-black text-slate-800 mt-1">{res.payback} mo</div>
                               </div>
-                              <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 text-center">
-                                <span className="text-[10px] text-slate-500 font-bold uppercase">LTV:CAC Ratio</span>
+                              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">LTV:CAC Ratio</span>
                                 <div className={`text-lg font-black mt-1 ${
-                                  res.ratio >= 3 ? 'text-emerald-400' :
-                                  res.ratio >= 1 ? 'text-amber-400' : 'text-rose-500'
+                                  res.ratio >= 3 ? 'text-emerald-600' :
+                                  res.ratio >= 1 ? 'text-amber-500' : 'text-rose-600'
                                 }`}>
                                   {res.ratio}x
-                                  <span className="text-[9px] block text-slate-400 font-semibold">{res.verdict}</span>
+                                  <span className="text-[9px] block text-slate-500 font-bold">{res.verdict}</span>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Sensitivity table */}
-                            <div className="bg-slate-900/50 p-3.5 rounded-lg border border-slate-800">
-                              <span className="text-[10px] font-extrabold uppercase text-slate-450 block mb-2">
-                                Churn Sensitivity heatmap
+                            <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+                              <span className="text-[10px] font-extrabold uppercase text-slate-500 block mb-2 text-left">
+                                Churn Sensitivity Heatmap
                               </span>
                               <table className="w-full text-center text-xs">
                                 <thead>
-                                  <tr className="text-slate-500 border-b border-slate-800">
+                                  <tr className="text-slate-400 border-b border-slate-200">
                                     <th className="pb-1 text-left">Monthly Churn</th>
                                     <th className="pb-1">Implied LTV</th>
                                     <th className="pb-1">LTV:CAC Ratio</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-850">
+                                <tbody className="divide-y divide-slate-100">
                                   {res.sensitivity.map((sens, sIdx) => (
-                                    <tr key={sIdx} className="hover:bg-slate-900/20">
-                                      <td className="py-2 text-left font-bold text-slate-400">{(sens.churn * 100).toFixed(0)}%</td>
-                                      <td className="py-2 font-mono text-slate-350">₹{sens.ltv}</td>
+                                    <tr key={sIdx} className="hover:bg-slate-100/30">
+                                      <td className="py-2 text-left font-bold text-slate-600">{(sens.churn * 100).toFixed(0)}%</td>
+                                      <td className="py-2 font-mono text-slate-700">₹{sens.ltv}</td>
                                       <td className={`py-2 font-mono font-bold ${
-                                        sens.ratio >= 3 ? 'text-emerald-400' :
-                                        sens.ratio >= 1.5 ? 'text-blue-400' : 'text-rose-500'
+                                        sens.ratio >= 3 ? 'text-emerald-600' :
+                                        sens.ratio >= 1.5 ? 'text-blue-650' : 'text-rose-600'
                                       }`}>
                                         {sens.ratio}x
                                       </td>
@@ -1775,51 +2212,51 @@ const AdminPMPlayground = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {/* Inputs Panel */}
                           <div className="space-y-4">
-                            <h4 className="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                            <h4 className="text-xs font-extrabold uppercase text-slate-550 tracking-wider">
                               Traffic & Conversions
                             </h4>
-                            <div className="grid grid-cols-2 gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-850">
-                              <div className="col-span-2 border-b border-slate-800 pb-1.5">
+                            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                              <div className="col-span-2 border-b border-slate-200 pb-1.5">
                                 <span className="text-[10px] font-bold uppercase text-slate-500">Control (A)</span>
                               </div>
                               <div>
-                                <label className="block text-[10px] text-slate-450 mb-1">Visitors</label>
+                                <label className="block text-[10px] text-slate-500 mb-1">Visitors</label>
                                 <input
                                   type="number"
                                   value={data.inputs.controlVisitors}
                                   onChange={e => handleInputChange(activeTab, "controlVisitors", e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-yellow-400 font-bold"
+                                  className="w-full bg-white border border-slate-200 rounded p-1.5 text-yellow-600 font-bold"
                                 />
                               </div>
                               <div>
-                                <label className="block text-[10px] text-slate-450 mb-1">Conversions</label>
+                                <label className="block text-[10px] text-slate-500 mb-1">Conversions</label>
                                 <input
                                   type="number"
                                   value={data.inputs.controlConversions}
                                   onChange={e => handleInputChange(activeTab, "controlConversions", e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-yellow-400 font-bold"
+                                  className="w-full bg-white border border-slate-200 rounded p-1.5 text-yellow-600 font-bold"
                                 />
                               </div>
 
-                              <div className="col-span-2 border-b border-slate-800 pb-1.5 mt-2">
-                                <span className="text-[10px] font-bold uppercase text-indigo-400">Variant (B)</span>
+                              <div className="col-span-2 border-b border-slate-200 pb-1.5 mt-2">
+                                <span className="text-[10px] font-bold uppercase text-indigo-650">Variant (B)</span>
                               </div>
                               <div>
-                                <label className="block text-[10px] text-slate-450 mb-1">Visitors</label>
+                                <label className="block text-[10px] text-slate-500 mb-1">Visitors</label>
                                 <input
                                   type="number"
                                   value={data.inputs.variantVisitors}
                                   onChange={e => handleInputChange(activeTab, "variantVisitors", e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-yellow-400 font-bold"
+                                  className="w-full bg-white border border-slate-200 rounded p-1.5 text-yellow-600 font-bold"
                                 />
                               </div>
                               <div>
-                                <label className="block text-[10px] text-slate-450 mb-1">Conversions</label>
+                                <label className="block text-[10px] text-slate-500 mb-1">Conversions</label>
                                 <input
                                   type="number"
                                   value={data.inputs.variantConversions}
                                   onChange={e => handleInputChange(activeTab, "variantConversions", e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-yellow-400 font-bold"
+                                  className="w-full bg-white border border-slate-200 rounded p-1.5 text-yellow-600 font-bold"
                                 />
                               </div>
                             </div>
@@ -1827,36 +2264,36 @@ const AdminPMPlayground = () => {
 
                           {/* Calculations & Results */}
                           <div className="space-y-4">
-                            <h4 className="text-xs font-extrabold uppercase text-slate-400 tracking-wider">
+                            <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider">
                               Significance Results
                             </h4>
                             
-                            <div className="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-850">
+                            <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-450">Control Conv. Rate:</span>
-                                <span className="font-mono font-bold text-slate-200">{(res.cr * 100).toFixed(2)}%</span>
+                                <span className="text-slate-500">Control Conv. Rate:</span>
+                                <span className="font-mono font-bold text-slate-800">{(res.cr * 100).toFixed(2)}%</span>
                               </div>
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-450">Variant Conv. Rate:</span>
-                                <span className="font-mono font-bold text-slate-200">{(res.vr * 100).toFixed(2)}%</span>
+                                <span className="text-slate-500">Variant Conv. Rate:</span>
+                                <span className="font-mono font-bold text-slate-800">{(res.vr * 100).toFixed(2)}%</span>
                               </div>
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-450">Relative Uplift:</span>
-                                <span className={`font-mono font-extrabold ${res.uplift >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                                <span className="text-slate-500">Relative Uplift:</span>
+                                <span className={`font-mono font-extrabold ${res.uplift >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                   {res.uplift >= 0 ? `+${(res.uplift * 100).toFixed(1)}%` : `${(res.uplift * 100).toFixed(1)}%`}
                                 </span>
                               </div>
-                              <div className="flex justify-between text-xs border-t border-slate-800 pt-2">
-                                <span className="text-slate-450">Z-Score:</span>
-                                <span className="font-mono font-extrabold text-indigo-400">{res.zScore}</span>
+                              <div className="flex justify-between text-xs border-t border-slate-200 pt-2">
+                                <span className="text-slate-500">Z-Score:</span>
+                                <span className="font-mono font-extrabold text-indigo-600">{res.zScore}</span>
                               </div>
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-450">Significant at 95%? (|z|&gt;1.96):</span>
-                                <span className={`font-bold ${res.sig95 === "YES ✓" ? "text-emerald-400" : "text-slate-500"}`}>{res.sig95}</span>
+                                <span className="text-slate-500">Significant at 95%? (|z|&gt;1.96):</span>
+                                <span className={`font-bold ${res.sig95 === "YES ✓" ? "text-emerald-600" : "text-slate-400"}`}>{res.sig95}</span>
                               </div>
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-450">Significant at 99%? (|z|&gt;2.576):</span>
-                                <span className={`font-bold ${res.sig99 === "YES ✓" ? "text-emerald-400" : "text-slate-500"}`}>{res.sig99}</span>
+                                <span className="text-slate-500">Significant at 99%? (|z|&gt;2.576):</span>
+                                <span className={`font-bold ${res.sig99 === "YES ✓" ? "text-emerald-600" : "text-slate-400"}`}>{res.sig99}</span>
                               </div>
                             </div>
                           </div>
@@ -1864,10 +2301,8 @@ const AdminPMPlayground = () => {
                       );
                     }
 
-                    // STANDARD TABULAR GRID FOR OTHER CALCULATORS
                     const finalRows = template.calculate ? template.calculate(data.rows, data.weights).rows || template.calculate(data.rows, data.weights) : data.rows;
                     
-                    // Specific to Cohort Retention, calculate stats first
                     let processedData = finalRows;
                     let moscowStats = null;
                     if (activeTab === "MoSCoW" && template.calculate) {
@@ -1888,19 +2323,19 @@ const AdminPMPlayground = () => {
                       <div className="space-y-4">
                         {/* Special case: Weighted Scoring weight headers */}
                         {activeTab === "WeightedScoring" && (
-                          <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-850 flex items-center gap-4 flex-wrap text-xs">
-                            <span className="font-bold text-slate-355">Adjust Criteria Weights (Sum must equal 100%):</span>
+                          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-4 flex-wrap text-xs shadow-inner">
+                            <span className="font-bold text-slate-550">Adjust Criteria Weights (Sum must equal 100%):</span>
                             {Object.keys(data.weights).map(wKey => {
                               const labels = { fit: "Strategic Fit", revenue: "Revenue Upside", speed: "Speed to Ship", risk: "Low Risk" };
                               return (
                                 <div key={wKey} className="flex items-center gap-1.5">
-                                  <span className="text-slate-400 font-semibold">{labels[wKey]}:</span>
+                                  <span className="text-slate-500 font-bold">{labels[wKey]}:</span>
                                   <input
                                     type="number"
                                     step="0.05"
                                     value={data.weights[wKey]}
                                     onChange={e => handleWeightChange(activeTab, wKey, e.target.value)}
-                                    className="w-14 bg-slate-900 border border-slate-700 rounded p-1 text-center font-bold text-yellow-400"
+                                    className="w-14 bg-white border border-slate-200 rounded p-1 text-center font-bold text-yellow-600 focus:outline-none focus:border-pink-500"
                                   />
                                 </div>
                               );
@@ -1909,7 +2344,7 @@ const AdminPMPlayground = () => {
                               const sum = Object.values(data.weights).reduce((a, b) => a + b, 0);
                               const isOk = Math.abs(sum - 1.0) < 0.001;
                               return (
-                                <span className={`font-bold ml-auto px-2 py-0.5 rounded text-[10px] ${isOk ? 'bg-emerald-950 text-emerald-400 border border-emerald-900' : 'bg-rose-950 text-rose-400 border border-rose-900'}`}>
+                                <span className={`font-bold ml-auto px-2 py-0.5 rounded text-[10px] ${isOk ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'}`}>
                                   {isOk ? "Sum: 100% ✓" : `Sum: ${(sum*100).toFixed(0)}% (FIX)`}
                                 </span>
                               );
@@ -1919,13 +2354,13 @@ const AdminPMPlayground = () => {
 
                         {/* RENDER TABLE CONTAINER */}
                         <div className="overflow-x-auto">
-                          <table className="w-full text-xs text-left border border-slate-850 rounded-lg overflow-hidden">
-                            <thead className="bg-slate-900 text-slate-300 font-bold border-b border-slate-800">
+                          <table className="w-full text-xs text-left border border-slate-200 rounded-lg overflow-hidden">
+                            <thead className="bg-slate-50 text-slate-655 font-bold border-b border-slate-200">
                               <tr>
                                 {template.headers.map((h, hIdx) => (
                                   <th 
                                     key={hIdx} 
-                                    className={`p-3 ${h.editable ? 'bg-yellow-500/10 text-yellow-400' : 'text-slate-300'} ${
+                                    className={`p-3 ${h.editable ? 'bg-yellow-500/10 text-yellow-750' : 'text-slate-600'} ${
                                       h.type === 'number' || h.type === 'percent' ? 'text-center' : ''
                                     }`}
                                   >
@@ -1935,9 +2370,9 @@ const AdminPMPlayground = () => {
                                 <th className="p-3 w-10 text-center"></th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-850">
+                            <tbody className="divide-y divide-slate-100">
                               {processedData.map((row, rIdx) => (
-                                <tr key={row.id || rIdx} className="hover:bg-slate-900/35">
+                                <tr key={row.id || rIdx} className="hover:bg-slate-50/40">
                                   {template.headers.map((h, hIdx) => {
                                     const val = row[h.key];
                                     
@@ -1948,7 +2383,7 @@ const AdminPMPlayground = () => {
                                             <select
                                               value={val}
                                               onChange={e => handleCellChange(activeTab, rIdx, h.key, e.target.value)}
-                                              className="w-full bg-slate-900 border border-slate-700 rounded p-1 text-slate-350 font-bold"
+                                              className="w-full bg-white border border-slate-200 rounded p-1 text-slate-700 font-bold focus:outline-none focus:border-pink-500"
                                             >
                                               {h.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                             </select>
@@ -1956,7 +2391,7 @@ const AdminPMPlayground = () => {
                                             <select
                                               value={val}
                                               onChange={e => handleCellChange(activeTab, rIdx, h.key, e.target.value)}
-                                              className="w-full bg-slate-900 border border-slate-700 rounded p-1 text-slate-355 font-bold"
+                                              className="w-full bg-white border border-slate-200 rounded p-1 text-slate-700 font-bold focus:outline-none focus:border-pink-500"
                                             >
                                               {h.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                             </select>
@@ -1969,7 +2404,7 @@ const AdminPMPlayground = () => {
                                                 const v = h.type === "number" || h.type === "percent" ? Number(e.target.value) : e.target.value;
                                                 handleCellChange(activeTab, rIdx, h.key, v);
                                               }}
-                                              className={`w-full bg-slate-900 border border-slate-700 rounded p-1 font-semibold text-yellow-400 ${
+                                              className={`w-full bg-white border border-slate-200 rounded p-1 font-bold text-yellow-600 focus:outline-none focus:border-pink-500 ${
                                                 h.type === "number" || h.type === "percent" ? "text-center" : "text-left"
                                               }`}
                                             />
@@ -1977,7 +2412,6 @@ const AdminPMPlayground = () => {
                                         </td>
                                       );
                                     } else {
-                                      // Render read-only calculated cell
                                       let displayVal = val;
                                       if (h.type === "percent") {
                                         displayVal = (val * 100).toFixed(0) + "%";
@@ -1987,7 +2421,7 @@ const AdminPMPlayground = () => {
                                       return (
                                         <td 
                                           key={hIdx} 
-                                          className={`p-3 font-mono font-bold text-slate-300 ${
+                                          className={`p-3 font-mono font-bold text-slate-700 ${
                                             h.type === 'number' || h.type === 'percent' ? 'text-center' : ''
                                           }`}
                                         >
@@ -2000,7 +2434,7 @@ const AdminPMPlayground = () => {
                                     {row.force ? null : (
                                       <button
                                         onClick={() => handleDeleteRow(activeTab, rIdx)}
-                                        className="text-slate-500 hover:text-rose-500 p-1 rounded hover:bg-rose-500/10 transition-colors"
+                                        className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition-colors"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -2014,22 +2448,22 @@ const AdminPMPlayground = () => {
 
                         {/* Special case outputs for MoSCoW, PMF Survey, etc. */}
                         {moscowStats && (
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-850 text-xs">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                             <div className="space-y-1">
                               <span className="text-slate-500 font-bold block">Must-have Effort:</span>
-                              <span className="text-sm font-extrabold text-slate-200">{moscowStats.summary.M.effort} days ({moscowStats.summary.M.count} items)</span>
+                              <span className="text-sm font-extrabold text-slate-800">{moscowStats.summary.M.effort} days ({moscowStats.summary.M.count} items)</span>
                             </div>
                             <div className="space-y-1">
                               <span className="text-slate-500 font-bold block">Should-have Effort:</span>
-                              <span className="text-sm font-extrabold text-slate-200">{moscowStats.summary.S.effort} days ({moscowStats.summary.S.count} items)</span>
+                              <span className="text-sm font-extrabold text-slate-800">{moscowStats.summary.S.effort} days ({moscowStats.summary.S.count} items)</span>
                             </div>
                             <div className="space-y-1">
                               <span className="text-slate-500 font-bold block">Total Effort:</span>
-                              <span className="text-sm font-extrabold text-slate-200">{moscowStats.totalEffort} days</span>
+                              <span className="text-sm font-extrabold text-slate-800">{moscowStats.totalEffort} days</span>
                             </div>
                             <div className="space-y-1">
                               <span className="text-slate-500 font-bold block">Must-have % of Effort:</span>
-                              <span className={`text-sm font-extrabold ${moscowStats.mustPercent <= 60 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                              <span className={`text-sm font-extrabold ${moscowStats.mustPercent <= 60 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                 {moscowStats.mustPercent.toFixed(1)}% 
                                 {moscowStats.mustPercent <= 60 ? ' (Healthy ✓)' : ' (Too high - risk!)'}
                               </span>
@@ -2037,42 +2471,18 @@ const AdminPMPlayground = () => {
                           </div>
                         )}
 
-                        {activeTab === "PMFSurvey" && (() => {
-                          const surveyStats = template.calculate(data.rows);
-                          return (
-                            <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-850 text-xs text-center">
-                              <div>
-                                <span className="text-slate-550 font-bold block uppercase">Valid Responses</span>
-                                <span className="text-lg font-black text-slate-200 mt-1">{surveyStats.valid}</span>
-                              </div>
-                              <div>
-                                <span className="text-slate-550 font-bold block uppercase">PMF Score</span>
-                                <span className={`text-lg font-black mt-1 ${surveyStats.score >= 0.40 ? 'text-emerald-400' : 'text-rose-500'}`}>
-                                  {(surveyStats.score * 100).toFixed(1)}%
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-slate-550 font-bold block uppercase">Verdict (40% Bench)</span>
-                                <span className={`text-lg font-black mt-1 ${surveyStats.score >= 0.40 ? 'text-emerald-400' : 'text-rose-500'}`}>
-                                  {surveyStats.verdict}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })()}
-
                         {activeTab === "CohortRetention" && (() => {
                           const retentionStats = template.calculate(data.rows);
                           return (
                             <div>
-                              <h4 className="text-xs font-extrabold uppercase text-slate-400 tracking-wider mb-2">
+                              <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider mb-2">
                                 2. Cohort Retention Heatmap (%)
                               </h4>
                               <div className="overflow-x-auto">
-                                <table className="w-full text-xs text-center border border-slate-850 rounded-lg overflow-hidden">
-                                  <thead className="bg-slate-900 text-slate-350 font-bold border-b border-slate-800">
+                                <table className="w-full text-xs text-center border border-slate-200 rounded-lg overflow-hidden">
+                                  <thead className="bg-slate-50 text-slate-655 font-bold border-b border-slate-200">
                                     <tr>
-                                      <th className="p-2.5 text-left">Cohort</th>
+                                      <th className="p-2.5 text-left pl-4">Cohort</th>
                                       <th className="p-2.5">Size (M0)</th>
                                       <th className="p-2.5">M1</th>
                                       <th className="p-2.5">M2</th>
@@ -2082,23 +2492,21 @@ const AdminPMPlayground = () => {
                                       <th className="p-2.5">M6</th>
                                     </tr>
                                   </thead>
-                                  <tbody className="divide-y divide-slate-850">
+                                  <tbody className="divide-y divide-slate-100">
                                     {retentionStats.calculated.map((cRow, cIdx) => (
-                                      <tr key={cIdx} className="hover:bg-slate-900/20">
-                                        <td className="p-2 text-left font-bold text-slate-450">{cRow.cohort}</td>
-                                        <td className="p-2 font-semibold text-slate-300">{cRow.size}</td>
+                                      <tr key={cIdx} className="hover:bg-slate-50/40">
+                                        <td className="p-2 pl-4 text-left font-bold text-slate-500">{cRow.cohort}</td>
+                                        <td className="p-2 font-semibold text-slate-700">{cRow.size}</td>
                                         {d3.range(7).map(mNum => {
                                           const key = `m${mNum}`;
                                           const val = cRow[key];
                                           // Heatmap coloring based on percentage
-                                          const red = 15 + Math.round((1 - val) * 20);
-                                          const green = 23 + Math.round(val * 110);
-                                          const blue = 42 + Math.round(val * 50);
+                                          const green = Math.round(val * 160 + 95);
                                           return (
                                             <td 
                                               key={mNum} 
-                                              style={{ backgroundColor: `rgba(${red}, ${green}, ${blue}, 0.28)` }}
-                                              className="p-2.5 font-bold text-slate-200 border border-slate-850/60"
+                                              style={{ backgroundColor: `rgba(99, 102, 241, ${val * 0.3})` }}
+                                              className="p-2.5 font-bold text-slate-800 border border-slate-200/50"
                                             >
                                               {mNum === 0 ? "100%" : (val * 100).toFixed(0) + "%"}
                                             </td>
@@ -2107,16 +2515,16 @@ const AdminPMPlayground = () => {
                                       </tr>
                                     ))}
                                     {/* Average Cohort Row */}
-                                    <tr className="bg-slate-900 font-extrabold border-t border-slate-800">
-                                      <td className="p-2 text-left text-slate-300">Average</td>
-                                      <td className="p-2 text-slate-500">—</td>
-                                      <td className="p-2 text-indigo-300">{(retentionStats.averages.m0 * 100)}%</td>
-                                      <td className="p-2 text-indigo-300">{(retentionStats.averages.m1 * 100).toFixed(0)}%</td>
-                                      <td className="p-2 text-indigo-300">{(retentionStats.averages.m2 * 100).toFixed(0)}%</td>
-                                      <td className="p-2 text-indigo-400">{(retentionStats.averages.m3 * 100).toFixed(0)}%</td>
-                                      <td className="p-2 text-indigo-400">{(retentionStats.averages.m4 * 100).toFixed(0)}%</td>
-                                      <td className="p-2 text-indigo-500">{(retentionStats.averages.m5 * 100).toFixed(0)}%</td>
-                                      <td className="p-2 text-indigo-500">{(retentionStats.averages.m6 * 100).toFixed(0)}%</td>
+                                    <tr className="bg-slate-50 font-extrabold border-t border-slate-200 text-slate-800">
+                                      <td className="p-2 pl-4 text-left text-slate-600">Average</td>
+                                      <td className="p-2 text-slate-400">—</td>
+                                      <td className="p-2 text-indigo-600">{(retentionStats.averages.m0 * 100)}%</td>
+                                      <td className="p-2 text-indigo-600">{(retentionStats.averages.m1 * 100).toFixed(0)}%</td>
+                                      <td className="p-2 text-indigo-600">{(retentionStats.averages.m2 * 100).toFixed(0)}%</td>
+                                      <td className="p-2 text-indigo-600">{(retentionStats.averages.m3 * 100).toFixed(0)}%</td>
+                                      <td className="p-2 text-indigo-600">{(retentionStats.averages.m4 * 100).toFixed(0)}%</td>
+                                      <td className="p-2 text-indigo-650">{(retentionStats.averages.m5 * 100).toFixed(0)}%</td>
+                                      <td className="p-2 text-indigo-650">{(retentionStats.averages.m6 * 100).toFixed(0)}%</td>
                                     </tr>
                                   </tbody>
                                 </table>
@@ -2134,77 +2542,77 @@ const AdminPMPlayground = () => {
                   
                   {/* Left Column: Visual Chart representation */}
                   {(() => {
-                    if (activeTab === "RICE") return <RiceBarChart data={frameworkData.RICE.rows} />;
-                    if (activeTab === "WeightedScoring") return <WeightedBarChart data={frameworkData.WeightedScoring.rows} />;
-                    if (activeTab === "ValueVsEffort") return <ValueVsEffortChart data={frameworkData.ValueVsEffort.rows} />;
-                    if (activeTab === "KanoModel") return <KanoScatterPlot data={PM_TEMPLATES.KanoModel.calculate(frameworkData.KanoModel.rows)} />;
+                    if (activeTab === "RICE") return <RiceBarChart data={frameworkData.RICE.rows} setTooltip={setTooltip} />;
+                    if (activeTab === "WeightedScoring") return <WeightedBarChart data={frameworkData.WeightedScoring.rows} setTooltip={setTooltip} />;
+                    if (activeTab === "ValueVsEffort") return <ValueVsEffortChart data={frameworkData.ValueVsEffort.rows} onUpdateRow={(id, fields) => handleRowDataUpdate("ValueVsEffort", id, fields)} setTooltip={setTooltip} />;
+                    if (activeTab === "KanoModel") return <KanoScatterPlot data={PM_TEMPLATES.KanoModel.calculate(frameworkData.KanoModel.rows)} setTooltip={setTooltip} />;
                     if (activeTab === "WSJF") {
                       const finalWsjf = PM_TEMPLATES.WSJF.calculate(frameworkData.WSJF.rows);
-                      return <RiceBarChart data={finalWsjf.map(d => ({ name: d.name, score: d.wsjf }))} />;
+                      return <RiceBarChart data={finalWsjf.map(d => ({ name: d.name, score: d.wsjf, rank: d.rank }))} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "MoSCoW") {
                       const stats = PM_TEMPLATES.MoSCoW.calculate(frameworkData.MoSCoW.rows);
-                      return <MoscowPieChart data={stats} />;
+                      return <MoscowDonutChart data={stats} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "OpportunityScoring") {
                       const finalOpp = PM_TEMPLATES.OpportunityScoring.calculate(frameworkData.OpportunityScoring.rows);
-                      return <WeightedBarChart data={finalOpp.map(d => ({ name: d.name, score: d.opportunity }))} />;
+                      return <WeightedBarChart data={finalOpp.map(d => ({ name: d.name, score: d.opportunity }))} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "BCGMatrix") {
-                      return <BCGBubbleChart data={PM_TEMPLATES.BCGMatrix.calculate(frameworkData.BCGMatrix.rows)} />;
+                      return <BCGBubbleChart data={PM_TEMPLATES.BCGMatrix.calculate(frameworkData.BCGMatrix.rows)} onUpdateRow={(id, fields) => handleRowDataUpdate("BCGMatrix", id, fields)} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "AnsoffMatrix") {
                       const finalAnsoff = PM_TEMPLATES.AnsoffMatrix.calculate(frameworkData.AnsoffMatrix.rows);
-                      return <WeightedBarChart data={finalAnsoff.map(d => ({ name: d.name, score: d.riskAdjusted }))} />;
+                      return <WeightedBarChart data={finalAnsoff.map(d => ({ name: d.name, score: d.riskAdjusted }))} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "Porter5Forces") {
-                      return <PorterRadarChart data={frameworkData.Porter5Forces.rows} />;
+                      return <PorterForcesChart data={frameworkData.Porter5Forces.rows} onUpdateRow={handlePorterRowUpdate} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "NorthStar") {
-                      return <NorthStarLineChart trajectory={frameworkData.NorthStar.trajectory} />;
+                      return <NorthStarLineChart trajectory={frameworkData.NorthStar.trajectory} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "AARRR") {
                       const finalAarrr = PM_TEMPLATES.AARRR.calculate(frameworkData.AARRR.rows);
-                      return <AARRRFunnelChart data={finalAarrr} />;
+                      return <AARRRFunnelChart data={finalAarrr} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "HEART") {
                       const finalHeart = PM_TEMPLATES.HEART.calculate(frameworkData.HEART.rows);
-                      return <WeightedBarChart data={finalHeart.map(d => ({ name: d.category, score: d.attainment * 100 }))} />;
+                      return <WeightedBarChart data={finalHeart.map(d => ({ name: d.category, score: d.attainment * 100 }))} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "UnitEconomics") {
                       const ueStats = PM_TEMPLATES.UnitEconomics.calculate(frameworkData.UnitEconomics.inputs);
-                      return <WeightedBarChart data={ueStats.sensitivity.map(s => ({ name: `${s.churn * 100}% Churn`, score: s.ratio }))} />;
+                      return <WeightedBarChart data={ueStats.sensitivity.map(s => ({ name: `${(s.churn * 100).toFixed(0)}% Churn`, score: s.ratio }))} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "CohortRetention") {
                       const finalCohort = PM_TEMPLATES.CohortRetention.calculate(frameworkData.CohortRetention.rows);
-                      return <CohortRetentionChart data={finalCohort} />;
+                      return <CohortRetentionChart data={finalCohort} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "PMFSurvey") {
                       const finalPmf = PM_TEMPLATES.PMFSurvey.calculate(frameworkData.PMFSurvey.rows);
                       return <ABTestChart data={{
                         cr: finalPmf.score, vr: 0.40, inputs: { controlVisitors: finalPmf.valid, controlConversions: 0, variantVisitors: 100, variantConversions: 40 }
-                      }} />;
+                      }} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "ABTest") {
                       const abStats = PM_TEMPLATES.ABTest.calculate(frameworkData.ABTest.inputs);
-                      return <ABTestChart data={abStats} />;
+                      return <ABTestChart data={abStats} setTooltip={setTooltip} />;
                     }
                     if (activeTab === "OKRTracker") {
                       const finalOkrs = PM_TEMPLATES.OKRTracker.calculate(frameworkData.OKRTracker.rows);
-                      return <RiceBarChart data={finalOkrs.map(d => ({ name: d.kr, score: d.progress * 100 }))} />;
+                      return <RiceBarChart data={finalOkrs.map(d => ({ name: d.kr, score: d.progress * 100 }))} setTooltip={setTooltip} />;
                     }
                     
                     return null;
                   })()}
 
                   {/* Right Column: Key takeaways or analysis */}
-                  <div className="bg-slate-950/40 p-5 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <div className="bg-white border border-slate-200 p-5 rounded-xl flex flex-col justify-between shadow-sm">
                     <div>
-                      <div className="flex items-center gap-2 mb-3 text-pink-400">
+                      <div className="flex items-center gap-2 mb-3 text-pink-600">
                         <TrendingUp size={16} />
                         <h4 className="text-xs font-bold uppercase tracking-wider">Playbook Readout & Verdict</h4>
                       </div>
-                      <p className="text-xs text-slate-350 leading-relaxed font-semibold mb-4 bg-slate-900/60 p-3 rounded-lg border-l-4 border-pink-500">
+                      <p className="text-xs text-slate-700 leading-relaxed font-bold mb-4 bg-slate-50 p-3 rounded-lg border-l-4 border-pink-500">
                         {(() => {
                           if (activeTab === "RICE") return "Build top-ranked items first. If two RICE scores are close, prioritize the one with lower Effort as it de-risks value faster. Beware of inflated reach estimates — anchor them to actual customer metrics.";
                           if (activeTab === "WeightedScoring") return "Agree on criteria weights with all major stakeholders BEFORE grading options. This avoids reverse-engineering weights to support a favorite option.";
@@ -2228,19 +2636,19 @@ const AdminPMPlayground = () => {
                         })()}
                       </p>
                       
-                      <div className="space-y-2 mt-4 text-[11px] text-slate-400 leading-relaxed bg-slate-900/20 p-3 rounded border border-slate-800">
-                        <span className="font-bold text-slate-350 block mb-1">Methodology Checklist:</span>
-                        <div className="flex items-start gap-1.5">
-                          <CheckCircle2 size={13} className="text-pink-500 mt-0.5 shrink-0" />
-                          <span>Calculations recalculated in real-time on client side.</span>
+                      <div className="space-y-2 mt-4 text-[11px] text-slate-500 leading-relaxed bg-slate-50 p-3 rounded border border-slate-200">
+                        <span className="font-bold text-slate-700 block mb-1">Methodology Checklist:</span>
+                        <div className="flex items-start gap-1.5 text-slate-600">
+                          <CheckCircle2 size={13} className="text-pink-600 mt-0.5 shrink-0" />
+                          <span>Drag interactive elements on the D3 charts to dynamically modify table inputs.</span>
                         </div>
-                        <div className="flex items-start gap-1.5">
-                          <CheckCircle2 size={13} className="text-pink-500 mt-0.5 shrink-0" />
-                          <span>Example datasets populated directly from field playbook.</span>
+                        <div className="flex items-start gap-1.5 text-slate-600">
+                          <CheckCircle2 size={13} className="text-pink-600 mt-0.5 shrink-0" />
+                          <span>Calculations and rankings update in real-time.</span>
                         </div>
-                        <div className="flex items-start gap-1.5">
-                          <CheckCircle2 size={13} className="text-pink-500 mt-0.5 shrink-0" />
-                          <span>Persistent storage enabled (saves automatically to browser cache).</span>
+                        <div className="flex items-start gap-1.5 text-slate-600">
+                          <CheckCircle2 size={13} className="text-pink-600 mt-0.5 shrink-0" />
+                          <span>Local storage persistence maintains your edits between browser sessions.</span>
                         </div>
                       </div>
                     </div>
@@ -2254,6 +2662,9 @@ const AdminPMPlayground = () => {
 
         </div>
       </section>
+
+      {/* FLOATING RICH D3 TOOLTIP CONTAINER */}
+      <Tooltip tooltip={tooltip} />
 
     </div>
   );
