@@ -1,0 +1,328 @@
+=== Sheet: Start Here ===
+Row 2: B2: Product Management Frameworks
+Row 3: B3: Formula-based calculators & charts  ·  Companion to the PDF field guide
+Row 5: B5: How to use this workbook
+Row 6: B6: Every tab is a working calculator for one framework. Type your numbers into the yellow cells and the scores, ratios and charts update automatically. White cells hold formulas — leave them alone. The example numbers are illustrative (a fictional Indian consumer app) so you can see the shape of a healthy vs unhealthy result before you plug in your own.
+Row 10: B10: Index of framework calculators
+Row 11: B11: Prioritisation
+Row 12: B12: RICE | C12: Score & rank features by Reach × Impact × Confidence ÷ Effort | D12: Open ▸
+Row 13: B13: Weighted Scoring | C13: Rank options against weighted criteria | D13: Open ▸
+Row 14: B14: Value vs Effort | C14: 2×2 quadrant: quick wins vs money pits | D14: Open ▸
+Row 15: B15: Kano Model | C15: Classify features: delighters, performance, must-haves | D15: Open ▸
+Row 16: B16: WSJF | C16: SAFe: Cost of Delay ÷ Job Size | D16: Open ▸
+Row 17: B17: MoSCoW | C17: Must / Should / Could / Won't split | D17: Open ▸
+Row 18: B18: Opportunity Scoring | C18: Ulwick: importance vs satisfaction gaps | D18: Open ▸
+Row 19: B19: Strategy & Portfolio
+Row 20: B20: BCG Matrix | C20: Stars, Cash Cows, Question Marks, Dogs | D20: Open ▸
+Row 21: B21: Ansoff Matrix | C21: Growth vectors & risk-adjusted value | D21: Open ▸
+Row 22: B22: Porter 5 Forces | C22: Industry attractiveness radar | D22: Open ▸
+Row 23: B23: Metrics & Growth
+Row 24: B24: North Star | C24: NSM decomposition & trajectory | D24: Open ▸
+Row 25: B25: AARRR Funnel | C25: Pirate metrics conversion funnel | D25: Open ▸
+Row 26: B26: HEART | C26: Google's UX metrics scorecard | D26: Open ▸
+Row 27: B27: Unit Economics | C27: LTV, CAC, payback, LTV:CAC | D27: Open ▸
+Row 28: B28: Cohort Retention | C28: Retention curves by cohort | D28: Open ▸
+Row 29: B29: PMF Survey | C29: Sean Ellis 40% test | D29: Open ▸
+Row 30: B30: Experiments
+Row 31: B31: A-B Test | C31: Statistical significance calculator | D31: Open ▸
+Row 32: B32: OKR Tracker | C32: Objective / Key Result progress | D32: Open ▸
+Row 34: B34: Built as a senior-consultant-grade companion. Charts are native Excel charts and recalc when you edit inputs. Currency shown in ₹ for illustration; change the number format if you work in another currency.
+
+
+=== Sheet: RICE ===
+Row 1: A1: RICE Prioritisation
+Row 2: A2: Score = (Reach × Impact × Confidence) ÷ Effort  —  the higher the score, the sooner you build it
+Row 3: A3: WHEN TO USE: comparing a backlog of features/ideas objectively. Reach = how many users this affects per period. Impact = per-user effect (3=massive, 2=high, 1=medium, 0.5=low, 0.25=minimal). Confidence = how sure you are (100/80/50%). Effort = person-months of work.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Feature / Idea | B8: Reach (users/qtr) | C8: Impact (0.25–3) | D8: Confidence | E8: Effort (p-months) | F8: RICE Score | G8: Rank
+Row 9: A9: 1-tap reorder | B9: 42000 | C9: 2 | D9: 0.9 | E9: 2 | F9: =(B9*C9*D9)/E9 (Formula) | G9: =RANK(F9,$F$9:$F$16,0) (Formula)
+Row 10: A10: UPI autopay | B10: 30000 | C10: 3 | D10: 0.8 | E10: 3 | F10: =(B10*C10*D10)/E10 (Formula) | G10: =RANK(F10,$F$9:$F$16,0) (Formula)
+Row 11: A11: Hindi voice search | B11: 18000 | C11: 1 | D11: 0.5 | E11: 4 | F11: =(B11*C11*D11)/E11 (Formula) | G11: =RANK(F11,$F$9:$F$16,0) (Formula)
+Row 12: A12: Loyalty coins | B12: 55000 | C12: 1 | D12: 0.8 | E12: 3 | F12: =(B12*C12*D12)/E12 (Formula) | G12: =RANK(F12,$F$9:$F$16,0) (Formula)
+Row 13: A13: Group ordering | B13: 22000 | C13: 2 | D13: 0.7 | E13: 5 | F13: =(B13*C13*D13)/E13 (Formula) | G13: =RANK(F13,$F$9:$F$16,0) (Formula)
+Row 14: A14: Live order tracking | B14: 60000 | C14: 2 | D14: 0.9 | E14: 2 | F14: =(B14*C14*D14)/E14 (Formula) | G14: =RANK(F14,$F$9:$F$16,0) (Formula)
+Row 15: A15: Referral rewards | B15: 48000 | C15: 1 | D15: 0.8 | E15: 1.5 | F15: =(B15*C15*D15)/E15 (Formula) | G15: =RANK(F15,$F$9:$F$16,0) (Formula)
+Row 16: A16: Dark mode | B16: 35000 | C16: 0.5 | D16: 1 | E16: 1 | F16: =(B16*C16*D16)/E16 (Formula) | G16: =RANK(F16,$F$9:$F$16,0) (Formula)
+Row 38: A38: Read it: build top-ranked first. If two scores are close, the one with lower Effort de-risks faster. Beware inflated Reach — anchor it to real analytics, not hopes.
+
+
+=== Sheet: Weighted Scoring ===
+Row 1: A1: Weighted Scoring Model
+Row 2: A2: Rank options against criteria that matter differently — weights must sum to 100%
+Row 3: A3: WHEN TO USE: choosing between a few strategic options (e.g. which market to enter) where several criteria matter unequally. Set weights on row 8 (they auto-check to 100%). Score each option 1–5 on each criterion. Total = weighted sum.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Weights → | B8: 0.35 | C8: 0.3 | D8: 0.2 | E8: 0.15 | F8: =SUM(B8:E8) (Formula) | G8: =IF(F8=1,"OK ✓","FIX: ≠100%") (Formula)
+Row 9: A9: Option | B9: Strategic fit | C9: Revenue upside | D9: Speed to ship | E9: Low risk | G9: Weighted total
+Row 10: A10: Tier-2 metros | B10: 4 | C10: 5 | D10: 3 | E10: 3 | G10: =SUMPRODUCT(B10:E10,$B$8:$E$8) (Formula)
+Row 11: A11: Tier-3 towns | B11: 5 | C11: 3 | D11: 2 | E11: 4 | G11: =SUMPRODUCT(B11:E11,$B$8:$E$8) (Formula)
+Row 12: A12: Premium urban | B12: 3 | C12: 4 | D12: 4 | E12: 3 | G12: =SUMPRODUCT(B12:E12,$B$8:$E$8) (Formula)
+Row 13: A13: SMB / kirana | B13: 4 | C13: 4 | D13: 5 | E13: 4 | G13: =SUMPRODUCT(B13:E13,$B$8:$E$8) (Formula)
+Row 33: A33: Read it: highest total wins. Weights are where the debate should happen — get stakeholders to agree on weights BEFORE scoring, so the numbers aren't reverse-engineered to a favourite.
+
+
+=== Sheet: Value vs Effort ===
+Row 1: A1: Value vs Effort (2×2)
+Row 2: A2: Quick Wins (high value, low effort) first; avoid the Money Pits
+Row 3: A3: WHEN TO USE: a fast, visual triage. Rate Value and Effort 1–10. The scatter plots each item; the quadrant label is auto-assigned. Aim for the top-left: high value, low effort.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Item | B8: Value (1–10) | C8: Effort (1–10) | D8: Quadrant
+Row 9: A9: Live tracking | B9: 9 | C9: 3 | D9: =IF(AND(B9>=5,C9<5),"Quick Win",IF(AND(B9>=5,C9>=5),"Big Bet",IF(AND(B9<5,C9<5),"Fill-in","Money Pit"))) (Formula)
+Row 10: A10: UPI autopay | B10: 8 | C10: 6 | D10: =IF(AND(B10>=5,C10<5),"Quick Win",IF(AND(B10>=5,C10>=5),"Big Bet",IF(AND(B10<5,C10<5),"Fill-in","Money Pit"))) (Formula)
+Row 11: A11: Voice search | B11: 4 | C11: 7 | D11: =IF(AND(B11>=5,C11<5),"Quick Win",IF(AND(B11>=5,C11>=5),"Big Bet",IF(AND(B11<5,C11<5),"Fill-in","Money Pit"))) (Formula)
+Row 12: A12: Dark mode | B12: 3 | C12: 2 | D12: =IF(AND(B12>=5,C12<5),"Quick Win",IF(AND(B12>=5,C12>=5),"Big Bet",IF(AND(B12<5,C12<5),"Fill-in","Money Pit"))) (Formula)
+Row 13: A13: Group ordering | B13: 6 | C13: 8 | D13: =IF(AND(B13>=5,C13<5),"Quick Win",IF(AND(B13>=5,C13>=5),"Big Bet",IF(AND(B13<5,C13<5),"Fill-in","Money Pit"))) (Formula)
+Row 14: A14: Referral rewards | B14: 7 | C14: 3 | D14: =IF(AND(B14>=5,C14<5),"Quick Win",IF(AND(B14>=5,C14>=5),"Big Bet",IF(AND(B14<5,C14<5),"Fill-in","Money Pit"))) (Formula)
+Row 15: A15: Loyalty coins | B15: 6 | C15: 4 | D15: =IF(AND(B15>=5,C15<5),"Quick Win",IF(AND(B15>=5,C15>=5),"Big Bet",IF(AND(B15<5,C15<5),"Fill-in","Money Pit"))) (Formula)
+Row 16: A16: AI menu recos | B16: 8 | C16: 9 | D16: =IF(AND(B16>=5,C16<5),"Quick Win",IF(AND(B16>=5,C16>=5),"Big Bet",IF(AND(B16<5,C16<5),"Fill-in","Money Pit"))) (Formula)
+Row 19: A19: Read it: Quick Wins build momentum and trust. Big Bets need a strategic reason. Money Pits (low value, high effort) are usually a 'no'. Fill-ins are for spare capacity only.
+
+
+=== Sheet: Kano Model ===
+Row 1: A1: Kano Model
+Row 2: A2: Classify features by how they drive satisfaction: Delighters, Performance, Must-be, Indifferent
+Row 3: A3: WHEN TO USE: deciding what actually moves customer satisfaction. From paired survey questions, tally how many users put each feature in each category. Better = (Attractive+Performance)/total; Worse = −(Performance+Must-be)/total. The classification picks the most common vote.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Feature | B8: Attractive | C8: Performance | D8: Must-be | E8: Indifferent | F8: Reverse | G8: Better coeff. | H8: Worse coeff. | I8: Classification | K8: |Worse| (chart) | L8: Better (chart)
+Row 9: A9: Live tracking | B9: 30 | C9: 45 | D9: 20 | E9: 5 | F9: 0 | G9: =(B9+C9)/(B9+C9+D9+E9+F9) (Formula) | H9: =-(C9+D9)/(B9+C9+D9+E9+F9) (Formula) | I9: =IF(MAX(B9:E9)=B9,"Delighter",IF(MAX(B9:E9)=C9,"Performance",IF(MAX(B9:E9)=D9,"Must-be","Indifferent"))) (Formula) | K9: =ABS(H9) (Formula) | L9: =G9 (Formula)
+Row 10: A10: UPI autopay | B10: 15 | C10: 40 | D10: 40 | E10: 5 | F10: 0 | G10: =(B10+C10)/(B10+C10+D10+E10+F10) (Formula) | H10: =-(C10+D10)/(B10+C10+D10+E10+F10) (Formula) | I10: =IF(MAX(B10:E10)=B10,"Delighter",IF(MAX(B10:E10)=C10,"Performance",IF(MAX(B10:E10)=D10,"Must-be","Indifferent"))) (Formula) | K10: =ABS(H10) (Formula) | L10: =G10 (Formula)
+Row 11: A11: Hindi voice | B11: 50 | C11: 20 | D11: 5 | E11: 25 | F11: 0 | G11: =(B11+C11)/(B11+C11+D11+E11+F11) (Formula) | H11: =-(C11+D11)/(B11+C11+D11+E11+F11) (Formula) | I11: =IF(MAX(B11:E11)=B11,"Delighter",IF(MAX(B11:E11)=C11,"Performance",IF(MAX(B11:E11)=D11,"Must-be","Indifferent"))) (Formula) | K11: =ABS(H11) (Formula) | L11: =G11 (Formula)
+Row 12: A12: Loyalty coins | B12: 55 | C12: 25 | D12: 5 | E12: 15 | F12: 0 | G12: =(B12+C12)/(B12+C12+D12+E12+F12) (Formula) | H12: =-(C12+D12)/(B12+C12+D12+E12+F12) (Formula) | I12: =IF(MAX(B12:E12)=B12,"Delighter",IF(MAX(B12:E12)=C12,"Performance",IF(MAX(B12:E12)=D12,"Must-be","Indifferent"))) (Formula) | K12: =ABS(H12) (Formula) | L12: =G12 (Formula)
+Row 13: A13: Dark mode | B13: 20 | C13: 10 | D13: 5 | E13: 60 | F13: 5 | G13: =(B13+C13)/(B13+C13+D13+E13+F13) (Formula) | H13: =-(C13+D13)/(B13+C13+D13+E13+F13) (Formula) | I13: =IF(MAX(B13:E13)=B13,"Delighter",IF(MAX(B13:E13)=C13,"Performance",IF(MAX(B13:E13)=D13,"Must-be","Indifferent"))) (Formula) | K13: =ABS(H13) (Formula) | L13: =G13 (Formula)
+Row 14: A14: Fast delivery | B14: 5 | C14: 35 | D14: 55 | E14: 5 | F14: 0 | G14: =(B14+C14)/(B14+C14+D14+E14+F14) (Formula) | H14: =-(C14+D14)/(B14+C14+D14+E14+F14) (Formula) | I14: =IF(MAX(B14:E14)=B14,"Delighter",IF(MAX(B14:E14)=C14,"Performance",IF(MAX(B14:E14)=D14,"Must-be","Indifferent"))) (Formula) | K14: =ABS(H14) (Formula) | L14: =G14 (Formula)
+Row 27: A27: Read it: top-left = Must-be (fix or lose trust), top-right = Performance (more is better), high Better + low Worse = Delighters (differentiators). Indifferent = don't over-invest.
+
+
+=== Sheet: WSJF ===
+Row 1: A1: WSJF — Weighted Shortest Job First
+Row 2: A2: SAFe prioritisation: WSJF = Cost of Delay ÷ Job Size. Do the highest WSJF first.
+Row 3: A3: WHEN TO USE: agile/SAFe backlogs where sequencing matters. Cost of Delay = User-Business Value + Time Criticality + Risk-reduction/Opportunity. Score each 1–10 (relative, not absolute). Job Size = relative effort. Short, high-value jobs rise to the top.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Feature | B8: User/Biz Value | C8: Time Criticality | D8: Risk/Opportunity | E8: Cost of Delay | F8: Job Size | G8: WSJF | H8: Rank
+Row 9: A9: Live tracking | B9: 8 | C9: 7 | D9: 5 | E9: =B9+C9+D9 (Formula) | F9: 3 | G9: =E9/F9 (Formula) | H9: =RANK(G9,$G$9:$G$14,0) (Formula)
+Row 10: A10: UPI autopay | B10: 9 | C10: 8 | D10: 6 | E10: =B10+C10+D10 (Formula) | F10: 5 | G10: =E10/F10 (Formula) | H10: =RANK(G10,$G$9:$G$14,0) (Formula)
+Row 11: A11: Voice search | B11: 4 | C11: 3 | D11: 4 | E11: =B11+C11+D11 (Formula) | F11: 4 | G11: =E11/F11 (Formula) | H11: =RANK(G11,$G$9:$G$14,0) (Formula)
+Row 12: A12: Loyalty coins | B12: 7 | C12: 5 | D12: 4 | E12: =B12+C12+D12 (Formula) | F12: 3 | G12: =E12/F12 (Formula) | H12: =RANK(G12,$G$9:$G$14,0) (Formula)
+Row 13: A13: Group ordering | B13: 5 | C13: 4 | D13: 6 | E13: =B13+C13+D13 (Formula) | F13: 6 | G13: =E13/F13 (Formula) | H13: =RANK(G13,$G$9:$G$14,0) (Formula)
+Row 14: A14: Referral rewards | B14: 8 | C14: 6 | D14: 5 | E14: =B14+C14+D14 (Formula) | F14: 2 | G14: =E14/F14 (Formula) | H14: =RANK(G14,$G$9:$G$14,0) (Formula)
+Row 33: A33: Read it: WSJF rewards small jobs that deliver value now. If everything is 'urgent', your Time Criticality scores aren't calibrated — force a spread from 1 to 10.
+
+
+=== Sheet: MoSCoW ===
+Row 1: A1: MoSCoW
+Row 2: A2: Scope a release: Must-have, Should-have, Could-have, Won't-have (this time)
+Row 3: A3: WHEN TO USE: agreeing scope for a release or MVP. Tag each item M/S/C/W. Rule of thumb: Must-haves should be ≤60% of effort, leaving slack for the unknown. The summary and pie update automatically.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Item | B8: Category (M/S/C/W) | C8: Effort (days) | E8: Category | F8: Items | G8: Effort (days)
+Row 9: A9: Checkout works | B9: M | C9: 6 | E9: Must | F9: =COUNTIF($B$9:$B$17,"M") (Formula) | G9: =SUMIF($B$9:$B$17,"M",$C$9:$C$17) (Formula)
+Row 10: A10: UPI payment | B10: M | C10: 5 | E10: Should | F10: =COUNTIF($B$9:$B$17,"S") (Formula) | G10: =SUMIF($B$9:$B$17,"S",$C$9:$C$17) (Formula)
+Row 11: A11: Order tracking | B11: M | C11: 4 | E11: Could | F11: =COUNTIF($B$9:$B$17,"C") (Formula) | G11: =SUMIF($B$9:$B$17,"C",$C$9:$C$17) (Formula)
+Row 12: A12: Loyalty coins | B12: S | C12: 3 | E12: Won't | F12: =COUNTIF($B$9:$B$17,"W") (Formula) | G12: =SUMIF($B$9:$B$17,"W",$C$9:$C$17) (Formula)
+Row 13: A13: Referral rewards | B13: S | C13: 3 | E13: Total effort | G13: =SUM(G9:G12) (Formula)
+Row 14: A14: Dark mode | B14: C | C14: 2 | E14: Must-have % of effort | G14: =G9/G13 (Formula)
+Row 15: A15: Voice search | B15: C | C15: 4
+Row 16: A16: AR menu | B16: W | C16: 8
+Row 17: A17: Group ordering | B17: S | C17: 5
+Row 20: A20: Read it: if Must-have effort blows past ~60%, you have no room to absorb surprises — renegotiate scope now, not at crunch.
+
+
+=== Sheet: Opportunity Scoring ===
+Row 1: A1: Opportunity Scoring (Ulwick / ODI)
+Row 2: A2: Find under-served needs: Opportunity = Importance + max(Importance − Satisfaction, 0)
+Row 3: A3: WHEN TO USE: outcome-driven innovation. Survey users on how IMPORTANT an outcome is and how SATISFIED they are today (both 1–10). High importance + low satisfaction = the biggest opportunity. Score >10 is a strong signal, >15 is exceptional.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Desired outcome (job step) | B8: Importance (1–10) | C8: Satisfaction (1–10) | D8: Opportunity | E8: Rank
+Row 9: A9: Get food fast when hungry | B9: 9 | C9: 6 | D9: =B9+MAX(B9-C9,0) (Formula) | E9: =RANK(D9,$D$9:$D$14,0) (Formula)
+Row 10: A10: Trust the delivery ETA | B10: 9 | C10: 4 | D10: =B10+MAX(B10-C10,0) (Formula) | E10: =RANK(D10,$D$9:$D$14,0) (Formula)
+Row 11: A11: Pay without friction | B11: 8 | C11: 7 | D11: =B11+MAX(B11-C11,0) (Formula) | E11: =RANK(D11,$D$9:$D$14,0) (Formula)
+Row 12: A12: Discover new dishes I'll like | B12: 7 | C12: 3 | D12: =B12+MAX(B12-C12,0) (Formula) | E12: =RANK(D12,$D$9:$D$14,0) (Formula)
+Row 13: A13: Reorder favourites easily | B13: 8 | C13: 8 | D13: =B13+MAX(B13-C13,0) (Formula) | E13: =RANK(D13,$D$9:$D$14,0) (Formula)
+Row 14: A14: Resolve a wrong order | B14: 8 | C14: 3 | D14: =B14+MAX(B14-C14,0) (Formula) | E14: =RANK(D14,$D$9:$D$14,0) (Formula)
+Row 34: A34: Read it: attack the highest opportunity scores — that's where users care a lot and current solutions disappoint. Well-served outcomes (high importance, high satisfaction) are table-stakes, not differentiators.
+
+
+=== Sheet: BCG Matrix ===
+Row 1: A1: BCG Growth–Share Matrix
+Row 2: A2: Portfolio view: Stars, Cash Cows, Question Marks, Dogs — decide where to invest, milk, or exit
+Row 3: A3: WHEN TO USE: allocating money/attention across a portfolio of products or lines. Market Growth = the market's annual growth (invest if high). Relative Market Share = your share ÷ largest rival's share (>1 means you lead). Bubble size = revenue. Category is auto-assigned at the 10% / 1.0x lines.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Product / Line | B8: Market Growth | C8: Relative Mkt Share (x) | D8: Revenue (₹ cr) | E8: Category
+Row 9: A9: Food delivery | B9: 0.18 | C9: 1.4 | D9: 220 | E9: =IF(AND(B9>=0.1,C9>=1),"★ Star",IF(AND(B9>=0.1,C9<1),"? Question Mark",IF(AND(B9<0.1,C9>=1),"$ Cash Cow","Dog"))) (Formula)
+Row 10: A10: Grocery (10-min) | B10: 0.35 | C10: 0.6 | D10: 80 | E10: =IF(AND(B10>=0.1,C10>=1),"★ Star",IF(AND(B10>=0.1,C10<1),"? Question Mark",IF(AND(B10<0.1,C10>=1),"$ Cash Cow","Dog"))) (Formula)
+Row 11: A11: Dining-out coupons | B11: 0.05 | C11: 1.6 | D11: 140 | E11: =IF(AND(B11>=0.1,C11>=1),"★ Star",IF(AND(B11>=0.1,C11<1),"? Question Mark",IF(AND(B11<0.1,C11>=1),"$ Cash Cow","Dog"))) (Formula)
+Row 12: A12: Cloud kitchens | B12: 0.28 | C12: 0.5 | D12: 35 | E12: =IF(AND(B12>=0.1,C12>=1),"★ Star",IF(AND(B12>=0.1,C12<1),"? Question Mark",IF(AND(B12<0.1,C12>=1),"$ Cash Cow","Dog"))) (Formula)
+Row 13: A13: Ads / media | B13: 0.22 | C13: 1.2 | D13: 60 | E13: =IF(AND(B13>=0.1,C13>=1),"★ Star",IF(AND(B13>=0.1,C13<1),"? Question Mark",IF(AND(B13<0.1,C13>=1),"$ Cash Cow","Dog"))) (Formula)
+Row 14: A14: Print vouchers | B14: 0.02 | C14: 0.7 | D14: 12 | E14: =IF(AND(B14>=0.1,C14>=1),"★ Star",IF(AND(B14>=0.1,C14<1),"? Question Mark",IF(AND(B14<0.1,C14>=1),"$ Cash Cow","Dog"))) (Formula)
+Row 17: A17: Play: fund Stars, milk Cash Cows to fund Stars/Question Marks, pick 1–2 Question Marks to back hard, and divest Dogs. Everything can't be a Star — a healthy portfolio needs Cash Cows paying the bills.
+
+
+=== Sheet: Ansoff Matrix ===
+Row 1: A1: Ansoff Growth Matrix
+Row 2: A2: Four growth vectors, rising risk: Market Penetration → Product Development / Market Development → Diversification
+Row 3: A3: WHEN TO USE: choosing HOW to grow. Existing product + existing market = Penetration (lowest risk). New product OR new market = medium risk. New product AND new market = Diversification (highest risk). Enter expected revenue and a success probability; risk-adjusted value ranks them.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Initiative | B8: Growth vector | C8: Expected rev (₹ cr) | D8: Success prob. | E8: Risk-adjusted value
+Row 9: A9: Push reorders to existing users | B9: Market Penetration | C9: 40 | D9: 0.85 | E9: =C9*D9 (Formula)
+Row 10: A10: Launch grocery to same users | B10: Product Development | C10: 70 | D10: 0.55 | E10: =C10*D10 (Formula)
+Row 11: A11: Enter Tier-3 towns | B11: Market Development | C11: 90 | D11: 0.45 | E11: =C11*D11 (Formula)
+Row 12: A12: Fintech lending, new users | B12: Diversification | C12: 150 | D12: 0.25 | E12: =C12*D12 (Formula)
+Row 30: A30: Read it: growth gets riskier as you move away from what you know. Weight your roadmap toward penetration for cash, a measured bet or two on adjacent products/markets, and diversify only with strong conviction and a ring-fenced budget.
+
+
+=== Sheet: Porter 5 Forces ===
+Row 1: A1: Porter's Five Forces
+Row 2: A2: How attractive is this market? Score each force 1 (benign) to 5 (brutal). Lower total = more attractive.
+Row 3: A3: WHEN TO USE: assessing structural profitability of a market before entering or doubling down. Score the THREAT level of each force. The radar shows your risk shape; overall attractiveness = 6 − average score (higher is better).
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Force | B8: Threat (1–5) | C8: Your notes
+Row 9: A9: Competitive rivalry | B9: 4 | C9: Zomato, Swiggy, local aggregators
+Row 10: A10: Threat of new entrants | B10: 3 | C10: High capital + network effects deter, but funding is available
+Row 11: A11: Supplier power (restaurants) | B11: 4 | C11: Large chains negotiate hard on commission
+Row 12: A12: Buyer power (users) | B12: 4 | C12: Low switching cost, coupon-driven
+Row 13: A13: Threat of substitutes | B13: 2 | C13: Home cooking, dine-in, direct restaurant apps
+Row 15: A15: Average threat | B15: =AVERAGE(B9:B13) (Formula)
+Row 16: A16: Attractiveness (6 − avg) | B16: =6-B15 (Formula)
+Row 17: A17: Verdict | B17: =IF(B16>=4,"Attractive",IF(B16>=2.5,"Tough but viable","Hostile")) (Formula)
+Row 19: A19: Read it: a market where four forces are '5' can still be entered — but only with a wedge (a segment rivals ignore) and a durable moat. Use this to choose WHERE to compete, not just whether.
+
+
+=== Sheet: North Star ===
+Row 1: A1: North Star Metric
+Row 2: A2: One metric that captures the value users get — decomposed into the inputs a team can actually move
+Row 3: A3: WHEN TO USE: aligning the whole team behind value, not vanity. Pick an NSM that rises only when customers succeed (e.g. 'weekly orders delivered on time'). Decompose it into 2–4 input metrics you can influence. Track actual vs target monthly.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: 1 · North Star decomposition   (NSM = Active users × Orders per user × On-time rate)
+Row 9: A9: Input driver | B9: Current | C9: 90-day target | D9: Change | E9: % change
+Row 10: A10: Monthly active users (000s) | B10: 1200 | C10: 1500 | D10: =C10-B10 (Formula) | E10: =IFERROR((C10-B10)/B10,0) (Formula)
+Row 11: A11: Orders per user / month | B11: 3.2 | C11: 3.8 | D11: =C11-B11 (Formula) | E11: =IFERROR((C11-B11)/B11,0) (Formula)
+Row 12: A12: On-time delivery rate | B12: 0.86 | C12: 0.93 | D12: =C12-B12 (Formula) | E12: =IFERROR((C12-B12)/B12,0) (Formula)
+Row 13: A13: NORTH STAR (monthly on-time orders, mn) | B13: =B10*B11*B12/1000 (Formula) | C13: =C10*C11*C12/1000 (Formula) | D13: =C13-B13 (Formula) | E13: =IFERROR((C13-B13)/B13,0) (Formula)
+Row 16: A16: 2 · Monthly trajectory (actual vs target)
+Row 17: A17: Month | B17: NSM actual (mn) | C17: NSM target (mn)
+Row 18: A18: Jan | B18: 2.9 | C18: 3
+Row 19: A19: Feb | B19: 3 | C19: 3.15
+Row 20: A20: Mar | B20: 3.15 | C20: 3.3
+Row 21: A21: Apr | B21: 3.3 | C21: 3.45
+Row 22: A22: May | B22: 3.4 | C22: 3.6
+Row 23: A23: Jun | B23: 3.55 | C23: 3.75
+Row 24: A24: Jul | B24: 3.7 | C24: 3.9
+Row 25: A25: Aug | B25: 3.8 | C25: 4.05
+Row 26: A26: Sep | C26: 4.2
+Row 28: A28: Read it: if input drivers are all green but the NSM lags, your model of value is wrong — revisit which inputs truly cause the outcome. A good NSM is a leading indicator of revenue, not revenue itself.
+
+
+=== Sheet: AARRR Funnel ===
+Row 1: A1: AARRR — Pirate Metrics
+Row 2: A2: The lifecycle funnel: Acquisition → Activation → Retention → Revenue → Referral. Find the leakiest step.
+Row 3: A3: WHEN TO USE: diagnosing where users drop off. Enter the count reaching each stage. Step conversion = this stage ÷ previous stage. % of top = this stage ÷ acquisition. The biggest drop is usually your highest-leverage fix.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Stage | B8: Users | C8: Step conversion | D8: % of Acquisition | E8: What it means
+Row 9: A9: Acquisition | B9: 100000 | C9: — | D9: =B9/$B$9 (Formula) | E9: People who arrive
+Row 10: A10: Activation | B10: 42000 | C10: =B10/B9 (Formula) | D10: =B10/$B$9 (Formula) | E10: Hit the 'aha' (first order)
+Row 11: A11: Retention | B11: 23000 | C11: =B11/B10 (Formula) | D11: =B11/$B$9 (Formula) | E11: Come back in 30 days
+Row 12: A12: Revenue | B12: 18000 | C12: =B12/B11 (Formula) | D12: =B12/$B$9 (Formula) | E12: Pay / order again
+Row 13: A13: Referral | B13: 5400 | C13: =B13/B12 (Formula) | D13: =B13/$B$9 (Formula) | E13: Invite someone
+Row 31: A31: Read it: don't pour money into Acquisition if Activation is leaking. Fix the funnel bottom-up — retention first, because retained users make every other number cheaper.
+
+
+=== Sheet: HEART ===
+Row 1: A1: Google HEART Framework
+Row 2: A2: Measure UX quality across Happiness, Engagement, Adoption, Retention, Task success
+Row 3: A3: WHEN TO USE: turning fuzzy 'good experience' into trackable metrics. For each category pick ONE signal metric, set current & target. % attainment shows how close you are. Don't track all five if only two matter for this feature.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Category | B8: Signal metric | C8: Current | D8: Target | E8: % attain
+Row 9: A9: Happiness | B9: CSAT / app rating | C9: 0.72 | D9: 0.85 | E9: =IFERROR(C9/D9,0) (Formula)
+Row 10: A10: Engagement | B10: Orders per active user / wk | C10: 1.1 | D10: 1.5 | E10: =IFERROR(C10/D10,0) (Formula)
+Row 11: A11: Adoption | B11: New-feature uptake in 30d | C11: 0.34 | D11: 0.6 | E11: =IFERROR(C11/D11,0) (Formula)
+Row 12: A12: Retention | B12: D30 retention | C12: 0.28 | D12: 0.4 | E12: =IFERROR(C12/D12,0) (Formula)
+Row 13: A13: Task success | B13: Checkout completion rate | C13: 0.88 | D13: 0.95 | E13: =IFERROR(C13/D13,0) (Formula)
+Row 31: A31: Read it: pair each metric with a Goal→Signal→Metric logic so you're measuring the behaviour that proves the goal, not the easiest number to collect. Retention and Task success are usually the truthful ones.
+
+
+=== Sheet: Unit Economics ===
+Row 1: A1: Unit Economics — LTV, CAC & Payback
+Row 2: A2: Does each customer make more than they cost? The single most important growth question.
+Row 3: A3: WHEN TO USE: validating that growth is profitable, not just fast. Enter the four blue inputs. Lifetime = 1 ÷ monthly churn. LTV = ARPU × gross margin × lifetime. Aim for LTV:CAC ≥ 3 and payback ≤ 12 months.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Inputs & results | D8: Sensitivity: churn → LTV & ratio
+Row 9: A9: ARPU — revenue per user / month | B9: 300 | D9: Monthly churn | E9: LTV | F9: LTV:CAC
+Row 10: A10: Gross margin | B10: 0.3 | D10: 0.03 | E10: =$B$9*$B$10*(1/D10) (Formula) | F10: =E10/$B$12 (Formula)
+Row 11: A11: Monthly churn rate | B11: 0.05 | D11: 0.05 | E11: =$B$9*$B$10*(1/D11) (Formula) | F11: =E11/$B$12 (Formula)
+Row 12: A12: CAC — cost to acquire a customer | B12: 900 | D12: 0.07 | E12: =$B$9*$B$10*(1/D12) (Formula) | F12: =E12/$B$12 (Formula)
+Row 13: A13: Avg customer lifetime (months) | B13: =1/B11 (Formula) | D13: 0.1 | E13: =$B$9*$B$10*(1/D13) (Formula) | F13: =E13/$B$12 (Formula)
+Row 14: A14: Contribution / month (ARPU × margin) | B14: =B9*B10 (Formula)
+Row 15: A15: LTV (lifetime value) | B15: =B9*B10*(1/B11) (Formula)
+Row 16: A16: LTV : CAC ratio | B16: =(B9*B10*(1/B11))/B12 (Formula)
+Row 17: A17: CAC payback (months) | B17: =B12/(B9*B10) (Formula)
+Row 18: A18: Health verdict | B18: =IF(B16>=3,"Healthy ✓",IF(B16>=1,"Fragile","Losing money")) (Formula)
+Row 20: A20: Read it: churn is the silent killer — halving churn doubles lifetime and LTV. If LTV:CAC < 3, either lower CAC (better targeting/organic), raise ARPU, or cut churn before you scale spend.
+
+
+=== Sheet: Cohort Retention ===
+Row 1: A1: Cohort Retention
+Row 2: A2: Track how each monthly signup group sticks around over time — the truest measure of product value
+Row 3: A3: WHEN TO USE: judging real stickiness and product-market fit. Enter cohort size (Month 0 users) and how many are still active each later month. Retention % is auto-calculated. A flattening curve (retention stops falling) is the signal of PMF.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: 1 · Retained users (enter counts)
+Row 9: A9: Cohort | B9: Size (M0) | C9: M1 | D9: M2 | E9: M3 | F9: M4 | G9: M5 | H9: M6
+Row 10: A10: Jan | B10: 5000 | C10: 2900 | D10: 2100 | E10: 1750 | F10: 1550 | G10: 1450 | H10: 1400
+Row 11: A11: Feb | B11: 5600 | C11: 3360 | D11: 2520 | E11: 2130 | F11: 1900 | G11: 1800 | H11: 1750
+Row 12: A12: Mar | B12: 6100 | C12: 3900 | D12: 3050 | E12: 2620 | F12: 2380 | G12: 2260 | H12: 2200
+Row 13: A13: Apr | B13: 6800 | C13: 4490 | D13: 3600 | E13: 3130 | F13: 2860 | G13: 2720 | H13: 2650
+Row 15: A15: 2 · Retention % (auto: retained ÷ cohort size)
+Row 16: A16: Cohort | B16: M0 | C16: M1 | D16: M2 | E16: M3 | F16: M4 | G16: M5 | H16: M6
+Row 17: A17: =A10 (Formula) | B17: =1 (Formula) | C17: =C10/$B$10 (Formula) | D17: =D10/$B$10 (Formula) | E17: =E10/$B$10 (Formula) | F17: =F10/$B$10 (Formula) | G17: =G10/$B$10 (Formula) | H17: =H10/$B$10 (Formula)
+Row 18: A18: =A11 (Formula) | B18: =1 (Formula) | C18: =C11/$B$11 (Formula) | D18: =D11/$B$11 (Formula) | E18: =E11/$B$11 (Formula) | F18: =F11/$B$11 (Formula) | G18: =G11/$B$11 (Formula) | H18: =H11/$B$11 (Formula)
+Row 19: A19: =A12 (Formula) | B19: =1 (Formula) | C19: =C12/$B$12 (Formula) | D19: =D12/$B$12 (Formula) | E19: =E12/$B$12 (Formula) | F19: =F12/$B$12 (Formula) | G19: =G12/$B$12 (Formula) | H19: =H12/$B$12 (Formula)
+Row 20: A20: =A13 (Formula) | B20: =1 (Formula) | C20: =C13/$B$13 (Formula) | D20: =D13/$B$13 (Formula) | E20: =E13/$B$13 (Formula) | F20: =F13/$B$13 (Formula) | G20: =G13/$B$13 (Formula) | H20: =H13/$B$13 (Formula)
+Row 21: A21: Average | B21: =AVERAGE(B17:B20) (Formula) | C21: =AVERAGE(C17:C20) (Formula) | D21: =AVERAGE(D17:D20) (Formula) | E21: =AVERAGE(E17:E20) (Formula) | F21: =AVERAGE(F17:F20) (Formula) | G21: =AVERAGE(G17:G20) (Formula) | H21: =AVERAGE(H17:H20) (Formula)
+
+
+=== Sheet: PMF Survey ===
+Row 1: A1: Product-Market Fit Survey (Sean Ellis test)
+Row 2: A2: Ask users: 'How would you feel if you could no longer use this product?' ≥40% 'very disappointed' = PMF signal
+Row 3: A3: WHEN TO USE: gauging whether you have product-market fit. Survey engaged users. Count responses in each bucket. The score = 'very disappointed' ÷ (all answers except N/A). 40% is the benchmark from thousands of startups.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Responses
+Row 9: A9: Response | B9: Count
+Row 10: A10: Very disappointed | B10: 210
+Row 11: A11: Somewhat disappointed | B11: 180
+Row 12: A12: Not disappointed | B12: 90
+Row 13: A13: N/A – I no longer use it | B13: 20
+Row 14: A14: Valid responses (excl. N/A) | B14: =B10+B11+B12 (Formula)
+Row 15: A15: PMF score (% very disappointed) | B15: =B10/B14 (Formula)
+Row 16: A16: Verdict vs 40% benchmark | B16: =IF(B15>=0.4,"PMF signal ✓",IF(B15>=0.25,"Getting there","Not yet")) (Formula)
+Row 18: A18: Read it: below 40%, segment the 'very disappointed' users — who are they, what do they love? Double down on that persona and use-case before broadening. This survey guides positioning as much as product.
+
+
+=== Sheet: A-B Test ===
+Row 1: A1: A/B Test Significance Calculator
+Row 2: A2: Is the difference real or noise? Two-proportion z-test with 95% / 99% thresholds
+Row 3: A3: WHEN TO USE: deciding if a variant genuinely beats control. Enter visitors and conversions for each. The calculator returns conversion rates, relative uplift, a z-score and whether it clears the 95% (z>1.96) and 99% (z>2.576) bars. Aim for a pre-set sample size, don't peek early.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Inputs | D8: Results
+Row 9: A9: Metric | B9: Value | D9: Control conversion rate | E9: =B11/B10 (Formula)
+Row 10: A10: Control — visitors | B10: 20000 | D10: Variant conversion rate | E10: =B13/B12 (Formula)
+Row 11: A11: Control — conversions | B11: 1600 | D11: Absolute difference | E11: =B13/B12-B11/B10 (Formula)
+Row 12: A12: Variant — visitors | B12: 20000 | D12: Relative uplift | E12: =IFERROR((B13/B12)/(B11/B10)-1,0) (Formula)
+Row 13: A13: Variant — conversions | B13: 1760 | D13: Pooled rate | E13: =(B11+B13)/(B10+B12) (Formula)
+Row 14: D14: Standard error | E14: =SQRT(E13*(1-E13)*(1/B10+1/B12)) (Formula)
+Row 15: A15: Control | B15: =B11/B10 (Formula) | D15: z-score | E15: =IFERROR((B13/B12-B11/B10)/E14,0) (Formula)
+Row 16: A16: Variant | B16: =B13/B12 (Formula) | D16: Significant at 95%? (|z|>1.96) | E16: =IF(ABS(E15)>1.96,"YES ✓","No") (Formula)
+Row 17: D17: Significant at 99%? (|z|>2.576) | E17: =IF(ABS(E15)>2.576,"YES ✓","No") (Formula)
+Row 18: A18: Read it: 'not significant' doesn't mean 'no effect' — it may mean too little data. Decide your sample size and duration up front. Practical significance (is the uplift worth shipping?) matters as much as statistical significance.
+
+
+=== Sheet: OKR Tracker ===
+Row 1: A1: OKR Tracker
+Row 2: A2: Objectives are the ambition; Key Results are the measurable proof. Track progress, not activity.
+Row 3: A3: WHEN TO USE: quarterly goal-setting and mid-cycle check-ins. Each Objective gets 2–4 Key Results with a Start, Current and Target. Progress = (Current − Start) ÷ (Target − Start). 0.7 is often 'success' for a stretch KR — 1.0 everywhere means you set them too easy.
+Row 6: A6:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+Row 8: A8: Objective | B8: Key Result | C8: Start | D8: Current | E8: Target | F8: Progress | G8: Status
+Row 9: A9: Make ordering effortless | B9: D30 retention (%) | C9: 28 | D9: 33 | E9: 40 | F9: =IFERROR(MEDIAN(0,(D9-C9)/(E9-C9),1),0) (Formula) | G9: =IF(F9>=0.7,"On track",IF(F9>=0.4,"At risk","Off track")) (Formula)
+Row 10: A10: Make ordering effortless | B10: Checkout completion (%) | C10: 88 | D10: 92 | E10: 95 | F10: =IFERROR(MEDIAN(0,(D10-C10)/(E10-C10),1),0) (Formula) | G10: =IF(F10>=0.7,"On track",IF(F10>=0.4,"At risk","Off track")) (Formula)
+Row 11: A11: Win Tier-2 metros | B11: Tier-2 MAU (000s) | C11: 300 | D11: 520 | E11: 800 | F11: =IFERROR(MEDIAN(0,(D11-C11)/(E11-C11),1),0) (Formula) | G11: =IF(F11>=0.7,"On track",IF(F11>=0.4,"At risk","Off track")) (Formula)
+Row 12: A12: Win Tier-2 metros | B12: Tier-2 orders/user/mo | C12: 2.1 | D12: 2.6 | E12: 3.2 | F12: =IFERROR(MEDIAN(0,(D12-C12)/(E12-C12),1),0) (Formula) | G12: =IF(F12>=0.7,"On track",IF(F12>=0.4,"At risk","Off track")) (Formula)
+Row 13: A13: Fund growth sustainably | B13: LTV:CAC ratio | C13: 1.8 | D13: 2.4 | E13: 3 | F13: =IFERROR(MEDIAN(0,(D13-C13)/(E13-C13),1),0) (Formula) | G13: =IF(F13>=0.7,"On track",IF(F13>=0.4,"At risk","Off track")) (Formula)
+Row 32: A32: Read it: OKRs measure outcomes, not tasks. 'Ship feature X' is not a Key Result; 'raise retention to 40%' is. Review weekly, grade at quarter-end, and don't tie 100%-or-bust bonuses to stretch OKRs — it kills ambition.
+
+

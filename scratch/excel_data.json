@@ -1,0 +1,2104 @@
+{
+  "RICE": {
+    "title": "RICE Prioritisation",
+    "subtitle": "Score = (Reach \u00d7 Impact \u00d7 Confidence) \u00f7 Effort  \u2014  the higher the score, the sooner you build it",
+    "description": "WHEN TO USE: comparing a backlog of features/ideas objectively. Reach = how many users this affects per period. Impact = per-user effect (3=massive, 2=high, 1=medium, 0.5=low, 0.25=minimal). Confidence = how sure you are (100/80/50%). Effort = person-months of work.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "RICE Prioritisation",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Score = (Reach \u00d7 Impact \u00d7 Confidence) \u00f7 Effort  \u2014  the higher the score, the sooner you build it",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: comparing a backlog of features/ideas objectively. Reach = how many users this affects per period. Impact = per-user effect (3=massive, 2=high, 1=medium, 0.5=low, 0.25=minimal). Confidence = how sure you are (100/80/50%). Effort = person-months of work.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Feature / Idea",
+        "Reach (users/qtr)",
+        "Impact (0.25\u20133)",
+        "Confidence",
+        "Effort (p-months)",
+        "RICE Score",
+        "Rank"
+      ],
+      [
+        "1-tap reorder",
+        42000,
+        2,
+        0.9,
+        2,
+        37800,
+        2
+      ],
+      [
+        "UPI autopay",
+        30000,
+        3,
+        0.8,
+        3,
+        24000,
+        4
+      ],
+      [
+        "Hindi voice search",
+        18000,
+        1,
+        0.5,
+        4,
+        2250,
+        8
+      ],
+      [
+        "Loyalty coins",
+        55000,
+        1,
+        0.8,
+        3,
+        14666.666666666666,
+        6
+      ],
+      [
+        "Group ordering",
+        22000,
+        2,
+        0.7,
+        5,
+        6159.999999999999,
+        7
+      ],
+      [
+        "Live order tracking",
+        60000,
+        2,
+        0.9,
+        2,
+        54000,
+        1
+      ],
+      [
+        "Referral rewards",
+        48000,
+        1,
+        0.8,
+        1.5,
+        25600,
+        3
+      ],
+      [
+        "Dark mode",
+        35000,
+        0.5,
+        1,
+        1,
+        17500,
+        5
+      ],
+      [
+        "Read it: build top-ranked first. If two scores are close, the one with lower Effort de-risks faster. Beware inflated Reach \u2014 anchor it to real analytics, not hopes.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "Weighted Scoring": {
+    "title": "Weighted Scoring Model",
+    "subtitle": "Rank options against criteria that matter differently \u2014 weights must sum to 100%",
+    "description": "WHEN TO USE: choosing between a few strategic options (e.g. which market to enter) where several criteria matter unequally. Set weights on row 8 (they auto-check to 100%). Score each option 1\u20135 on each criterion. Total = weighted sum.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Weighted Scoring Model",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Rank options against criteria that matter differently \u2014 weights must sum to 100%",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: choosing between a few strategic options (e.g. which market to enter) where several criteria matter unequally. Set weights on row 8 (they auto-check to 100%). Score each option 1\u20135 on each criterion. Total = weighted sum.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Weights \u2192",
+        0.35,
+        0.3,
+        0.2,
+        0.15,
+        0.9999999999999999,
+        "OK \u2713"
+      ],
+      [
+        "Option",
+        "Strategic fit",
+        "Revenue upside",
+        "Speed to ship",
+        "Low risk",
+        null,
+        "Weighted total"
+      ],
+      [
+        "Tier-2 metros",
+        4,
+        5,
+        3,
+        3,
+        null,
+        3.95
+      ],
+      [
+        "Tier-3 towns",
+        5,
+        3,
+        2,
+        4,
+        null,
+        3.65
+      ],
+      [
+        "Premium urban",
+        3,
+        4,
+        4,
+        3,
+        null,
+        3.5
+      ],
+      [
+        "SMB / kirana",
+        4,
+        4,
+        5,
+        4,
+        null,
+        4.199999999999999
+      ],
+      [
+        "Read it: highest total wins. Weights are where the debate should happen \u2014 get stakeholders to agree on weights BEFORE scoring, so the numbers aren't reverse-engineered to a favourite.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "Value vs Effort": {
+    "title": "Value vs Effort (2\u00d72)",
+    "subtitle": "Quick Wins (high value, low effort) first; avoid the Money Pits",
+    "description": "WHEN TO USE: a fast, visual triage. Rate Value and Effort 1\u201310. The scatter plots each item; the quadrant label is auto-assigned. Aim for the top-left: high value, low effort.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Value vs Effort (2\u00d72)",
+        null,
+        null,
+        null
+      ],
+      [
+        "Quick Wins (high value, low effort) first; avoid the Money Pits",
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: a fast, visual triage. Rate Value and Effort 1\u201310. The scatter plots each item; the quadrant label is auto-assigned. Aim for the top-left: high value, low effort.",
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null
+      ],
+      [
+        "Item",
+        "Value (1\u201310)",
+        "Effort (1\u201310)",
+        "Quadrant"
+      ],
+      [
+        "Live tracking",
+        9,
+        3,
+        "Quick Win"
+      ],
+      [
+        "UPI autopay",
+        8,
+        6,
+        "Big Bet"
+      ],
+      [
+        "Voice search",
+        4,
+        7,
+        "Money Pit"
+      ],
+      [
+        "Dark mode",
+        3,
+        2,
+        "Fill-in"
+      ],
+      [
+        "Group ordering",
+        6,
+        8,
+        "Big Bet"
+      ],
+      [
+        "Referral rewards",
+        7,
+        3,
+        "Quick Win"
+      ],
+      [
+        "Loyalty coins",
+        6,
+        4,
+        "Quick Win"
+      ],
+      [
+        "AI menu recos",
+        8,
+        9,
+        "Big Bet"
+      ],
+      [
+        "Read it: Quick Wins build momentum and trust. Big Bets need a strategic reason. Money Pits (low value, high effort) are usually a 'no'. Fill-ins are for spare capacity only.",
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "Kano Model": {
+    "title": "Kano Model",
+    "subtitle": "Classify features by how they drive satisfaction: Delighters, Performance, Must-be, Indifferent",
+    "description": "WHEN TO USE: deciding what actually moves customer satisfaction. From paired survey questions, tally how many users put each feature in each category. Better = (Attractive+Performance)/total; Worse = \u2212(Performance+Must-be)/total. The classification picks the most common vote.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Kano Model",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Classify features by how they drive satisfaction: Delighters, Performance, Must-be, Indifferent",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: deciding what actually moves customer satisfaction. From paired survey questions, tally how many users put each feature in each category. Better = (Attractive+Performance)/total; Worse = \u2212(Performance+Must-be)/total. The classification picks the most common vote.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Feature",
+        "Attractive",
+        "Performance",
+        "Must-be",
+        "Indifferent",
+        "Reverse",
+        "Better coeff.",
+        "Worse coeff.",
+        "Classification",
+        null,
+        "|Worse| (chart)",
+        "Better (chart)"
+      ],
+      [
+        "Live tracking",
+        30,
+        45,
+        20,
+        5,
+        0,
+        0.75,
+        -0.65,
+        "Performance",
+        null,
+        0.65,
+        0.75
+      ],
+      [
+        "UPI autopay",
+        15,
+        40,
+        40,
+        5,
+        0,
+        0.55,
+        -0.8,
+        "Performance",
+        null,
+        0.8,
+        0.55
+      ],
+      [
+        "Hindi voice",
+        50,
+        20,
+        5,
+        25,
+        0,
+        0.7,
+        -0.25,
+        "Delighter",
+        null,
+        0.25,
+        0.7
+      ],
+      [
+        "Loyalty coins",
+        55,
+        25,
+        5,
+        15,
+        0,
+        0.8,
+        -0.3,
+        "Delighter",
+        null,
+        0.3,
+        0.8
+      ],
+      [
+        "Dark mode",
+        20,
+        10,
+        5,
+        60,
+        5,
+        0.3,
+        -0.15,
+        "Indifferent",
+        null,
+        0.15,
+        0.3
+      ],
+      [
+        "Fast delivery",
+        5,
+        35,
+        55,
+        5,
+        0,
+        0.4,
+        -0.9,
+        "Must-be",
+        null,
+        0.9,
+        0.4
+      ],
+      [
+        "Read it: top-left = Must-be (fix or lose trust), top-right = Performance (more is better), high Better + low Worse = Delighters (differentiators). Indifferent = don't over-invest.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "WSJF": {
+    "title": "WSJF \u2014 Weighted Shortest Job First",
+    "subtitle": "SAFe prioritisation: WSJF = Cost of Delay \u00f7 Job Size. Do the highest WSJF first.",
+    "description": "WHEN TO USE: agile/SAFe backlogs where sequencing matters. Cost of Delay = User-Business Value + Time Criticality + Risk-reduction/Opportunity. Score each 1\u201310 (relative, not absolute). Job Size = relative effort. Short, high-value jobs rise to the top.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "WSJF \u2014 Weighted Shortest Job First",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "SAFe prioritisation: WSJF = Cost of Delay \u00f7 Job Size. Do the highest WSJF first.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: agile/SAFe backlogs where sequencing matters. Cost of Delay = User-Business Value + Time Criticality + Risk-reduction/Opportunity. Score each 1\u201310 (relative, not absolute). Job Size = relative effort. Short, high-value jobs rise to the top.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Feature",
+        "User/Biz Value",
+        "Time Criticality",
+        "Risk/Opportunity",
+        "Cost of Delay",
+        "Job Size",
+        "WSJF",
+        "Rank"
+      ],
+      [
+        "Live tracking",
+        8,
+        7,
+        5,
+        20,
+        3,
+        6.666666666666667,
+        2
+      ],
+      [
+        "UPI autopay",
+        9,
+        8,
+        6,
+        23,
+        5,
+        4.6,
+        4
+      ],
+      [
+        "Voice search",
+        4,
+        3,
+        4,
+        11,
+        4,
+        2.75,
+        5
+      ],
+      [
+        "Loyalty coins",
+        7,
+        5,
+        4,
+        16,
+        3,
+        5.333333333333333,
+        3
+      ],
+      [
+        "Group ordering",
+        5,
+        4,
+        6,
+        15,
+        6,
+        2.5,
+        6
+      ],
+      [
+        "Referral rewards",
+        8,
+        6,
+        5,
+        19,
+        2,
+        9.5,
+        1
+      ],
+      [
+        "Read it: WSJF rewards small jobs that deliver value now. If everything is 'urgent', your Time Criticality scores aren't calibrated \u2014 force a spread from 1 to 10.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "MoSCoW": {
+    "title": "MoSCoW",
+    "subtitle": "Scope a release: Must-have, Should-have, Could-have, Won't-have (this time)",
+    "description": "WHEN TO USE: agreeing scope for a release or MVP. Tag each item M/S/C/W. Rule of thumb: Must-haves should be \u226460% of effort, leaving slack for the unknown. The summary and pie update automatically.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "MoSCoW",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Scope a release: Must-have, Should-have, Could-have, Won't-have (this time)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: agreeing scope for a release or MVP. Tag each item M/S/C/W. Rule of thumb: Must-haves should be \u226460% of effort, leaving slack for the unknown. The summary and pie update automatically.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Item",
+        "Category (M/S/C/W)",
+        "Effort (days)",
+        null,
+        "Category",
+        "Items",
+        "Effort (days)"
+      ],
+      [
+        "Checkout works",
+        "M",
+        6,
+        null,
+        "Must",
+        3,
+        15
+      ],
+      [
+        "UPI payment",
+        "M",
+        5,
+        null,
+        "Should",
+        3,
+        11
+      ],
+      [
+        "Order tracking",
+        "M",
+        4,
+        null,
+        "Could",
+        2,
+        6
+      ],
+      [
+        "Loyalty coins",
+        "S",
+        3,
+        null,
+        "Won't",
+        1,
+        8
+      ],
+      [
+        "Referral rewards",
+        "S",
+        3,
+        null,
+        "Total effort",
+        null,
+        40
+      ],
+      [
+        "Dark mode",
+        "C",
+        2,
+        null,
+        "Must-have % of effort",
+        null,
+        0.375
+      ],
+      [
+        "Voice search",
+        "C",
+        4,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "AR menu",
+        "W",
+        8,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Group ordering",
+        "S",
+        5,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Read it: if Must-have effort blows past ~60%, you have no room to absorb surprises \u2014 renegotiate scope now, not at crunch.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "Opportunity Scoring": {
+    "title": "Opportunity Scoring (Ulwick / ODI)",
+    "subtitle": "Find under-served needs: Opportunity = Importance + max(Importance \u2212 Satisfaction, 0)",
+    "description": "WHEN TO USE: outcome-driven innovation. Survey users on how IMPORTANT an outcome is and how SATISFIED they are today (both 1\u201310). High importance + low satisfaction = the biggest opportunity. Score >10 is a strong signal, >15 is exceptional.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Opportunity Scoring (Ulwick / ODI)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Find under-served needs: Opportunity = Importance + max(Importance \u2212 Satisfaction, 0)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: outcome-driven innovation. Survey users on how IMPORTANT an outcome is and how SATISFIED they are today (both 1\u201310). High importance + low satisfaction = the biggest opportunity. Score >10 is a strong signal, >15 is exceptional.",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Desired outcome (job step)",
+        "Importance (1\u201310)",
+        "Satisfaction (1\u201310)",
+        "Opportunity",
+        "Rank"
+      ],
+      [
+        "Get food fast when hungry",
+        9,
+        6,
+        12,
+        3
+      ],
+      [
+        "Trust the delivery ETA",
+        9,
+        4,
+        14,
+        1
+      ],
+      [
+        "Pay without friction",
+        8,
+        7,
+        9,
+        5
+      ],
+      [
+        "Discover new dishes I'll like",
+        7,
+        3,
+        11,
+        4
+      ],
+      [
+        "Reorder favourites easily",
+        8,
+        8,
+        8,
+        6
+      ],
+      [
+        "Resolve a wrong order",
+        8,
+        3,
+        13,
+        2
+      ],
+      [
+        "Read it: attack the highest opportunity scores \u2014 that's where users care a lot and current solutions disappoint. Well-served outcomes (high importance, high satisfaction) are table-stakes, not differentiators.",
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "BCG Matrix": {
+    "title": "BCG Growth\u2013Share Matrix",
+    "subtitle": "Portfolio view: Stars, Cash Cows, Question Marks, Dogs \u2014 decide where to invest, milk, or exit",
+    "description": "WHEN TO USE: allocating money/attention across a portfolio of products or lines. Market Growth = the market's annual growth (invest if high). Relative Market Share = your share \u00f7 largest rival's share (>1 means you lead). Bubble size = revenue. Category is auto-assigned at the 10% / 1.0x lines.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "BCG Growth\u2013Share Matrix",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Portfolio view: Stars, Cash Cows, Question Marks, Dogs \u2014 decide where to invest, milk, or exit",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: allocating money/attention across a portfolio of products or lines. Market Growth = the market's annual growth (invest if high). Relative Market Share = your share \u00f7 largest rival's share (>1 means you lead). Bubble size = revenue. Category is auto-assigned at the 10% / 1.0x lines.",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Product / Line",
+        "Market Growth",
+        "Relative Mkt Share (x)",
+        "Revenue (\u20b9 cr)",
+        "Category"
+      ],
+      [
+        "Food delivery",
+        0.18,
+        1.4,
+        220,
+        "\u2605 Star"
+      ],
+      [
+        "Grocery (10-min)",
+        0.35,
+        0.6,
+        80,
+        "? Question Mark"
+      ],
+      [
+        "Dining-out coupons",
+        0.05,
+        1.6,
+        140,
+        "$ Cash Cow"
+      ],
+      [
+        "Cloud kitchens",
+        0.28,
+        0.5,
+        35,
+        "? Question Mark"
+      ],
+      [
+        "Ads / media",
+        0.22,
+        1.2,
+        60,
+        "\u2605 Star"
+      ],
+      [
+        "Print vouchers",
+        0.02,
+        0.7,
+        12,
+        "Dog"
+      ],
+      [
+        "Play: fund Stars, milk Cash Cows to fund Stars/Question Marks, pick 1\u20132 Question Marks to back hard, and divest Dogs. Everything can't be a Star \u2014 a healthy portfolio needs Cash Cows paying the bills.",
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "Ansoff Matrix": {
+    "title": "Ansoff Growth Matrix",
+    "subtitle": "Four growth vectors, rising risk: Market Penetration \u2192 Product Development / Market Development \u2192 Diversification",
+    "description": "WHEN TO USE: choosing HOW to grow. Existing product + existing market = Penetration (lowest risk). New product OR new market = medium risk. New product AND new market = Diversification (highest risk). Enter expected revenue and a success probability; risk-adjusted value ranks them.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Ansoff Growth Matrix",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Four growth vectors, rising risk: Market Penetration \u2192 Product Development / Market Development \u2192 Diversification",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: choosing HOW to grow. Existing product + existing market = Penetration (lowest risk). New product OR new market = medium risk. New product AND new market = Diversification (highest risk). Enter expected revenue and a success probability; risk-adjusted value ranks them.",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Initiative",
+        "Growth vector",
+        "Expected rev (\u20b9 cr)",
+        "Success prob.",
+        "Risk-adjusted value"
+      ],
+      [
+        "Push reorders to existing users",
+        "Market Penetration",
+        40,
+        0.85,
+        34
+      ],
+      [
+        "Launch grocery to same users",
+        "Product Development",
+        70,
+        0.55,
+        38.5
+      ],
+      [
+        "Enter Tier-3 towns",
+        "Market Development",
+        90,
+        0.45,
+        40.5
+      ],
+      [
+        "Fintech lending, new users",
+        "Diversification",
+        150,
+        0.25,
+        37.5
+      ],
+      [
+        "Read it: growth gets riskier as you move away from what you know. Weight your roadmap toward penetration for cash, a measured bet or two on adjacent products/markets, and diversify only with strong conviction and a ring-fenced budget.",
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "Porter 5 Forces": {
+    "title": "Porter's Five Forces",
+    "subtitle": "How attractive is this market? Score each force 1 (benign) to 5 (brutal). Lower total = more attractive.",
+    "description": "WHEN TO USE: assessing structural profitability of a market before entering or doubling down. Score the THREAT level of each force. The radar shows your risk shape; overall attractiveness = 6 \u2212 average score (higher is better).",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Porter's Five Forces",
+        null,
+        null
+      ],
+      [
+        "How attractive is this market? Score each force 1 (benign) to 5 (brutal). Lower total = more attractive.",
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: assessing structural profitability of a market before entering or doubling down. Score the THREAT level of each force. The radar shows your risk shape; overall attractiveness = 6 \u2212 average score (higher is better).",
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null
+      ],
+      [
+        "Force",
+        "Threat (1\u20135)",
+        "Your notes"
+      ],
+      [
+        "Competitive rivalry",
+        4,
+        "Zomato, Swiggy, local aggregators"
+      ],
+      [
+        "Threat of new entrants",
+        3,
+        "High capital + network effects deter, but funding is available"
+      ],
+      [
+        "Supplier power (restaurants)",
+        4,
+        "Large chains negotiate hard on commission"
+      ],
+      [
+        "Buyer power (users)",
+        4,
+        "Low switching cost, coupon-driven"
+      ],
+      [
+        "Threat of substitutes",
+        2,
+        "Home cooking, dine-in, direct restaurant apps"
+      ],
+      [
+        "Average threat",
+        3.4,
+        null
+      ],
+      [
+        "Attractiveness (6 \u2212 avg)",
+        2.6,
+        null
+      ],
+      [
+        "Verdict",
+        "Tough but viable",
+        null
+      ],
+      [
+        "Read it: a market where four forces are '5' can still be entered \u2014 but only with a wedge (a segment rivals ignore) and a durable moat. Use this to choose WHERE to compete, not just whether.",
+        null,
+        null
+      ]
+    ]
+  },
+  "North Star": {
+    "title": "North Star Metric",
+    "subtitle": "One metric that captures the value users get \u2014 decomposed into the inputs a team can actually move",
+    "description": "WHEN TO USE: aligning the whole team behind value, not vanity. Pick an NSM that rises only when customers succeed (e.g. 'weekly orders delivered on time'). Decompose it into 2\u20134 input metrics you can influence. Track actual vs target monthly.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "North Star Metric",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "One metric that captures the value users get \u2014 decomposed into the inputs a team can actually move",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: aligning the whole team behind value, not vanity. Pick an NSM that rises only when customers succeed (e.g. 'weekly orders delivered on time'). Decompose it into 2\u20134 input metrics you can influence. Track actual vs target monthly.",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "1 \u00b7 North Star decomposition   (NSM = Active users \u00d7 Orders per user \u00d7 On-time rate)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Input driver",
+        "Current",
+        "90-day target",
+        "Change",
+        "% change"
+      ],
+      [
+        "Monthly active users (000s)",
+        1200,
+        1500,
+        300,
+        0.25
+      ],
+      [
+        "Orders per user / month",
+        3.2,
+        3.8,
+        0.5999999999999996,
+        0.1874999999999999
+      ],
+      [
+        "On-time delivery rate",
+        0.86,
+        0.93,
+        0.07000000000000006,
+        0.08139534883720938
+      ],
+      [
+        "NORTH STAR (monthly on-time orders, mn)",
+        3.3024,
+        5.301,
+        1.9986000000000002,
+        0.6051962209302326
+      ],
+      [
+        "2 \u00b7 Monthly trajectory (actual vs target)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Month",
+        "NSM actual (mn)",
+        "NSM target (mn)",
+        null,
+        null
+      ],
+      [
+        "Jan",
+        2.9,
+        3,
+        null,
+        null
+      ],
+      [
+        "Feb",
+        3,
+        3.15,
+        null,
+        null
+      ],
+      [
+        "Mar",
+        3.15,
+        3.3,
+        null,
+        null
+      ],
+      [
+        "Apr",
+        3.3,
+        3.45,
+        null,
+        null
+      ],
+      [
+        "May",
+        3.4,
+        3.6,
+        null,
+        null
+      ],
+      [
+        "Jun",
+        3.55,
+        3.75,
+        null,
+        null
+      ],
+      [
+        "Jul",
+        3.7,
+        3.9,
+        null,
+        null
+      ],
+      [
+        "Aug",
+        3.8,
+        4.05,
+        null,
+        null
+      ],
+      [
+        "Sep",
+        null,
+        4.2,
+        null,
+        null
+      ],
+      [
+        "Read it: if input drivers are all green but the NSM lags, your model of value is wrong \u2014 revisit which inputs truly cause the outcome. A good NSM is a leading indicator of revenue, not revenue itself.",
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "AARRR Funnel": {
+    "title": "AARRR \u2014 Pirate Metrics",
+    "subtitle": "The lifecycle funnel: Acquisition \u2192 Activation \u2192 Retention \u2192 Revenue \u2192 Referral. Find the leakiest step.",
+    "description": "WHEN TO USE: diagnosing where users drop off. Enter the count reaching each stage. Step conversion = this stage \u00f7 previous stage. % of top = this stage \u00f7 acquisition. The biggest drop is usually your highest-leverage fix.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "AARRR \u2014 Pirate Metrics",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "The lifecycle funnel: Acquisition \u2192 Activation \u2192 Retention \u2192 Revenue \u2192 Referral. Find the leakiest step.",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: diagnosing where users drop off. Enter the count reaching each stage. Step conversion = this stage \u00f7 previous stage. % of top = this stage \u00f7 acquisition. The biggest drop is usually your highest-leverage fix.",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Stage",
+        "Users",
+        "Step conversion",
+        "% of Acquisition",
+        "What it means"
+      ],
+      [
+        "Acquisition",
+        100000,
+        "\u2014",
+        1,
+        "People who arrive"
+      ],
+      [
+        "Activation",
+        42000,
+        0.42,
+        0.42,
+        "Hit the 'aha' (first order)"
+      ],
+      [
+        "Retention",
+        23000,
+        0.5476190476190477,
+        0.23,
+        "Come back in 30 days"
+      ],
+      [
+        "Revenue",
+        18000,
+        0.782608695652174,
+        0.18,
+        "Pay / order again"
+      ],
+      [
+        "Referral",
+        5400,
+        0.3,
+        0.054,
+        "Invite someone"
+      ],
+      [
+        "Read it: don't pour money into Acquisition if Activation is leaking. Fix the funnel bottom-up \u2014 retention first, because retained users make every other number cheaper.",
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "HEART": {
+    "title": "Google HEART Framework",
+    "subtitle": "Measure UX quality across Happiness, Engagement, Adoption, Retention, Task success",
+    "description": "WHEN TO USE: turning fuzzy 'good experience' into trackable metrics. For each category pick ONE signal metric, set current & target. % attainment shows how close you are. Don't track all five if only two matter for this feature.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Google HEART Framework",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Measure UX quality across Happiness, Engagement, Adoption, Retention, Task success",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: turning fuzzy 'good experience' into trackable metrics. For each category pick ONE signal metric, set current & target. % attainment shows how close you are. Don't track all five if only two matter for this feature.",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Category",
+        "Signal metric",
+        "Current",
+        "Target",
+        "% attain"
+      ],
+      [
+        "Happiness",
+        "CSAT / app rating",
+        0.72,
+        0.85,
+        0.8470588235294118
+      ],
+      [
+        "Engagement",
+        "Orders per active user / wk",
+        1.1,
+        1.5,
+        0.7333333333333334
+      ],
+      [
+        "Adoption",
+        "New-feature uptake in 30d",
+        0.34,
+        0.6,
+        0.5666666666666668
+      ],
+      [
+        "Retention",
+        "D30 retention",
+        0.28,
+        0.4,
+        0.7000000000000001
+      ],
+      [
+        "Task success",
+        "Checkout completion rate",
+        0.88,
+        0.95,
+        0.9263157894736842
+      ],
+      [
+        "Read it: pair each metric with a Goal\u2192Signal\u2192Metric logic so you're measuring the behaviour that proves the goal, not the easiest number to collect. Retention and Task success are usually the truthful ones.",
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "Unit Economics": {
+    "title": "Unit Economics \u2014 LTV, CAC & Payback",
+    "subtitle": "Does each customer make more than they cost? The single most important growth question.",
+    "description": "WHEN TO USE: validating that growth is profitable, not just fast. Enter the four blue inputs. Lifetime = 1 \u00f7 monthly churn. LTV = ARPU \u00d7 gross margin \u00d7 lifetime. Aim for LTV:CAC \u2265 3 and payback \u2264 12 months.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Unit Economics \u2014 LTV, CAC & Payback",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Does each customer make more than they cost? The single most important growth question.",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: validating that growth is profitable, not just fast. Enter the four blue inputs. Lifetime = 1 \u00f7 monthly churn. LTV = ARPU \u00d7 gross margin \u00d7 lifetime. Aim for LTV:CAC \u2265 3 and payback \u2264 12 months.",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Inputs & results",
+        null,
+        null,
+        "Sensitivity: churn \u2192 LTV & ratio",
+        null,
+        null
+      ],
+      [
+        "ARPU \u2014 revenue per user / month",
+        300,
+        null,
+        "Monthly churn",
+        "LTV",
+        "LTV:CAC"
+      ],
+      [
+        "Gross margin",
+        0.3,
+        null,
+        0.03,
+        3000,
+        3.3333333333333335
+      ],
+      [
+        "Monthly churn rate",
+        0.05,
+        null,
+        0.05,
+        1800,
+        2
+      ],
+      [
+        "CAC \u2014 cost to acquire a customer",
+        900,
+        null,
+        0.07,
+        1285.7142857142856,
+        1.4285714285714284
+      ],
+      [
+        "Avg customer lifetime (months)",
+        20,
+        null,
+        0.1,
+        900,
+        1
+      ],
+      [
+        "Contribution / month (ARPU \u00d7 margin)",
+        90,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "LTV (lifetime value)",
+        1800,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "LTV : CAC ratio",
+        2,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "CAC payback (months)",
+        10,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Health verdict",
+        "Fragile",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Read it: churn is the silent killer \u2014 halving churn doubles lifetime and LTV. If LTV:CAC < 3, either lower CAC (better targeting/organic), raise ARPU, or cut churn before you scale spend.",
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "Cohort Retention": {
+    "title": "Cohort Retention",
+    "subtitle": "Track how each monthly signup group sticks around over time \u2014 the truest measure of product value",
+    "description": "WHEN TO USE: judging real stickiness and product-market fit. Enter cohort size (Month 0 users) and how many are still active each later month. Retention % is auto-calculated. A flattening curve (retention stops falling) is the signal of PMF.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Cohort Retention",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Track how each monthly signup group sticks around over time \u2014 the truest measure of product value",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: judging real stickiness and product-market fit. Enter cohort size (Month 0 users) and how many are still active each later month. Retention % is auto-calculated. A flattening curve (retention stops falling) is the signal of PMF.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "1 \u00b7 Retained users (enter counts)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Cohort",
+        "Size (M0)",
+        "M1",
+        "M2",
+        "M3",
+        "M4",
+        "M5",
+        "M6"
+      ],
+      [
+        "Jan",
+        5000,
+        2900,
+        2100,
+        1750,
+        1550,
+        1450,
+        1400
+      ],
+      [
+        "Feb",
+        5600,
+        3360,
+        2520,
+        2130,
+        1900,
+        1800,
+        1750
+      ],
+      [
+        "Mar",
+        6100,
+        3900,
+        3050,
+        2620,
+        2380,
+        2260,
+        2200
+      ],
+      [
+        "Apr",
+        6800,
+        4490,
+        3600,
+        3130,
+        2860,
+        2720,
+        2650
+      ],
+      [
+        "2 \u00b7 Retention % (auto: retained \u00f7 cohort size)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Cohort",
+        "M0",
+        "M1",
+        "M2",
+        "M3",
+        "M4",
+        "M5",
+        "M6"
+      ],
+      [
+        "Jan",
+        1,
+        0.58,
+        0.42,
+        0.35,
+        0.31,
+        0.29,
+        0.28
+      ],
+      [
+        "Feb",
+        1,
+        0.6,
+        0.45,
+        0.38035714285714284,
+        0.3392857142857143,
+        0.32142857142857145,
+        0.3125
+      ],
+      [
+        "Mar",
+        1,
+        0.639344262295082,
+        0.5,
+        0.42950819672131146,
+        0.3901639344262295,
+        0.3704918032786885,
+        0.36065573770491804
+      ],
+      [
+        "Apr",
+        1,
+        0.6602941176470588,
+        0.5294117647058824,
+        0.4602941176470588,
+        0.42058823529411765,
+        0.4,
+        0.3897058823529412
+      ],
+      [
+        "Average",
+        1,
+        0.6199095949855352,
+        0.4748529411764706,
+        0.40503986430637823,
+        0.3650094710015154,
+        0.345480093676815,
+        0.3357154050144648
+      ],
+      [
+        "Read it: if every cohort keeps declining to near-zero, you don't have PMF yet. A curve that flattens at, say, 28% means a loyal core \u2014 newer cohorts flattening HIGHER means your product is improving.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "PMF Survey": {
+    "title": "Product-Market Fit Survey (Sean Ellis test)",
+    "subtitle": "Ask users: 'How would you feel if you could no longer use this product?' \u226540% 'very disappointed' = PMF signal",
+    "description": "WHEN TO USE: gauging whether you have product-market fit. Survey engaged users. Count responses in each bucket. The score = 'very disappointed' \u00f7 (all answers except N/A). 40% is the benchmark from thousands of startups.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "Product-Market Fit Survey (Sean Ellis test)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Ask users: 'How would you feel if you could no longer use this product?' \u226540% 'very disappointed' = PMF signal",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: gauging whether you have product-market fit. Survey engaged users. Count responses in each bucket. The score = 'very disappointed' \u00f7 (all answers except N/A). 40% is the benchmark from thousands of startups.",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Responses",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Response",
+        "Count",
+        null,
+        null,
+        null
+      ],
+      [
+        "Very disappointed",
+        210,
+        null,
+        null,
+        null
+      ],
+      [
+        "Somewhat disappointed",
+        180,
+        null,
+        null,
+        null
+      ],
+      [
+        "Not disappointed",
+        90,
+        null,
+        null,
+        null
+      ],
+      [
+        "N/A \u2013 I no longer use it",
+        20,
+        null,
+        null,
+        null
+      ],
+      [
+        "Valid responses (excl. N/A)",
+        480,
+        null,
+        null,
+        null
+      ],
+      [
+        "PMF score (% very disappointed)",
+        0.4375,
+        null,
+        null,
+        null
+      ],
+      [
+        "Verdict vs 40% benchmark",
+        "PMF signal \u2713",
+        null,
+        null,
+        null
+      ],
+      [
+        "Read it: below 40%, segment the 'very disappointed' users \u2014 who are they, what do they love? Double down on that persona and use-case before broadening. This survey guides positioning as much as product.",
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "A-B Test": {
+    "title": "A/B Test Significance Calculator",
+    "subtitle": "Is the difference real or noise? Two-proportion z-test with 95% / 99% thresholds",
+    "description": "WHEN TO USE: deciding if a variant genuinely beats control. Enter visitors and conversions for each. The calculator returns conversion rates, relative uplift, a z-score and whether it clears the 95% (z>1.96) and 99% (z>2.576) bars. Aim for a pre-set sample size, don't peek early.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "A/B Test Significance Calculator",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Is the difference real or noise? Two-proportion z-test with 95% / 99% thresholds",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: deciding if a variant genuinely beats control. Enter visitors and conversions for each. The calculator returns conversion rates, relative uplift, a z-score and whether it clears the 95% (z>1.96) and 99% (z>2.576) bars. Aim for a pre-set sample size, don't peek early.",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Inputs",
+        null,
+        null,
+        "Results",
+        null
+      ],
+      [
+        "Metric",
+        "Value",
+        null,
+        "Control conversion rate",
+        0.08
+      ],
+      [
+        "Control \u2014 visitors",
+        20000,
+        null,
+        "Variant conversion rate",
+        0.088
+      ],
+      [
+        "Control \u2014 conversions",
+        1600,
+        null,
+        "Absolute difference",
+        0.007999999999999993
+      ],
+      [
+        "Variant \u2014 visitors",
+        20000,
+        null,
+        "Relative uplift",
+        0.09999999999999987
+      ],
+      [
+        "Variant \u2014 conversions",
+        1760,
+        null,
+        "Pooled rate",
+        0.084
+      ],
+      [
+        null,
+        null,
+        null,
+        "Standard error",
+        0.00277387815161373
+      ],
+      [
+        "Control",
+        0.08,
+        null,
+        "z-score",
+        2.884048816400215
+      ],
+      [
+        "Variant",
+        0.088,
+        null,
+        "Significant at 95%? (|z|>1.96)",
+        "YES \u2713"
+      ],
+      [
+        null,
+        null,
+        null,
+        "Significant at 99%? (|z|>2.576)",
+        "YES \u2713"
+      ],
+      [
+        "Read it: 'not significant' doesn't mean 'no effect' \u2014 it may mean too little data. Decide your sample size and duration up front. Practical significance (is the uplift worth shipping?) matters as much as statistical significance.",
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  },
+  "OKR Tracker": {
+    "title": "OKR Tracker",
+    "subtitle": "Objectives are the ambition; Key Results are the measurable proof. Track progress, not activity.",
+    "description": "WHEN TO USE: quarterly goal-setting and mid-cycle check-ins. Each Objective gets 2\u20134 Key Results with a Start, Current and Target. Progress = (Current \u2212 Start) \u00f7 (Target \u2212 Start). 0.7 is often 'success' for a stretch KR \u2014 1.0 everywhere means you set them too easy.",
+    "rows": [],
+    "raw_rows": [
+      [
+        "OKR Tracker",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Objectives are the ambition; Key Results are the measurable proof. Track progress, not activity.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "WHEN TO USE: quarterly goal-setting and mid-cycle check-ins. Each Objective gets 2\u20134 Key Results with a Start, Current and Target. Progress = (Current \u2212 Start) \u00f7 (Target \u2212 Start). 0.7 is often 'success' for a stretch KR \u2014 1.0 everywhere means you set them too easy.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "  Legend:  Yellow = your inputs (edit these)    \u00b7    White = live formulas (leave alone)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        "Objective",
+        "Key Result",
+        "Start",
+        "Current",
+        "Target",
+        "Progress",
+        "Status"
+      ],
+      [
+        "Make ordering effortless",
+        "D30 retention (%)",
+        28,
+        33,
+        40,
+        0.4166666666666667,
+        "At risk"
+      ],
+      [
+        "Make ordering effortless",
+        "Checkout completion (%)",
+        88,
+        92,
+        95,
+        0.5714285714285714,
+        "At risk"
+      ],
+      [
+        "Win Tier-2 metros",
+        "Tier-2 MAU (000s)",
+        300,
+        520,
+        800,
+        0.44,
+        "At risk"
+      ],
+      [
+        "Win Tier-2 metros",
+        "Tier-2 orders/user/mo",
+        2.1,
+        2.6,
+        3.2,
+        0.45454545454545453,
+        "At risk"
+      ],
+      [
+        "Fund growth sustainably",
+        "LTV:CAC ratio",
+        1.8,
+        2.4,
+        3,
+        0.4999999999999999,
+        "At risk"
+      ],
+      [
+        "Read it: OKRs measure outcomes, not tasks. 'Ship feature X' is not a Key Result; 'raise retention to 40%' is. Review weekly, grade at quarter-end, and don't tie 100%-or-bust bonuses to stretch OKRs \u2014 it kills ambition.",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  }
+}

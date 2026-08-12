@@ -1,0 +1,316 @@
+=== RICE ===
+Rows count: 14
+  Row 1: Col 0: RICE Prioritisation
+  Row 2: Col 0: Score = (Reach × Impact × Confidence) ÷ Effort  —  the higher the score, the sooner you build it
+  Row 3: Col 0: WHEN TO USE: comparing a backlog of features/ideas objectively. Reach = how many users this affects per period. Impact = per-user effect (3=massive, 2=high, 1=medium, 0.5=low, 0.25=minimal). Confidence = how sure you are (100/80/50%). Effort = person-months of work.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Feature / Idea, Col 1: Reach (users/qtr), Col 2: Impact (0.25–3), Col 3: Confidence, Col 4: Effort (p-months), Col 5: RICE Score, Col 6: Rank
+  Row 6: Col 0: 1-tap reorder, Col 1: 42000, Col 2: 2, Col 3: 0.9, Col 4: 2, Col 5: 37800, Col 6: 2
+  Row 7: Col 0: UPI autopay, Col 1: 30000, Col 2: 3, Col 3: 0.8, Col 4: 3, Col 5: 24000, Col 6: 4
+  Row 8: Col 0: Hindi voice search, Col 1: 18000, Col 2: 1, Col 3: 0.5, Col 4: 4, Col 5: 2250, Col 6: 8
+  Row 9: Col 0: Loyalty coins, Col 1: 55000, Col 2: 1, Col 3: 0.8, Col 4: 3, Col 5: 14666.666666666666, Col 6: 6
+  Row 10: Col 0: Group ordering, Col 1: 22000, Col 2: 2, Col 3: 0.7, Col 4: 5, Col 5: 6159.999999999999, Col 6: 7
+  Row 11: Col 0: Live order tracking, Col 1: 60000, Col 2: 2, Col 3: 0.9, Col 4: 2, Col 5: 54000, Col 6: 1
+  Row 12: Col 0: Referral rewards, Col 1: 48000, Col 2: 1, Col 3: 0.8, Col 4: 1.5, Col 5: 25600, Col 6: 3
+  Row 13: Col 0: Dark mode, Col 1: 35000, Col 2: 0.5, Col 3: 1, Col 4: 1, Col 5: 17500, Col 6: 5
+  Row 14: Col 0: Read it: build top-ranked first. If two scores are close, the one with lower Effort de-risks faster. Beware inflated Reach — anchor it to real analytics, not hopes.
+
+
+=== Weighted Scoring ===
+Rows count: 11
+  Row 1: Col 0: Weighted Scoring Model
+  Row 2: Col 0: Rank options against criteria that matter differently — weights must sum to 100%
+  Row 3: Col 0: WHEN TO USE: choosing between a few strategic options (e.g. which market to enter) where several criteria matter unequally. Set weights on row 8 (they auto-check to 100%). Score each option 1–5 on each criterion. Total = weighted sum.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Weights →, Col 1: 0.35, Col 2: 0.3, Col 3: 0.2, Col 4: 0.15, Col 5: 0.9999999999999999, Col 6: OK ✓
+  Row 6: Col 0: Option, Col 1: Strategic fit, Col 2: Revenue upside, Col 3: Speed to ship, Col 4: Low risk, Col 6: Weighted total
+  Row 7: Col 0: Tier-2 metros, Col 1: 4, Col 2: 5, Col 3: 3, Col 4: 3, Col 6: 3.95
+  Row 8: Col 0: Tier-3 towns, Col 1: 5, Col 2: 3, Col 3: 2, Col 4: 4, Col 6: 3.65
+  Row 9: Col 0: Premium urban, Col 1: 3, Col 2: 4, Col 3: 4, Col 4: 3, Col 6: 3.5
+  Row 10: Col 0: SMB / kirana, Col 1: 4, Col 2: 4, Col 3: 5, Col 4: 4, Col 6: 4.199999999999999
+  Row 11: Col 0: Read it: highest total wins. Weights are where the debate should happen — get stakeholders to agree on weights BEFORE scoring, so the numbers aren't reverse-engineered to a favourite.
+
+
+=== Value vs Effort ===
+Rows count: 14
+  Row 1: Col 0: Value vs Effort (2×2)
+  Row 2: Col 0: Quick Wins (high value, low effort) first; avoid the Money Pits
+  Row 3: Col 0: WHEN TO USE: a fast, visual triage. Rate Value and Effort 1–10. The scatter plots each item; the quadrant label is auto-assigned. Aim for the top-left: high value, low effort.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Item, Col 1: Value (1–10), Col 2: Effort (1–10), Col 3: Quadrant
+  Row 6: Col 0: Live tracking, Col 1: 9, Col 2: 3, Col 3: Quick Win
+  Row 7: Col 0: UPI autopay, Col 1: 8, Col 2: 6, Col 3: Big Bet
+  Row 8: Col 0: Voice search, Col 1: 4, Col 2: 7, Col 3: Money Pit
+  Row 9: Col 0: Dark mode, Col 1: 3, Col 2: 2, Col 3: Fill-in
+  Row 10: Col 0: Group ordering, Col 1: 6, Col 2: 8, Col 3: Big Bet
+  Row 11: Col 0: Referral rewards, Col 1: 7, Col 2: 3, Col 3: Quick Win
+  Row 12: Col 0: Loyalty coins, Col 1: 6, Col 2: 4, Col 3: Quick Win
+  Row 13: Col 0: AI menu recos, Col 1: 8, Col 2: 9, Col 3: Big Bet
+  Row 14: Col 0: Read it: Quick Wins build momentum and trust. Big Bets need a strategic reason. Money Pits (low value, high effort) are usually a 'no'. Fill-ins are for spare capacity only.
+
+
+=== Kano Model ===
+Rows count: 12
+  Row 1: Col 0: Kano Model
+  Row 2: Col 0: Classify features by how they drive satisfaction: Delighters, Performance, Must-be, Indifferent
+  Row 3: Col 0: WHEN TO USE: deciding what actually moves customer satisfaction. From paired survey questions, tally how many users put each feature in each category. Better = (Attractive+Performance)/total; Worse = −(Performance+Must-be)/total. The classification picks the most common vote.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Feature, Col 1: Attractive, Col 2: Performance, Col 3: Must-be, Col 4: Indifferent, Col 5: Reverse, Col 6: Better coeff., Col 7: Worse coeff., Col 8: Classification, Col 10: |Worse| (chart), Col 11: Better (chart)
+  Row 6: Col 0: Live tracking, Col 1: 30, Col 2: 45, Col 3: 20, Col 4: 5, Col 5: 0, Col 6: 0.75, Col 7: -0.65, Col 8: Performance, Col 10: 0.65, Col 11: 0.75
+  Row 7: Col 0: UPI autopay, Col 1: 15, Col 2: 40, Col 3: 40, Col 4: 5, Col 5: 0, Col 6: 0.55, Col 7: -0.8, Col 8: Performance, Col 10: 0.8, Col 11: 0.55
+  Row 8: Col 0: Hindi voice, Col 1: 50, Col 2: 20, Col 3: 5, Col 4: 25, Col 5: 0, Col 6: 0.7, Col 7: -0.25, Col 8: Delighter, Col 10: 0.25, Col 11: 0.7
+  Row 9: Col 0: Loyalty coins, Col 1: 55, Col 2: 25, Col 3: 5, Col 4: 15, Col 5: 0, Col 6: 0.8, Col 7: -0.3, Col 8: Delighter, Col 10: 0.3, Col 11: 0.8
+  Row 10: Col 0: Dark mode, Col 1: 20, Col 2: 10, Col 3: 5, Col 4: 60, Col 5: 5, Col 6: 0.3, Col 7: -0.15, Col 8: Indifferent, Col 10: 0.15, Col 11: 0.3
+  Row 11: Col 0: Fast delivery, Col 1: 5, Col 2: 35, Col 3: 55, Col 4: 5, Col 5: 0, Col 6: 0.4, Col 7: -0.9, Col 8: Must-be, Col 10: 0.9, Col 11: 0.4
+  Row 12: Col 0: Read it: top-left = Must-be (fix or lose trust), top-right = Performance (more is better), high Better + low Worse = Delighters (differentiators). Indifferent = don't over-invest.
+
+
+=== WSJF ===
+Rows count: 12
+  Row 1: Col 0: WSJF — Weighted Shortest Job First
+  Row 2: Col 0: SAFe prioritisation: WSJF = Cost of Delay ÷ Job Size. Do the highest WSJF first.
+  Row 3: Col 0: WHEN TO USE: agile/SAFe backlogs where sequencing matters. Cost of Delay = User-Business Value + Time Criticality + Risk-reduction/Opportunity. Score each 1–10 (relative, not absolute). Job Size = relative effort. Short, high-value jobs rise to the top.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Feature, Col 1: User/Biz Value, Col 2: Time Criticality, Col 3: Risk/Opportunity, Col 4: Cost of Delay, Col 5: Job Size, Col 6: WSJF, Col 7: Rank
+  Row 6: Col 0: Live tracking, Col 1: 8, Col 2: 7, Col 3: 5, Col 4: 20, Col 5: 3, Col 6: 6.666666666666667, Col 7: 2
+  Row 7: Col 0: UPI autopay, Col 1: 9, Col 2: 8, Col 3: 6, Col 4: 23, Col 5: 5, Col 6: 4.6, Col 7: 4
+  Row 8: Col 0: Voice search, Col 1: 4, Col 2: 3, Col 3: 4, Col 4: 11, Col 5: 4, Col 6: 2.75, Col 7: 5
+  Row 9: Col 0: Loyalty coins, Col 1: 7, Col 2: 5, Col 3: 4, Col 4: 16, Col 5: 3, Col 6: 5.333333333333333, Col 7: 3
+  Row 10: Col 0: Group ordering, Col 1: 5, Col 2: 4, Col 3: 6, Col 4: 15, Col 5: 6, Col 6: 2.5, Col 7: 6
+  Row 11: Col 0: Referral rewards, Col 1: 8, Col 2: 6, Col 3: 5, Col 4: 19, Col 5: 2, Col 6: 9.5, Col 7: 1
+  Row 12: Col 0: Read it: WSJF rewards small jobs that deliver value now. If everything is 'urgent', your Time Criticality scores aren't calibrated — force a spread from 1 to 10.
+
+
+=== MoSCoW ===
+Rows count: 15
+  Row 1: Col 0: MoSCoW
+  Row 2: Col 0: Scope a release: Must-have, Should-have, Could-have, Won't-have (this time)
+  Row 3: Col 0: WHEN TO USE: agreeing scope for a release or MVP. Tag each item M/S/C/W. Rule of thumb: Must-haves should be ≤60% of effort, leaving slack for the unknown. The summary and pie update automatically.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Item, Col 1: Category (M/S/C/W), Col 2: Effort (days), Col 4: Category, Col 5: Items, Col 6: Effort (days)
+  Row 6: Col 0: Checkout works, Col 1: M, Col 2: 6, Col 4: Must, Col 5: 3, Col 6: 15
+  Row 7: Col 0: UPI payment, Col 1: M, Col 2: 5, Col 4: Should, Col 5: 3, Col 6: 11
+  Row 8: Col 0: Order tracking, Col 1: M, Col 2: 4, Col 4: Could, Col 5: 2, Col 6: 6
+  Row 9: Col 0: Loyalty coins, Col 1: S, Col 2: 3, Col 4: Won't, Col 5: 1, Col 6: 8
+  Row 10: Col 0: Referral rewards, Col 1: S, Col 2: 3, Col 4: Total effort, Col 6: 40
+  Row 11: Col 0: Dark mode, Col 1: C, Col 2: 2, Col 4: Must-have % of effort, Col 6: 0.375
+  Row 12: Col 0: Voice search, Col 1: C, Col 2: 4
+  Row 13: Col 0: AR menu, Col 1: W, Col 2: 8
+  Row 14: Col 0: Group ordering, Col 1: S, Col 2: 5
+  Row 15: Col 0: Read it: if Must-have effort blows past ~60%, you have no room to absorb surprises — renegotiate scope now, not at crunch.
+
+
+=== Opportunity Scoring ===
+Rows count: 12
+  Row 1: Col 0: Opportunity Scoring (Ulwick / ODI)
+  Row 2: Col 0: Find under-served needs: Opportunity = Importance + max(Importance − Satisfaction, 0)
+  Row 3: Col 0: WHEN TO USE: outcome-driven innovation. Survey users on how IMPORTANT an outcome is and how SATISFIED they are today (both 1–10). High importance + low satisfaction = the biggest opportunity. Score >10 is a strong signal, >15 is exceptional.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Desired outcome (job step), Col 1: Importance (1–10), Col 2: Satisfaction (1–10), Col 3: Opportunity, Col 4: Rank
+  Row 6: Col 0: Get food fast when hungry, Col 1: 9, Col 2: 6, Col 3: 12, Col 4: 3
+  Row 7: Col 0: Trust the delivery ETA, Col 1: 9, Col 2: 4, Col 3: 14, Col 4: 1
+  Row 8: Col 0: Pay without friction, Col 1: 8, Col 2: 7, Col 3: 9, Col 4: 5
+  Row 9: Col 0: Discover new dishes I'll like, Col 1: 7, Col 2: 3, Col 3: 11, Col 4: 4
+  Row 10: Col 0: Reorder favourites easily, Col 1: 8, Col 2: 8, Col 3: 8, Col 4: 6
+  Row 11: Col 0: Resolve a wrong order, Col 1: 8, Col 2: 3, Col 3: 13, Col 4: 2
+  Row 12: Col 0: Read it: attack the highest opportunity scores — that's where users care a lot and current solutions disappoint. Well-served outcomes (high importance, high satisfaction) are table-stakes, not differentiators.
+
+
+=== BCG Matrix ===
+Rows count: 12
+  Row 1: Col 0: BCG Growth–Share Matrix
+  Row 2: Col 0: Portfolio view: Stars, Cash Cows, Question Marks, Dogs — decide where to invest, milk, or exit
+  Row 3: Col 0: WHEN TO USE: allocating money/attention across a portfolio of products or lines. Market Growth = the market's annual growth (invest if high). Relative Market Share = your share ÷ largest rival's share (>1 means you lead). Bubble size = revenue. Category is auto-assigned at the 10% / 1.0x lines.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Product / Line, Col 1: Market Growth, Col 2: Relative Mkt Share (x), Col 3: Revenue (₹ cr), Col 4: Category
+  Row 6: Col 0: Food delivery, Col 1: 0.18, Col 2: 1.4, Col 3: 220, Col 4: ★ Star
+  Row 7: Col 0: Grocery (10-min), Col 1: 0.35, Col 2: 0.6, Col 3: 80, Col 4: ? Question Mark
+  Row 8: Col 0: Dining-out coupons, Col 1: 0.05, Col 2: 1.6, Col 3: 140, Col 4: $ Cash Cow
+  Row 9: Col 0: Cloud kitchens, Col 1: 0.28, Col 2: 0.5, Col 3: 35, Col 4: ? Question Mark
+  Row 10: Col 0: Ads / media, Col 1: 0.22, Col 2: 1.2, Col 3: 60, Col 4: ★ Star
+  Row 11: Col 0: Print vouchers, Col 1: 0.02, Col 2: 0.7, Col 3: 12, Col 4: Dog
+  Row 12: Col 0: Play: fund Stars, milk Cash Cows to fund Stars/Question Marks, pick 1–2 Question Marks to back hard, and divest Dogs. Everything can't be a Star — a healthy portfolio needs Cash Cows paying the bills.
+
+
+=== Ansoff Matrix ===
+Rows count: 10
+  Row 1: Col 0: Ansoff Growth Matrix
+  Row 2: Col 0: Four growth vectors, rising risk: Market Penetration → Product Development / Market Development → Diversification
+  Row 3: Col 0: WHEN TO USE: choosing HOW to grow. Existing product + existing market = Penetration (lowest risk). New product OR new market = medium risk. New product AND new market = Diversification (highest risk). Enter expected revenue and a success probability; risk-adjusted value ranks them.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Initiative, Col 1: Growth vector, Col 2: Expected rev (₹ cr), Col 3: Success prob., Col 4: Risk-adjusted value
+  Row 6: Col 0: Push reorders to existing users, Col 1: Market Penetration, Col 2: 40, Col 3: 0.85, Col 4: 34
+  Row 7: Col 0: Launch grocery to same users, Col 1: Product Development, Col 2: 70, Col 3: 0.55, Col 4: 38.5
+  Row 8: Col 0: Enter Tier-3 towns, Col 1: Market Development, Col 2: 90, Col 3: 0.45, Col 4: 40.5
+  Row 9: Col 0: Fintech lending, new users, Col 1: Diversification, Col 2: 150, Col 3: 0.25, Col 4: 37.5
+  Row 10: Col 0: Read it: growth gets riskier as you move away from what you know. Weight your roadmap toward penetration for cash, a measured bet or two on adjacent products/markets, and diversify only with strong conviction and a ring-fenced budget.
+
+
+=== Porter 5 Forces ===
+Rows count: 14
+  Row 1: Col 0: Porter's Five Forces
+  Row 2: Col 0: How attractive is this market? Score each force 1 (benign) to 5 (brutal). Lower total = more attractive.
+  Row 3: Col 0: WHEN TO USE: assessing structural profitability of a market before entering or doubling down. Score the THREAT level of each force. The radar shows your risk shape; overall attractiveness = 6 − average score (higher is better).
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Force, Col 1: Threat (1–5), Col 2: Your notes
+  Row 6: Col 0: Competitive rivalry, Col 1: 4, Col 2: Zomato, Swiggy, local aggregators
+  Row 7: Col 0: Threat of new entrants, Col 1: 3, Col 2: High capital + network effects deter, but funding is available
+  Row 8: Col 0: Supplier power (restaurants), Col 1: 4, Col 2: Large chains negotiate hard on commission
+  Row 9: Col 0: Buyer power (users), Col 1: 4, Col 2: Low switching cost, coupon-driven
+  Row 10: Col 0: Threat of substitutes, Col 1: 2, Col 2: Home cooking, dine-in, direct restaurant apps
+  Row 11: Col 0: Average threat, Col 1: 3.4
+  Row 12: Col 0: Attractiveness (6 − avg), Col 1: 2.6
+  Row 13: Col 0: Verdict, Col 1: Tough but viable
+  Row 14: Col 0: Read it: a market where four forces are '5' can still be entered — but only with a wedge (a segment rivals ignore) and a durable moat. Use this to choose WHERE to compete, not just whether.
+
+
+=== North Star ===
+Rows count: 22
+  Row 1: Col 0: North Star Metric
+  Row 2: Col 0: One metric that captures the value users get — decomposed into the inputs a team can actually move
+  Row 3: Col 0: WHEN TO USE: aligning the whole team behind value, not vanity. Pick an NSM that rises only when customers succeed (e.g. 'weekly orders delivered on time'). Decompose it into 2–4 input metrics you can influence. Track actual vs target monthly.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: 1 · North Star decomposition   (NSM = Active users × Orders per user × On-time rate)
+  Row 6: Col 0: Input driver, Col 1: Current, Col 2: 90-day target, Col 3: Change, Col 4: % change
+  Row 7: Col 0: Monthly active users (000s), Col 1: 1200, Col 2: 1500, Col 3: 300, Col 4: 0.25
+  Row 8: Col 0: Orders per user / month, Col 1: 3.2, Col 2: 3.8, Col 3: 0.5999999999999996, Col 4: 0.1874999999999999
+  Row 9: Col 0: On-time delivery rate, Col 1: 0.86, Col 2: 0.93, Col 3: 0.07000000000000006, Col 4: 0.08139534883720938
+  Row 10: Col 0: NORTH STAR (monthly on-time orders, mn), Col 1: 3.3024, Col 2: 5.301, Col 3: 1.9986000000000002, Col 4: 0.6051962209302326
+  Row 11: Col 0: 2 · Monthly trajectory (actual vs target)
+  Row 12: Col 0: Month, Col 1: NSM actual (mn), Col 2: NSM target (mn)
+  Row 13: Col 0: Jan, Col 1: 2.9, Col 2: 3
+  Row 14: Col 0: Feb, Col 1: 3, Col 2: 3.15
+  Row 15: Col 0: Mar, Col 1: 3.15, Col 2: 3.3
+  Row 16: Col 0: Apr, Col 1: 3.3, Col 2: 3.45
+  Row 17: Col 0: May, Col 1: 3.4, Col 2: 3.6
+  Row 18: Col 0: Jun, Col 1: 3.55, Col 2: 3.75
+  Row 19: Col 0: Jul, Col 1: 3.7, Col 2: 3.9
+  Row 20: Col 0: Aug, Col 1: 3.8, Col 2: 4.05
+  Row 21: Col 0: Sep, Col 2: 4.2
+  Row 22: Col 0: Read it: if input drivers are all green but the NSM lags, your model of value is wrong — revisit which inputs truly cause the outcome. A good NSM is a leading indicator of revenue, not revenue itself.
+
+
+=== AARRR Funnel ===
+Rows count: 11
+  Row 1: Col 0: AARRR — Pirate Metrics
+  Row 2: Col 0: The lifecycle funnel: Acquisition → Activation → Retention → Revenue → Referral. Find the leakiest step.
+  Row 3: Col 0: WHEN TO USE: diagnosing where users drop off. Enter the count reaching each stage. Step conversion = this stage ÷ previous stage. % of top = this stage ÷ acquisition. The biggest drop is usually your highest-leverage fix.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Stage, Col 1: Users, Col 2: Step conversion, Col 3: % of Acquisition, Col 4: What it means
+  Row 6: Col 0: Acquisition, Col 1: 100000, Col 2: —, Col 3: 1, Col 4: People who arrive
+  Row 7: Col 0: Activation, Col 1: 42000, Col 2: 0.42, Col 3: 0.42, Col 4: Hit the 'aha' (first order)
+  Row 8: Col 0: Retention, Col 1: 23000, Col 2: 0.5476190476190477, Col 3: 0.23, Col 4: Come back in 30 days
+  Row 9: Col 0: Revenue, Col 1: 18000, Col 2: 0.782608695652174, Col 3: 0.18, Col 4: Pay / order again
+  Row 10: Col 0: Referral, Col 1: 5400, Col 2: 0.3, Col 3: 0.054, Col 4: Invite someone
+  Row 11: Col 0: Read it: don't pour money into Acquisition if Activation is leaking. Fix the funnel bottom-up — retention first, because retained users make every other number cheaper.
+
+
+=== HEART ===
+Rows count: 11
+  Row 1: Col 0: Google HEART Framework
+  Row 2: Col 0: Measure UX quality across Happiness, Engagement, Adoption, Retention, Task success
+  Row 3: Col 0: WHEN TO USE: turning fuzzy 'good experience' into trackable metrics. For each category pick ONE signal metric, set current & target. % attainment shows how close you are. Don't track all five if only two matter for this feature.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Category, Col 1: Signal metric, Col 2: Current, Col 3: Target, Col 4: % attain
+  Row 6: Col 0: Happiness, Col 1: CSAT / app rating, Col 2: 0.72, Col 3: 0.85, Col 4: 0.8470588235294118
+  Row 7: Col 0: Engagement, Col 1: Orders per active user / wk, Col 2: 1.1, Col 3: 1.5, Col 4: 0.7333333333333334
+  Row 8: Col 0: Adoption, Col 1: New-feature uptake in 30d, Col 2: 0.34, Col 3: 0.6, Col 4: 0.5666666666666668
+  Row 9: Col 0: Retention, Col 1: D30 retention, Col 2: 0.28, Col 3: 0.4, Col 4: 0.7000000000000001
+  Row 10: Col 0: Task success, Col 1: Checkout completion rate, Col 2: 0.88, Col 3: 0.95, Col 4: 0.9263157894736842
+  Row 11: Col 0: Read it: pair each metric with a Goal→Signal→Metric logic so you're measuring the behaviour that proves the goal, not the easiest number to collect. Retention and Task success are usually the truthful ones.
+
+
+=== Unit Economics ===
+Rows count: 16
+  Row 1: Col 0: Unit Economics — LTV, CAC & Payback
+  Row 2: Col 0: Does each customer make more than they cost? The single most important growth question.
+  Row 3: Col 0: WHEN TO USE: validating that growth is profitable, not just fast. Enter the four blue inputs. Lifetime = 1 ÷ monthly churn. LTV = ARPU × gross margin × lifetime. Aim for LTV:CAC ≥ 3 and payback ≤ 12 months.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Inputs & results, Col 3: Sensitivity: churn → LTV & ratio
+  Row 6: Col 0: ARPU — revenue per user / month, Col 1: 300, Col 3: Monthly churn, Col 4: LTV, Col 5: LTV:CAC
+  Row 7: Col 0: Gross margin, Col 1: 0.3, Col 3: 0.03, Col 4: 3000, Col 5: 3.3333333333333335
+  Row 8: Col 0: Monthly churn rate, Col 1: 0.05, Col 3: 0.05, Col 4: 1800, Col 5: 2
+  Row 9: Col 0: CAC — cost to acquire a customer, Col 1: 900, Col 3: 0.07, Col 4: 1285.7142857142856, Col 5: 1.4285714285714284
+  Row 10: Col 0: Avg customer lifetime (months), Col 1: 20, Col 3: 0.1, Col 4: 900, Col 5: 1
+  Row 11: Col 0: Contribution / month (ARPU × margin), Col 1: 90
+  Row 12: Col 0: LTV (lifetime value), Col 1: 1800
+  Row 13: Col 0: LTV : CAC ratio, Col 1: 2
+  Row 14: Col 0: CAC payback (months), Col 1: 10
+  Row 15: Col 0: Health verdict, Col 1: Fragile
+  Row 16: Col 0: Read it: churn is the silent killer — halving churn doubles lifetime and LTV. If LTV:CAC < 3, either lower CAC (better targeting/organic), raise ARPU, or cut churn before you scale spend.
+
+
+=== Cohort Retention ===
+Rows count: 18
+  Row 1: Col 0: Cohort Retention
+  Row 2: Col 0: Track how each monthly signup group sticks around over time — the truest measure of product value
+  Row 3: Col 0: WHEN TO USE: judging real stickiness and product-market fit. Enter cohort size (Month 0 users) and how many are still active each later month. Retention % is auto-calculated. A flattening curve (retention stops falling) is the signal of PMF.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: 1 · Retained users (enter counts)
+  Row 6: Col 0: Cohort, Col 1: Size (M0), Col 2: M1, Col 3: M2, Col 4: M3, Col 5: M4, Col 6: M5, Col 7: M6
+  Row 7: Col 0: Jan, Col 1: 5000, Col 2: 2900, Col 3: 2100, Col 4: 1750, Col 5: 1550, Col 6: 1450, Col 7: 1400
+  Row 8: Col 0: Feb, Col 1: 5600, Col 2: 3360, Col 3: 2520, Col 4: 2130, Col 5: 1900, Col 6: 1800, Col 7: 1750
+  Row 9: Col 0: Mar, Col 1: 6100, Col 2: 3900, Col 3: 3050, Col 4: 2620, Col 5: 2380, Col 6: 2260, Col 7: 2200
+  Row 10: Col 0: Apr, Col 1: 6800, Col 2: 4490, Col 3: 3600, Col 4: 3130, Col 5: 2860, Col 6: 2720, Col 7: 2650
+  Row 11: Col 0: 2 · Retention % (auto: retained ÷ cohort size)
+  Row 12: Col 0: Cohort, Col 1: M0, Col 2: M1, Col 3: M2, Col 4: M3, Col 5: M4, Col 6: M5, Col 7: M6
+  Row 13: Col 0: Jan, Col 1: 1, Col 2: 0.58, Col 3: 0.42, Col 4: 0.35, Col 5: 0.31, Col 6: 0.29, Col 7: 0.28
+  Row 14: Col 0: Feb, Col 1: 1, Col 2: 0.6, Col 3: 0.45, Col 4: 0.38035714285714284, Col 5: 0.3392857142857143, Col 6: 0.32142857142857145, Col 7: 0.3125
+  Row 15: Col 0: Mar, Col 1: 1, Col 2: 0.639344262295082, Col 3: 0.5, Col 4: 0.42950819672131146, Col 5: 0.3901639344262295, Col 6: 0.3704918032786885, Col 7: 0.36065573770491804
+  Row 16: Col 0: Apr, Col 1: 1, Col 2: 0.6602941176470588, Col 3: 0.5294117647058824, Col 4: 0.4602941176470588, Col 5: 0.42058823529411765, Col 6: 0.4, Col 7: 0.3897058823529412
+  Row 17: Col 0: Average, Col 1: 1, Col 2: 0.6199095949855352, Col 3: 0.4748529411764706, Col 4: 0.40503986430637823, Col 5: 0.3650094710015154, Col 6: 0.345480093676815, Col 7: 0.3357154050144648
+  Row 18: Col 0: Read it: if every cohort keeps declining to near-zero, you don't have PMF yet. A curve that flattens at, say, 28% means a loyal core — newer cohorts flattening HIGHER means your product is improving.
+
+
+=== PMF Survey ===
+Rows count: 14
+  Row 1: Col 0: Product-Market Fit Survey (Sean Ellis test)
+  Row 2: Col 0: Ask users: 'How would you feel if you could no longer use this product?' ≥40% 'very disappointed' = PMF signal
+  Row 3: Col 0: WHEN TO USE: gauging whether you have product-market fit. Survey engaged users. Count responses in each bucket. The score = 'very disappointed' ÷ (all answers except N/A). 40% is the benchmark from thousands of startups.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Responses
+  Row 6: Col 0: Response, Col 1: Count
+  Row 7: Col 0: Very disappointed, Col 1: 210
+  Row 8: Col 0: Somewhat disappointed, Col 1: 180
+  Row 9: Col 0: Not disappointed, Col 1: 90
+  Row 10: Col 0: N/A – I no longer use it, Col 1: 20
+  Row 11: Col 0: Valid responses (excl. N/A), Col 1: 480
+  Row 12: Col 0: PMF score (% very disappointed), Col 1: 0.4375
+  Row 13: Col 0: Verdict vs 40% benchmark, Col 1: PMF signal ✓
+  Row 14: Col 0: Read it: below 40%, segment the 'very disappointed' users — who are they, what do they love? Double down on that persona and use-case before broadening. This survey guides positioning as much as product.
+
+
+=== A-B Test ===
+Rows count: 15
+  Row 1: Col 0: A/B Test Significance Calculator
+  Row 2: Col 0: Is the difference real or noise? Two-proportion z-test with 95% / 99% thresholds
+  Row 3: Col 0: WHEN TO USE: deciding if a variant genuinely beats control. Enter visitors and conversions for each. The calculator returns conversion rates, relative uplift, a z-score and whether it clears the 95% (z>1.96) and 99% (z>2.576) bars. Aim for a pre-set sample size, don't peek early.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Inputs, Col 3: Results
+  Row 6: Col 0: Metric, Col 1: Value, Col 3: Control conversion rate, Col 4: 0.08
+  Row 7: Col 0: Control — visitors, Col 1: 20000, Col 3: Variant conversion rate, Col 4: 0.088
+  Row 8: Col 0: Control — conversions, Col 1: 1600, Col 3: Absolute difference, Col 4: 0.007999999999999993
+  Row 9: Col 0: Variant — visitors, Col 1: 20000, Col 3: Relative uplift, Col 4: 0.09999999999999987
+  Row 10: Col 0: Variant — conversions, Col 1: 1760, Col 3: Pooled rate, Col 4: 0.084
+  Row 11: Col 3: Standard error, Col 4: 0.00277387815161373
+  Row 12: Col 0: Control, Col 1: 0.08, Col 3: z-score, Col 4: 2.884048816400215
+  Row 13: Col 0: Variant, Col 1: 0.088, Col 3: Significant at 95%? (|z|>1.96), Col 4: YES ✓
+  Row 14: Col 3: Significant at 99%? (|z|>2.576), Col 4: YES ✓
+  Row 15: Col 0: Read it: 'not significant' doesn't mean 'no effect' — it may mean too little data. Decide your sample size and duration up front. Practical significance (is the uplift worth shipping?) matters as much as statistical significance.
+
+
+=== OKR Tracker ===
+Rows count: 11
+  Row 1: Col 0: OKR Tracker
+  Row 2: Col 0: Objectives are the ambition; Key Results are the measurable proof. Track progress, not activity.
+  Row 3: Col 0: WHEN TO USE: quarterly goal-setting and mid-cycle check-ins. Each Objective gets 2–4 Key Results with a Start, Current and Target. Progress = (Current − Start) ÷ (Target − Start). 0.7 is often 'success' for a stretch KR — 1.0 everywhere means you set them too easy.
+  Row 4: Col 0:   Legend:  Yellow = your inputs (edit these)    ·    White = live formulas (leave alone)
+  Row 5: Col 0: Objective, Col 1: Key Result, Col 2: Start, Col 3: Current, Col 4: Target, Col 5: Progress, Col 6: Status
+  Row 6: Col 0: Make ordering effortless, Col 1: D30 retention (%), Col 2: 28, Col 3: 33, Col 4: 40, Col 5: 0.4166666666666667, Col 6: At risk
+  Row 7: Col 0: Make ordering effortless, Col 1: Checkout completion (%), Col 2: 88, Col 3: 92, Col 4: 95, Col 5: 0.5714285714285714, Col 6: At risk
+  Row 8: Col 0: Win Tier-2 metros, Col 1: Tier-2 MAU (000s), Col 2: 300, Col 3: 520, Col 4: 800, Col 5: 0.44, Col 6: At risk
+  Row 9: Col 0: Win Tier-2 metros, Col 1: Tier-2 orders/user/mo, Col 2: 2.1, Col 3: 2.6, Col 4: 3.2, Col 5: 0.45454545454545453, Col 6: At risk
+  Row 10: Col 0: Fund growth sustainably, Col 1: LTV:CAC ratio, Col 2: 1.8, Col 3: 2.4, Col 4: 3, Col 5: 0.4999999999999999, Col 6: At risk
+  Row 11: Col 0: Read it: OKRs measure outcomes, not tasks. 'Ship feature X' is not a Key Result; 'raise retention to 40%' is. Review weekly, grade at quarter-end, and don't tie 100%-or-bust bonuses to stretch OKRs — it kills ambition.
+
+

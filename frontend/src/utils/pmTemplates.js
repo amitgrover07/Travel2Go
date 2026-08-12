@@ -22,29 +22,42 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Feature / Idea", type: "text", editable: true },
-      { key: "reach", label: "Reach (users/qtr)", type: "number", editable: true },
-      { key: "impact", label: "Impact (0.25-3)", type: "number", editable: true },
-      { key: "confidence", label: "Confidence (%)", type: "percent", editable: true },
-      { key: "effort", label: "Effort (p-months)", type: "number", editable: true },
+      { key: "reach", label: "Reach (users/qtr)", type: "number", min: 0, editable: true },
+      { 
+        key: "impact", 
+        label: "Impact (0.25-3)", 
+        type: "select", 
+        valueType: "number",
+        editable: true, 
+        options: [
+          { value: 3.0, label: "3 - Massive" },
+          { value: 2.0, label: "2 - High" },
+          { value: 1.0, label: "1 - Medium" },
+          { value: 0.5, label: "0.5 - Low" },
+          { value: 0.25, label: "0.25 - Minimal" }
+        ] 
+      },
+      { key: "confidence", label: "Confidence (%)", type: "number", min: 0, max: 100, editable: true },
+      { key: "effort", label: "Effort (p-months)", type: "number", min: 0.1, editable: true },
       { key: "score", label: "RICE Score", type: "number", editable: false },
       { key: "rank", label: "Rank", type: "number", editable: false }
     ],
     defaultRows: [
-      { id: "1", name: "1-tap reorder", reach: 42000, impact: 2.0, confidence: 0.9, effort: 2.0 },
-      { id: "2", name: "UPI autopay", reach: 30000, impact: 3.0, confidence: 0.8, effort: 3.0 },
-      { id: "3", name: "Hindi voice search", reach: 18000, impact: 1.0, confidence: 0.5, effort: 4.0 },
-      { id: "4", name: "Loyalty coins", reach: 55000, impact: 1.0, confidence: 0.8, effort: 3.0 },
-      { id: "5", name: "Group ordering", reach: 22000, impact: 2.0, confidence: 0.7, effort: 5.0 },
-      { id: "6", name: "Live order tracking", reach: 60000, impact: 2.0, confidence: 0.9, effort: 2.0 },
-      { id: "7", name: "Referral rewards", reach: 48000, impact: 1.0, confidence: 0.8, effort: 1.5 },
-      { id: "8", name: "Dark mode", reach: 35000, impact: 0.5, confidence: 1.0, effort: 1.0 }
+      { id: "1", name: "1-tap reorder", reach: 42000, impact: 2.0, confidence: 90, effort: 2.0 },
+      { id: "2", name: "UPI autopay", reach: 30000, impact: 3.0, confidence: 80, effort: 3.0 },
+      { id: "3", name: "Hindi voice search", reach: 18000, impact: 1.0, confidence: 50, effort: 4.0 },
+      { id: "4", name: "Loyalty coins", reach: 55000, impact: 1.0, confidence: 80, effort: 3.0 },
+      { id: "5", name: "Group ordering", reach: 22000, impact: 2.0, confidence: 70, effort: 5.0 },
+      { id: "6", name: "Live order tracking", reach: 60000, impact: 2.0, confidence: 90, effort: 2.0 },
+      { id: "7", name: "Referral rewards", reach: 48000, impact: 1.0, confidence: 80, effort: 1.5 },
+      { id: "8", name: "Dark mode", reach: 35000, impact: 0.5, confidence: 100, effort: 1.0 }
     ],
     calculate: (rows) => {
       const calculated = rows.map(row => {
         const reach = Number(row.reach) || 0;
         const impact = Number(row.impact) || 0;
-        const confidence = Number(row.confidence) || 0;
-        const effort = Number(row.effort) || 1; // Avoid division by zero
+        const confidence = (Number(row.confidence) || 0) / 100;
+        const effort = Number(row.effort) || 0.1; // Avoid division by zero
         const score = Math.round((reach * impact * confidence) / effort);
         return { ...row, score };
       });
@@ -75,17 +88,17 @@ export const PM_TEMPLATES = {
       "Pseudo-precision: 1-5 is opinion, treat it as such."
     ],
     weights: {
-      fit: 0.35,
-      revenue: 0.30,
-      speed: 0.20,
-      risk: 0.15
+      fit: 35,
+      revenue: 30,
+      speed: 20,
+      risk: 15
     },
     headers: [
       { key: "name", label: "Option", type: "text", editable: true },
-      { key: "fit", label: "Strategic fit (1-5)", type: "number", editable: true },
-      { key: "revenue", label: "Revenue upside (1-5)", type: "number", editable: true },
-      { key: "speed", label: "Speed to ship (1-5)", type: "number", editable: true },
-      { key: "risk", label: "Low risk (1-5)", type: "number", editable: true },
+      { key: "fit", label: "Strategic fit (1-5)", type: "number", min: 1, max: 5, editable: true },
+      { key: "revenue", label: "Revenue upside (1-5)", type: "number", min: 1, max: 5, editable: true },
+      { key: "speed", label: "Speed to ship (1-5)", type: "number", min: 1, max: 5, editable: true },
+      { key: "risk", label: "Low risk (1-5)", type: "number", min: 1, max: 5, editable: true },
       { key: "score", label: "Weighted total", type: "number", editable: false }
     ],
     defaultRows: [
@@ -95,10 +108,10 @@ export const PM_TEMPLATES = {
       { id: "4", name: "SMB / kirana", fit: 4, revenue: 4, speed: 5, risk: 4 }
     ],
     calculate: (rows, weights) => {
-      const fitW = Number(weights.fit) || 0;
-      const revW = Number(weights.revenue) || 0;
-      const speedW = Number(weights.speed) || 0;
-      const riskW = Number(weights.risk) || 0;
+      const fitW = (Number(weights.fit) || 0) / 100;
+      const revW = (Number(weights.revenue) || 0) / 100;
+      const speedW = (Number(weights.speed) || 0) / 100;
+      const riskW = (Number(weights.risk) || 0) / 100;
       return rows.map(row => {
         const fit = Number(row.fit) || 0;
         const revenue = Number(row.revenue) || 0;
@@ -130,8 +143,8 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Item / Feature", type: "text", editable: true },
-      { key: "value", label: "Value (1-10)", type: "number", editable: true },
-      { key: "effort", label: "Effort (1-10)", type: "number", editable: true },
+      { key: "value", label: "Value (1-10)", type: "number", min: 1, max: 10, editable: true },
+      { key: "effort", label: "Effort (1-10)", type: "number", min: 1, max: 10, editable: true },
       { key: "quadrant", label: "Quadrant", type: "text", editable: false }
     ],
     defaultRows: [
@@ -178,11 +191,11 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Feature / Idea", type: "text", editable: true },
-      { key: "attractive", label: "Attractive (Delight)", type: "number", editable: true },
-      { key: "performance", label: "Performance", type: "number", editable: true },
-      { key: "mustBe", label: "Must-be (Basic)", type: "number", editable: true },
-      { key: "indifferent", label: "Indifferent", type: "number", editable: true },
-      { key: "reverse", label: "Reverse", type: "number", editable: true },
+      { key: "attractive", label: "Attractive (Delight)", type: "number", min: 0, editable: true },
+      { key: "performance", label: "Performance", type: "number", min: 0, editable: true },
+      { key: "mustBe", label: "Must-be (Basic)", type: "number", min: 0, editable: true },
+      { key: "indifferent", label: "Indifferent", type: "number", min: 0, editable: true },
+      { key: "reverse", label: "Reverse", type: "number", min: 0, editable: true },
       { key: "better", label: "Better coeff. (0 to 1)", type: "number", editable: false },
       { key: "worse", label: "Worse coeff. (-1 to 0)", type: "number", editable: false },
       { key: "classification", label: "Kano Category", type: "text", editable: false }
@@ -253,11 +266,11 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Feature / Job", type: "text", editable: true },
-      { key: "value", label: "User/Biz Value (1-10)", type: "number", editable: true },
-      { key: "criticality", label: "Time Criticality (1-10)", type: "number", editable: true },
-      { key: "opportunity", label: "Risk/Opp Enable (1-10)", type: "number", editable: true },
+      { key: "value", label: "User/Biz Value (1-10)", type: "number", min: 1, max: 10, editable: true },
+      { key: "criticality", label: "Time Criticality (1-10)", type: "number", min: 1, max: 10, editable: true },
+      { key: "opportunity", label: "Risk/Opp Enable (1-10)", type: "number", min: 1, max: 10, editable: true },
       { key: "cod", label: "Cost of Delay", type: "number", editable: false },
-      { key: "size", label: "Job Size (relative)", type: "number", editable: true },
+      { key: "size", label: "Job Size (relative)", type: "number", min: 1, editable: true },
       { key: "wsjf", label: "WSJF Score", type: "number", editable: false },
       { key: "rank", label: "Rank", type: "number", editable: false }
     ],
@@ -308,7 +321,7 @@ export const PM_TEMPLATES = {
     headers: [
       { key: "name", label: "Backlog Item", type: "text", editable: true },
       { key: "category", label: "Category (M/S/C/W)", type: "select", editable: true, options: ["M", "S", "C", "W"] },
-      { key: "effort", label: "Effort (days)", type: "number", editable: true }
+      { key: "effort", label: "Effort (days)", type: "number", min: 0, editable: true }
     ],
     defaultRows: [
       { id: "1", name: "Checkout works", category: "M", effort: 6 },
@@ -362,8 +375,8 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Desired Customer Outcome (Job Step)", type: "text", editable: true },
-      { key: "importance", label: "Importance (1-10)", type: "number", editable: true },
-      { key: "satisfaction", label: "Satisfaction (1-10)", type: "number", editable: true },
+      { key: "importance", label: "Importance (1-10)", type: "number", min: 1, max: 10, editable: true },
+      { key: "satisfaction", label: "Satisfaction (1-10)", type: "number", min: 1, max: 10, editable: true },
       { key: "opportunity", label: "Opportunity Score", type: "number", editable: false },
       { key: "rank", label: "Rank", type: "number", editable: false }
     ],
@@ -409,9 +422,9 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Product / Line", type: "text", editable: true },
-      { key: "growth", label: "Market Growth (e.g. 0.15 = 15%)", type: "number", editable: true },
-      { key: "share", label: "Relative Share (x)", type: "number", editable: true },
-      { key: "revenue", label: "Revenue (₹ cr)", type: "number", editable: true },
+      { key: "growth", label: "Market Growth (e.g. 0.15 = 15%)", type: "number", min: 0, max: 1, editable: true },
+      { key: "share", label: "Relative Share (x)", type: "number", min: 0, max: 10, editable: true },
+      { key: "revenue", label: "Revenue (₹ cr)", type: "number", min: 0, editable: true },
       { key: "category", label: "Category", type: "text", editable: false }
     ],
     defaultRows: [
@@ -458,20 +471,20 @@ export const PM_TEMPLATES = {
     headers: [
       { key: "name", label: "Initiative", type: "text", editable: true },
       { key: "vector", label: "Growth Vector", type: "select", editable: true, options: ["Market Penetration", "Product Development", "Market Development", "Diversification"] },
-      { key: "revenue", label: "Expected Rev (₹ cr)", type: "number", editable: true },
-      { key: "probability", label: "Success Prob. (%)", type: "percent", editable: true },
+      { key: "revenue", label: "Expected Rev (₹ cr)", type: "number", min: 0, editable: true },
+      { key: "probability", label: "Success Prob. (%)", type: "number", min: 0, max: 100, editable: true },
       { key: "riskAdjusted", label: "Risk-Adjusted Value", type: "number", editable: false }
     ],
     defaultRows: [
-      { id: "1", name: "Push reorders to existing users", vector: "Market Penetration", revenue: 40, probability: 0.85 },
-      { id: "2", name: "Launch grocery to same users", vector: "Product Development", revenue: 70, probability: 0.55 },
-      { id: "3", name: "Enter Tier-3 towns", vector: "Market Development", revenue: 90, probability: 0.45 },
-      { id: "4", name: "Fintech lending, new users", vector: "Diversification", revenue: 150, probability: 0.25 }
+      { id: "1", name: "Push reorders to existing users", vector: "Market Penetration", revenue: 40, probability: 85 },
+      { id: "2", name: "Launch grocery to same users", vector: "Product Development", revenue: 70, probability: 55 },
+      { id: "3", name: "Enter Tier-3 towns", vector: "Market Development", revenue: 90, probability: 45 },
+      { id: "4", name: "Fintech lending, new users", vector: "Diversification", revenue: 150, probability: 25 }
     ],
     calculate: (rows) => {
       return rows.map(row => {
         const rev = Number(row.revenue) || 0;
-        const prob = Number(row.probability) || 0;
+        const prob = (Number(row.probability) || 0) / 100;
         const riskAdjusted = Number((rev * prob).toFixed(1));
         return { ...row, riskAdjusted };
       });
@@ -497,7 +510,7 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "force", label: "Force", type: "text", editable: false },
-      { key: "threat", label: "Threat Level (1-5)", type: "number", editable: true },
+      { key: "threat", label: "Threat Level (1-5)", type: "number", min: 1, max: 5, editable: true },
       { key: "notes", label: "Notes / Evidence", type: "text", editable: true }
     ],
     defaultRows: [
@@ -547,7 +560,7 @@ export const PM_TEMPLATES = {
     defaultDrivers: [
       { id: "1", driver: "Monthly active users (000s)", current: 1200, target: 1500 },
       { id: "2", driver: "Orders per user / month", current: 3.2, target: 3.8 },
-      { id: "3", driver: "On-time delivery rate (%)", current: 0.86, target: 0.93 }
+      { id: "3", driver: "On-time delivery rate (%)", current: 86, target: 93 }
     ],
     defaultTrajectory: [
       { month: "Jan", actual: 2.90, target: 3.00 },
@@ -570,7 +583,7 @@ export const PM_TEMPLATES = {
       });
       
       // Calculate NSM actual and target
-      const getNSM = (active, orders, rate) => (active * orders * rate) / 1000;
+      const getNSM = (active, orders, rate) => (active * orders * (rate / 100)) / 1000;
       
       const nsmCurrent = getNSM(calcDrivers[0].current, calcDrivers[1].current, calcDrivers[2].current);
       const nsmTarget = getNSM(calcDrivers[0].target, calcDrivers[1].target, calcDrivers[2].target);
@@ -609,7 +622,7 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "stage", label: "Funnel Stage", type: "text", editable: false },
-      { key: "users", label: "Users", type: "number", editable: true },
+      { key: "users", label: "Users", type: "number", min: 0, editable: true },
       { key: "stepConv", label: "Step Conversion", type: "percent", editable: false },
       { key: "totalConv", label: "% of Acquisition", type: "percent", editable: false },
       { key: "definition", label: "Definition", type: "text", editable: false }
@@ -662,16 +675,16 @@ export const PM_TEMPLATES = {
     headers: [
       { key: "category", label: "UX Category", type: "text", editable: false },
       { key: "metric", label: "Signal Metric", type: "text", editable: true },
-      { key: "current", label: "Current", type: "number", editable: true },
-      { key: "target", label: "Target Goal", type: "number", editable: true },
+      { key: "current", label: "Current", type: "number", min: 0, editable: true },
+      { key: "target", label: "Target Goal", type: "number", min: 0.1, editable: true },
       { key: "attainment", label: "% Attainment", type: "percent", editable: false }
     ],
     defaultRows: [
-      { id: "1", category: "Happiness", metric: "CSAT / app store rating", current: 0.72, target: 0.85 },
+      { id: "1", category: "Happiness", metric: "CSAT / app store rating", current: 72, target: 85 },
       { id: "2", category: "Engagement", metric: "Orders per active user / week", current: 1.1, target: 1.5 },
-      { id: "3", category: "Adoption", metric: "New-feature uptake in 30d", current: 0.34, target: 0.60 },
-      { id: "4", category: "Retention", metric: "D30 retention rate", current: 0.28, target: 0.40 },
-      { id: "5", category: "Task success", metric: "Checkout completion rate", current: 0.88, target: 0.95 }
+      { id: "3", category: "Adoption", metric: "New-feature uptake in 30d", current: 34, target: 60 },
+      { id: "4", category: "Retention", metric: "D30 retention rate", current: 28, target: 40 },
+      { id: "5", category: "Task success", metric: "Checkout completion rate", current: 88, target: 95 }
     ],
     calculate: (rows) => {
       return rows.map(row => {
@@ -705,14 +718,14 @@ export const PM_TEMPLATES = {
     ],
     inputs: {
       arpu: 300,
-      margin: 0.3,
-      churn: 0.05,
+      margin: 30,
+      churn: 5,
       cac: 900
     },
     calculate: (inputs) => {
       const arpu = Number(inputs.arpu) || 0;
-      const margin = Number(inputs.margin) || 0;
-      const churn = Number(inputs.churn) || 0.01;
+      const margin = (Number(inputs.margin) || 0) / 100;
+      const churn = (Number(inputs.churn) || 0) / 100;
       const cac = Number(inputs.cac) || 1;
       
       const lifetime = 1 / churn;
@@ -767,7 +780,16 @@ export const PM_TEMPLATES = {
       "Too-small cohorts resulting in noise.",
       "Declaring PMF before the curve flattens."
     ],
-    headers: ["Cohort", "Size (M0)", "M1", "M2", "M3", "M4", "M5", "M6"],
+    headers: [
+      { key: "cohort", label: "Cohort", type: "text", editable: true },
+      { key: "size", label: "Size (M0)", type: "number", min: 1, editable: true },
+      { key: "m1", label: "M1", type: "number", min: 0, editable: true },
+      { key: "m2", label: "M2", type: "number", min: 0, editable: true },
+      { key: "m3", label: "M3", type: "number", min: 0, editable: true },
+      { key: "m4", label: "M4", type: "number", min: 0, editable: true },
+      { key: "m5", label: "M5", type: "number", min: 0, editable: true },
+      { key: "m6", label: "M6", type: "number", min: 0, editable: true }
+    ],
     defaultRows: [
       { id: "1", cohort: "Jan", size: 5000, m1: 2900, m2: 2100, m3: 1750, m4: 1550, m5: 1450, m6: 1400 },
       { id: "2", cohort: "Feb", size: 5600, m1: 3360, m2: 2520, m3: 2130, m4: 1900, m5: 1800, m6: 1750 },
@@ -831,6 +853,10 @@ export const PM_TEMPLATES = {
       "Surveying signups who never reached the 'aha' moment.",
       "Chasing the 40% number instead of understanding user personas.",
       "Declaring PMF from one good week; confirm with retention."
+    ],
+    headers: [
+      { key: "label", label: "Response Option", type: "text", editable: false },
+      { key: "count", label: "User Count", type: "number", min: 0, editable: true }
     ],
     defaultRows: [
       { key: "very", label: "Very disappointed", count: 210 },

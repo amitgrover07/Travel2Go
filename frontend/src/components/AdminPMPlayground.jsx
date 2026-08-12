@@ -1563,10 +1563,25 @@ const AdminPMPlayground = () => {
     });
   };
 
+  const cleanAndClampInput = (val, min, max) => {
+    if (val === '' || val === undefined || val === null) return 0;
+    let str = val.toString();
+    // Remove leading zeros from integers (e.g. '05' -> '5') but preserve decimals (like '0.5')
+    if (str.length > 1 && str.startsWith('0') && str[1] !== '.') {
+      str = str.replace(/^0+/, '');
+    }
+    let num = Number(str);
+    if (isNaN(num)) num = 0;
+    if (min !== undefined && num < min) num = min;
+    if (max !== undefined && num > max) num = max;
+    return num;
+  };
+
   const handleWeightChange = (frameworkKey, weightKey, val) => {
+    const cleaned = cleanAndClampInput(val, 0, 100);
     setFrameworkData(prev => {
       const framework = { ...prev[frameworkKey] };
-      framework.weights = { ...framework.weights, [weightKey]: Number(val) || 0 };
+      framework.weights = { ...framework.weights, [weightKey]: cleaned };
       return { ...prev, [frameworkKey]: framework };
     });
   };
@@ -1574,16 +1589,36 @@ const AdminPMPlayground = () => {
   const handleInputChange = (frameworkKey, inputKey, val) => {
     setFrameworkData(prev => {
       const framework = { ...prev[frameworkKey] };
-      framework.inputs = { ...framework.inputs, [inputKey]: Number(val) || 0 };
+      const inputs = { ...framework.inputs };
+      
+      let min = 0;
+      let max = undefined;
+      if (frameworkKey === "UnitEconomics") {
+        if (inputKey === "margin" || inputKey === "churn") max = 100;
+      } else if (frameworkKey === "ABTest") {
+        if (inputKey === "controlVisitors" || inputKey === "variantVisitors") min = 1;
+        if (inputKey === "controlConversions") max = inputs.controlVisitors || 1;
+        if (inputKey === "variantConversions") max = inputs.variantVisitors || 1;
+      }
+      
+      const cleaned = cleanAndClampInput(val, min, max);
+      inputs[inputKey] = cleaned;
+      framework.inputs = inputs;
       return { ...prev, [frameworkKey]: framework };
     });
   };
 
   const handleDriverChange = (frameworkKey, idx, field, val) => {
+    let min = 0;
+    let max = undefined;
+    if (idx === 2) { // On-time delivery rate (%)
+      max = 100;
+    }
+    const cleaned = cleanAndClampInput(val, min, max);
     setFrameworkData(prev => {
       const framework = { ...prev[frameworkKey] };
       const updatedDrivers = [...framework.drivers];
-      updatedDrivers[idx] = { ...updatedDrivers[idx], [field]: Number(val) || 0 };
+      updatedDrivers[idx] = { ...updatedDrivers[idx], [field]: cleaned };
       framework.drivers = updatedDrivers;
       return { ...prev, [frameworkKey]: framework };
     });
@@ -1593,14 +1628,29 @@ const AdminPMPlayground = () => {
     setFrameworkData(prev => {
       const framework = { ...prev[frameworkKey] };
       const updatedTrajectory = [...framework.trajectory];
+      
+      let cleanVal = val;
+      if (val === '') {
+        cleanVal = null;
+      } else {
+        let str = val.toString();
+        if (str.length > 1 && str.startsWith('0') && str[1] !== '.') {
+          str = str.replace(/^0+/, '');
+        }
+        cleanVal = Number(str);
+        if (isNaN(cleanVal)) cleanVal = null;
+        if (cleanVal < 0) cleanVal = 0;
+      }
+      
       updatedTrajectory[idx] = { 
         ...updatedTrajectory[idx], 
-        [field]: val === '' ? null : Number(val) 
+        [field]: cleanVal 
       };
       framework.trajectory = updatedTrajectory;
       return { ...prev, [frameworkKey]: framework };
     });
   };
+
 
   // Row Manipulation
   const handleAddRow = (frameworkKey) => {
@@ -2106,11 +2156,13 @@ const AdminPMPlayground = () => {
                               </div>
                               <div>
                                 <label className="block text-xs text-slate-500 mb-1">
-                                  Gross Margin (e.g. 0.30 for 30%)
+                                  Gross Margin (%, e.g. 30 for 30%)
                                 </label>
                                 <input
                                   type="number"
-                                  step="0.05"
+                                  min="0"
+                                  max="100"
+                                  step="1"
                                   value={data.inputs.margin}
                                   onChange={e => handleInputChange(activeTab, "margin", e.target.value)}
                                   className="w-full bg-white border border-slate-200 rounded p-2 text-yellow-600 font-bold text-sm focus:outline-none focus:border-pink-500"
@@ -2118,11 +2170,13 @@ const AdminPMPlayground = () => {
                               </div>
                               <div>
                                 <label className="block text-xs text-slate-500 mb-1">
-                                  Monthly Churn Rate (e.g. 0.05 for 5%)
+                                  Monthly Churn Rate (%, e.g. 5 for 5%)
                                 </label>
                                 <input
                                   type="number"
-                                  step="0.01"
+                                  min="0"
+                                  max="100"
+                                  step="1"
                                   value={data.inputs.churn}
                                   onChange={e => handleInputChange(activeTab, "churn", e.target.value)}
                                   className="w-full bg-white border border-slate-200 rounded p-2 text-yellow-600 font-bold text-sm focus:outline-none focus:border-pink-500"
@@ -2332,9 +2386,17 @@ const AdminPMPlayground = () => {
                                   <span className="text-slate-500 font-bold">{labels[wKey]}:</span>
                                   <input
                                     type="number"
-                                    step="0.05"
+                                    min="0"
+                                    max="100"
+                                    step="1"
                                     value={data.weights[wKey]}
-                                    onChange={e => handleWeightChange(activeTab, wKey, e.target.value)}
+                                    onChange={e => {
+                                      let raw = e.target.value;
+                                      if (typeof raw === 'string' && raw.length > 1 && raw.startsWith('0') && raw[1] !== '.') {
+                                        raw = raw.replace(/^0+/, '');
+                                      }
+                                      handleWeightChange(activeTab, wKey, raw);
+                                    }}
                                     className="w-14 bg-white border border-slate-200 rounded p-1 text-center font-bold text-yellow-600 focus:outline-none focus:border-pink-500"
                                   />
                                 </div>
@@ -2342,10 +2404,10 @@ const AdminPMPlayground = () => {
                             })}
                             {(() => {
                               const sum = Object.values(data.weights).reduce((a, b) => a + b, 0);
-                              const isOk = Math.abs(sum - 1.0) < 0.001;
+                              const isOk = Math.abs(sum - 100) < 0.5;
                               return (
                                 <span className={`font-bold ml-auto px-2 py-0.5 rounded text-[10px] ${isOk ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'}`}>
-                                  {isOk ? "Sum: 100% ✓" : `Sum: ${(sum*100).toFixed(0)}% (FIX)`}
+                                  {isOk ? "Sum: 100% ✓" : `Sum: ${sum.toFixed(0)}% (FIX)`}
                                 </span>
                               );
                             })()}
@@ -2379,29 +2441,44 @@ const AdminPMPlayground = () => {
                                     if (h.editable) {
                                       return (
                                         <td key={hIdx} className="p-2 bg-yellow-500/5">
-                                          {h.key === "category" ? (
+                                          {h.type === "select" ? (
                                             <select
                                               value={val}
-                                              onChange={e => handleCellChange(activeTab, rIdx, h.key, e.target.value)}
+                                              onChange={e => {
+                                                const v = h.valueType === "number" ? Number(e.target.value) : e.target.value;
+                                                handleCellChange(activeTab, rIdx, h.key, v);
+                                              }}
                                               className="w-full bg-white border border-slate-200 rounded p-1 text-slate-700 font-bold focus:outline-none focus:border-pink-500"
                                             >
-                                              {h.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                            </select>
-                                          ) : h.key === "vector" ? (
-                                            <select
-                                              value={val}
-                                              onChange={e => handleCellChange(activeTab, rIdx, h.key, e.target.value)}
-                                              className="w-full bg-white border border-slate-200 rounded p-1 text-slate-700 font-bold focus:outline-none focus:border-pink-500"
-                                            >
-                                              {h.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                              {h.options.map((opt, oIdx) => {
+                                                const isObj = typeof opt === "object";
+                                                const oVal = isObj ? opt.value : opt;
+                                                const oLbl = isObj ? opt.label : opt;
+                                                return <option key={oIdx} value={oVal}>{oLbl}</option>;
+                                              })}
                                             </select>
                                           ) : (
                                             <input
                                               type={h.type === "number" || h.type === "percent" ? "number" : "text"}
-                                              step={h.type === "percent" ? "0.05" : "1"}
+                                              min={h.min}
+                                              max={h.max}
+                                              step={h.step || (h.type === "percent" ? "0.05" : "1")}
                                               value={val}
                                               onChange={e => {
-                                                const v = h.type === "number" || h.type === "percent" ? Number(e.target.value) : e.target.value;
+                                                let raw = e.target.value;
+                                                if (typeof raw === 'string' && raw.length > 1 && raw.startsWith('0') && raw[1] !== '.') {
+                                                  raw = raw.replace(/^0+/, '');
+                                                }
+                                                let v = raw;
+                                                if (h.type === "number" || h.type === "percent") {
+                                                  if (raw !== '') {
+                                                    v = Number(raw);
+                                                    if (h.min !== undefined && v < h.min) v = h.min;
+                                                    if (h.max !== undefined && v > h.max) v = h.max;
+                                                  } else {
+                                                    v = 0;
+                                                  }
+                                                }
                                                 handleCellChange(activeTab, rIdx, h.key, v);
                                               }}
                                               className={`w-full bg-white border border-slate-200 rounded p-1 font-bold text-yellow-600 focus:outline-none focus:border-pink-500 ${
