@@ -36,199 +36,261 @@ const Tooltip = ({ tooltip }) => {
 };
 
 // ============================================================================
-// --- CUSTOM D3 CHART COMPONENTS ---
+// --- CHART MODAL (FULL SCREEN ENLARGE) ---
 // ============================================================================
-
-// 1. RICE / WSJF / Opportunity Bar Chart (Vertical Bars)
-const RiceBarChart = ({ data, setTooltip }) => {
-  const svgRef = useRef(null);
+const ChartModal = ({ isOpen, onClose, title, children }) => {
   useEffect(() => {
-    if (!svgRef.current || !data || data.length === 0) return;
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-
-    const width = 450;
-    const height = 280;
-    const margin = { top: 20, right: 30, bottom: 40, left: 110 };
-
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
-
-    const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
-    const sortedData = [...data].sort((a, b) => b.score - a.score);
-
-    const xScale = d3.scaleLinear()
-      .domain([0, d3.max(sortedData, d => d.score) || 100])
-      .range([0, chartWidth]);
-
-    const yScale = d3.scaleBand()
-      .domain(sortedData.map(d => d.name))
-      .range([0, chartHeight])
-      .padding(0.25);
-
-    g.append("g")
-      .attr("transform", `translate(0, ${chartHeight})`)
-      .call(d3.axisBottom(xScale).ticks(5))
-      .attr("color", "#cbd5e1")
-      .selectAll("text")
-      .attr("fill", "#64748b");
-
-    g.append("g")
-      .call(d3.axisLeft(yScale))
-      .attr("color", "#cbd5e1")
-      .selectAll("text")
-      .attr("font-size", "10px")
-      .attr("font-weight", "500")
-      .attr("fill", "#334155");
-
-    const grad = svg.append("defs")
-      .append("linearGradient")
-      .attr("id", "riceGrad")
-      .attr("x1", "0%").attr("y1", "0%")
-      .attr("x2", "100%").attr("y2", "0%");
-    grad.append("stop").attr("offset", "0%").attr("stop-color", "#818cf8");
-    grad.append("stop").attr("offset", "100%").attr("stop-color", "#4f46e5");
-
-    g.selectAll(".bar")
-      .data(sortedData)
-      .enter()
-      .append("rect")
-      .attr("class", "bar cursor-help transition-all duration-100")
-      .attr("y", d => yScale(d.name))
-      .attr("x", 0)
-      .attr("height", yScale.bandwidth())
-      .attr("width", d => xScale(d.score))
-      .attr("fill", "url(#riceGrad)")
-      .attr("rx", 4)
-      .on("mouseover", (event, d) => {
-        d3.select(event.currentTarget).attr("fill", "#312e81");
-        setTooltip({
-          show: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: `<strong>${d.name}</strong><br/>Score: ${Math.round(d.score)}<br/>Rank: #${d.rank || '-'}`
-        });
-      })
-      .on("mousemove", (event) => {
-        setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-      })
-      .on("mouseout", (event) => {
-        d3.select(event.currentTarget).attr("fill", "url(#riceGrad)");
-        setTooltip({ show: false, x: 0, y: 0, content: "" });
-      });
-
-    g.selectAll(".label")
-      .data(sortedData)
-      .enter()
-      .append("text")
-      .attr("class", "pointer-events-none")
-      .attr("y", d => yScale(d.name) + yScale.bandwidth() / 2 + 4)
-      .attr("x", d => Math.min(xScale(d.score) + 5, chartWidth - 35))
-      .attr("fill", d => xScale(d.score) > chartWidth - 50 ? "#fff" : "#1e293b")
-      .attr("font-size", "9px")
-      .attr("font-weight", "bold")
-      .text(d => Math.round(d.score));
-
-  }, [data, setTooltip]);
-
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    if (isOpen) {
+      document.addEventListener('keydown', handleKey);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
+  if (!isOpen) return null;
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <span className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">Prioritisation Scoreboard</span>
-      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center"
+      style={{ background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 flex flex-col items-center"
+        style={{ maxWidth: '92vw', maxHeight: '90vh', minWidth: 340, overflow: 'auto' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between w-full mb-4">
+          <span className="text-sm font-extrabold text-slate-700 uppercase tracking-wider">{title}</span>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 transition-colors ml-4"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="w-full flex justify-center">
+          {children}
+        </div>
+        <p className="text-[10px] text-slate-400 mt-4 font-medium">Press Esc or click outside to close</p>
+      </div>
     </div>
   );
 };
 
-// 2. Weighted Scoring Bar Chart
-const WeightedBarChart = ({ data, setTooltip }) => {
+// ============================================================================
+// --- CHART WRAPPER (CLICK-TO-ENLARGE CONTAINER) ---
+// ============================================================================
+const ChartWrapper = ({ title, badge, children, modalChildren }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full group">
+        <div className="flex items-center justify-between w-full mb-3">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{title}</span>
+          <div className="flex items-center gap-2">
+            {badge}
+            <button
+              onClick={() => setOpen(true)}
+              title="Enlarge chart"
+              className="p-1 rounded-md bg-slate-50 border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 text-slate-400 transition-all opacity-0 group-hover:opacity-100"
+            >
+              <Maximize2 size={13} />
+            </button>
+          </div>
+        </div>
+        {children}
+      </div>
+      <ChartModal isOpen={open} onClose={() => setOpen(false)} title={title}>
+        {modalChildren || children}
+      </ChartModal>
+    </>
+  );
+};
+
+// ============================================================================
+// --- CUSTOM D3 CHART COMPONENTS ---
+// ============================================================================
+
+// Shared helper: draw horizontal grid lines
+const drawGrid = (g, yScale, chartWidth) => {
+  g.append("g")
+    .attr("class", "grid")
+    .call(d3.axisLeft(yScale).tickSize(-chartWidth).tickFormat(""))
+    .selectAll("line")
+    .attr("stroke", "#e2e8f0")
+    .attr("stroke-dasharray", "3,3");
+  g.select(".grid .domain").remove();
+};
+
+// 1. RICE / WSJF / Opportunity Bar Chart (Horizontal Bars)
+const RiceBarChart = ({ data, setTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const W = enlarged ? 760 : 420;
+  const H = enlarged ? 420 : 280;
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 280;
-    const margin = { top: 20, right: 30, bottom: 40, left: 110 };
+    const margin = { top: 20, right: 50, bottom: 40, left: 120 };
+    const chartWidth = W - margin.left - margin.right;
+    const chartHeight = H - margin.top - margin.bottom;
 
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
+    // Defs
+    const defs = svg.append("defs");
+    const grad = defs.append("linearGradient").attr("id", `riceGrad${enlarged ? 'L' : 'S'}`)
+      .attr("x1", "0%").attr("x2", "100%");
+    grad.append("stop").attr("offset", "0%").attr("stop-color", "#818cf8");
+    grad.append("stop").attr("offset", "100%").attr("stop-color", "#4338ca");
 
-    const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
     const sortedData = [...data].sort((a, b) => b.score - a.score);
 
-    const xScale = d3.scaleLinear().domain([0, 5]).range([0, chartWidth]);
-    const yScale = d3.scaleBand().domain(sortedData.map(d => d.name)).range([0, chartHeight]).padding(0.25);
+    const xScale = d3.scaleLinear()
+      .domain([0, d3.max(sortedData, d => d.score) * 1.08 || 100])
+      .range([0, chartWidth]);
+    const yScale = d3.scaleBand()
+      .domain(sortedData.map(d => d.name))
+      .range([0, chartHeight]).padding(0.28);
 
-    g.append("g")
-      .attr("transform", `translate(0, ${chartHeight})`)
+    // Grid
+    g.append("g").attr("class", "grid")
+      .call(d3.axisBottom(xScale).ticks(5).tickSize(chartHeight).tickFormat(""))
+      .call(gg => gg.select(".domain").remove())
+      .call(gg => gg.selectAll("line").attr("stroke", "#e2e8f0").attr("stroke-dasharray", "3,3").attr("transform", `translate(0,0)`));
+
+    // Axes
+    g.append("g").attr("transform", `translate(0,${chartHeight})`)
       .call(d3.axisBottom(xScale).ticks(5))
-      .attr("color", "#cbd5e1")
-      .selectAll("text")
-      .attr("fill", "#64748b");
+      .call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"))
+      .selectAll("text").attr("fill", "#64748b").attr("font-size", "10px");
 
-    g.append("g")
-      .call(d3.axisLeft(yScale))
-      .attr("color", "#cbd5e1")
-      .selectAll("text")
-      .attr("font-size", "10px")
-      .attr("fill", "#334155");
+    g.append("g").call(d3.axisLeft(yScale))
+      .call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"))
+      .selectAll("text").attr("font-size", "10px").attr("font-weight", "600").attr("fill", "#334155");
 
-    const grad = svg.append("defs")
-      .append("linearGradient")
-      .attr("id", "weightedGrad")
-      .attr("x1", "0%").attr("y1", "0%")
-      .attr("x2", "100%").attr("y2", "0%");
-    grad.append("stop").attr("offset", "0%").attr("stop-color", "#06b6d4");
-    grad.append("stop").attr("offset", "100%").attr("stop-color", "#0891b2");
-
-    g.selectAll(".bar")
-      .data(sortedData)
-      .enter()
-      .append("rect")
-      .attr("class", "cursor-help")
-      .attr("y", d => yScale(d.name))
-      .attr("x", 0)
+    // Bars with enter animation
+    const bars = g.selectAll(".bar").data(sortedData).enter().append("rect")
+      .attr("class", "bar cursor-help")
+      .attr("y", d => yScale(d.name)).attr("x", 0)
       .attr("height", yScale.bandwidth())
-      .attr("width", d => xScale(d.score || 0))
-      .attr("fill", "url(#weightedGrad)")
-      .attr("rx", 4)
-      .on("mouseover", (event, d) => {
-        d3.select(event.currentTarget).attr("fill", "#0f766e");
-        setTooltip({
-          show: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: `<strong>${d.name}</strong><br/>Weighted Total: ${d.score?.toFixed(2)}`
-        });
+      .attr("width", 0)
+      .attr("fill", `url(#riceGrad${enlarged ? 'L' : 'S'})`)
+      .attr("rx", 5);
+
+    bars.transition().duration(600).ease(d3.easeCubicOut)
+      .attr("width", d => xScale(d.score));
+
+    bars.on("mouseover", (event, d) => {
+        d3.select(event.currentTarget).transition().duration(100).attr("fill", "#3730a3");
+        setTooltip({ show: true, x: event.pageX, y: event.pageY,
+          content: `<strong>${d.name}</strong><br/>Score: <b>${Math.round(d.score)}</b><br/>Rank: #${d.rank || '-'}` });
       })
-      .on("mousemove", (event) => {
-        setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-      })
+      .on("mousemove", (event) => setTooltip(p => ({ ...p, x: event.pageX, y: event.pageY })))
       .on("mouseout", (event) => {
-        d3.select(event.currentTarget).attr("fill", "url(#weightedGrad)");
+        d3.select(event.currentTarget).transition().duration(100).attr("fill", `url(#riceGrad${enlarged ? 'L' : 'S'})`);
         setTooltip({ show: false, x: 0, y: 0, content: "" });
       });
 
-    g.selectAll(".label")
-      .data(sortedData)
-      .enter()
-      .append("text")
+    // Labels
+    g.selectAll(".label").data(sortedData).enter().append("text")
       .attr("class", "pointer-events-none")
       .attr("y", d => yScale(d.name) + yScale.bandwidth() / 2 + 4)
-      .attr("x", d => xScale(d.score || 0) + 5)
-      .attr("fill", "#1e293b")
-      .attr("font-size", "10px")
-      .attr("font-weight", "bold")
-      .text(d => d.score?.toFixed(2));
+      .attr("x", d => xScale(d.score) + 6)
+      .attr("fill", "#4338ca").attr("font-size", "10px").attr("font-weight", "700")
+      .text(d => Math.round(d.score));
 
-  }, [data, setTooltip]);
+  }, [data, setTooltip, W, H]);
 
+  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
+  if (enlarged) return chart;
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <span className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">Weighted Performance</span>
-      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
-    </div>
+    <ChartWrapper title="Prioritisation Scoreboard" modalChildren={<RiceBarChart data={data} setTooltip={setTooltip} enlarged />}>
+      {chart}
+    </ChartWrapper>
+  );
+};
+
+// 2. Weighted Scoring Bar Chart
+const WeightedBarChart = ({ data, setTooltip, enlarged }) => {
+  const svgRef = useRef(null);
+  const W = enlarged ? 760 : 420;
+  const H = enlarged ? 420 : 280;
+  useEffect(() => {
+    if (!svgRef.current || !data || data.length === 0) return;
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+
+    const margin = { top: 20, right: 60, bottom: 40, left: 120 };
+    const chartWidth = W - margin.left - margin.right;
+    const chartHeight = H - margin.top - margin.bottom;
+
+    const defs = svg.append("defs");
+    const gradId = `wGrad${enlarged ? 'L' : 'S'}`;
+    const grad = defs.append("linearGradient").attr("id", gradId).attr("x1", "0%").attr("x2", "100%");
+    grad.append("stop").attr("offset", "0%").attr("stop-color", "#22d3ee");
+    grad.append("stop").attr("offset", "100%").attr("stop-color", "#0284c7");
+
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const sortedData = [...data].sort((a, b) => b.score - a.score);
+    const maxScore = d3.max(sortedData, d => d.score) || 5;
+
+    const xScale = d3.scaleLinear().domain([0, maxScore * 1.1]).range([0, chartWidth]);
+    const yScale = d3.scaleBand().domain(sortedData.map(d => d.name)).range([0, chartHeight]).padding(0.28);
+
+    // Grid
+    g.append("g").attr("class", "grid")
+      .call(d3.axisBottom(xScale).ticks(5).tickSize(chartHeight).tickFormat(""))
+      .call(gg => { gg.select(".domain").remove(); gg.selectAll("line").attr("stroke", "#e2e8f0").attr("stroke-dasharray", "3,3"); });
+
+    // Axes
+    g.append("g").attr("transform", `translate(0,${chartHeight})`)
+      .call(d3.axisBottom(xScale).ticks(5))
+      .call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"))
+      .selectAll("text").attr("fill", "#64748b").attr("font-size", "10px");
+
+    g.append("g").call(d3.axisLeft(yScale))
+      .call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"))
+      .selectAll("text").attr("font-size", "10px").attr("font-weight", "600").attr("fill", "#334155");
+
+    // Bars
+    const bars = g.selectAll(".bar").data(sortedData).enter().append("rect")
+      .attr("class", "cursor-help").attr("y", d => yScale(d.name)).attr("x", 0)
+      .attr("height", yScale.bandwidth()).attr("width", 0)
+      .attr("fill", `url(#${gradId})`).attr("rx", 5);
+
+    bars.transition().duration(600).ease(d3.easeCubicOut)
+      .attr("width", d => xScale(d.score || 0));
+
+    bars.on("mouseover", (event, d) => {
+        d3.select(event.currentTarget).transition().duration(100).attr("fill", "#075985");
+        setTooltip({ show: true, x: event.pageX, y: event.pageY,
+          content: `<strong>${d.name}</strong><br/>Score: <b>${d.score?.toFixed(2)}</b>` });
+      })
+      .on("mousemove", (event) => setTooltip(p => ({ ...p, x: event.pageX, y: event.pageY })))
+      .on("mouseout", (event) => {
+        d3.select(event.currentTarget).transition().duration(100).attr("fill", `url(#${gradId})`);
+        setTooltip({ show: false, x: 0, y: 0, content: "" });
+      });
+
+    g.selectAll(".label").data(sortedData).enter().append("text")
+      .attr("class", "pointer-events-none")
+      .attr("y", d => yScale(d.name) + yScale.bandwidth() / 2 + 4)
+      .attr("x", d => xScale(d.score || 0) + 6)
+      .attr("fill", "#0369a1").attr("font-size", "10px").attr("font-weight", "700")
+      .text(d => typeof d.score === 'number' ? d.score.toFixed(2) : '');
+
+  }, [data, setTooltip, W, H]);
+
+  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
+  if (enlarged) return chart;
+  return (
+    <ChartWrapper title="Weighted Performance" modalChildren={<WeightedBarChart data={data} setTooltip={setTooltip} enlarged />}>
+      {chart}
+    </ChartWrapper>
   );
 };
 
@@ -395,118 +457,173 @@ const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip }) => {
   }, [data, onUpdateRow, setTooltip]);
 
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <div className="flex items-center gap-1.5 mb-2">
-        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Value vs Effort Interactive 2x2</span>
-        <span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Dots to Edit Table</span>
-      </div>
+    <ChartWrapper
+      title="Value vs Effort Interactive 2x2"
+      badge={<span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Dots to Edit Table</span>}
+    >
       <svg ref={svgRef} width="450" height="320" className="max-w-full" />
-    </div>
+    </ChartWrapper>
   );
 };
 
-// 4. Kano Model Better vs Worse Scatter Plot
-const KanoScatterPlot = ({ data, setTooltip }) => {
+// 4. Kano Model Chart with proper S-curves
+const KanoModelChart = ({ data, setTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const W = enlarged ? 760 : 440;
+  const H = enlarged ? 500 : 360;
   useEffect(() => {
-    if (!svgRef.current || !data || data.length === 0) return;
+    if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 320;
-    const margin = { top: 25, right: 30, bottom: 40, left: 45 };
+    const margin = { top: 30, right: 40, bottom: 55, left: 55 };
+    const chartWidth = W - margin.left - margin.right;
+    const chartHeight = H - margin.top - margin.bottom;
 
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+    // Kano axes: x = "Functionality / Feature Presence" (0→1), y = "Customer Satisfaction" (-1→1)
+    const xScale = d3.scaleLinear().domain([0, 1]).range([0, chartWidth]);
+    const yScale = d3.scaleLinear().domain([-1, 1]).range([chartHeight, 0]);
 
-    const xScale = d3.scaleLinear().domain([-1, 0]).range([0, chartWidth]);
-    const yScale = d3.scaleLinear().domain([0, 1]).range([chartHeight, 0]);
-
-    // Draw dividers
-    g.append("line")
-      .attr("x1", xScale(-0.5)).attr("y1", yScale(0))
-      .attr("x2", xScale(-0.5)).attr("y2", yScale(1))
-      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "3,3");
-
-    g.append("line")
-      .attr("x1", xScale(-1)).attr("y1", yScale(0.5))
-      .attr("x2", xScale(0)).attr("y2", yScale(0.5))
-      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "3,3");
-
-    // Grid labels
-    g.append("text").attr("x", xScale(-0.25)).attr("y", yScale(0.85)).attr("text-anchor", "middle").attr("fill", "#6366f1").attr("font-size", "10px").attr("font-weight", "bold").text("Delighters");
-    g.append("text").attr("x", xScale(-0.75)).attr("y", yScale(0.85)).attr("text-anchor", "middle").attr("fill", "#06b6d4").attr("font-size", "10px").attr("font-weight", "bold").text("Performance");
-    g.append("text").attr("x", xScale(-0.75)).attr("y", yScale(0.15)).attr("text-anchor", "middle").attr("fill", "#e11d48").attr("font-size", "10px").attr("font-weight", "bold").text("Must-be");
-    g.append("text").attr("x", xScale(-0.25)).attr("y", yScale(0.15)).attr("text-anchor", "middle").attr("fill", "#64748b").attr("font-size", "10px").attr("font-weight", "bold").text("Indifferent");
-
-    // Axes
-    g.append("g")
-      .attr("transform", `translate(0, ${chartHeight})`)
-      .call(d3.axisBottom(xScale).ticks(5))
-      .attr("color", "#cbd5e1")
-      .selectAll("text").attr("fill", "#64748b");
-
-    g.append("g")
-      .call(d3.axisLeft(yScale).ticks(5))
-      .attr("color", "#cbd5e1")
-      .selectAll("text").attr("fill", "#64748b");
-
-    svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Worse Coefficient (Dissatisfaction) →");
-    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 12).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Better Coefficient (Satisfaction) →");
-
-    // Plot
-    const dots = g.selectAll(".dot")
-      .data(data)
-      .enter()
-      .append("g")
-      .attr("class", "cursor-help");
-
-    dots.append("circle")
-      .attr("cx", d => xScale(Number(d.worse) || 0))
-      .attr("cy", d => yScale(Number(d.better) || 0))
-      .attr("r", 6.5)
-      .attr("fill", d => {
-        if (d.classification === "Delighter") return "#6366f1";
-        if (d.classification === "Performance") return "#06b6d4";
-        if (d.classification === "Must-be") return "#e11d48";
-        return "#64748b";
-      })
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 1.5);
-
-    dots.append("text")
-      .attr("x", d => xScale(Number(d.worse) || 0) + 8)
-      .attr("y", d => yScale(Number(d.better) || 0) + 3)
-      .text(d => d.name)
-      .attr("font-size", "9px")
-      .attr("font-weight", "650")
-      .attr("fill", "#334155");
-
-    dots.on("mouseover", (event, d) => {
-      setTooltip({
-        show: true,
-        x: event.pageX,
-        y: event.pageY,
-        content: `<strong>${d.name}</strong><br/>Category: <strong>${d.classification}</strong><br/>Better: ${d.better}<br/>Worse: ${d.worse}`
-      });
-    })
-    .on("mousemove", (event) => {
-      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-    })
-    .on("mouseout", () => {
-      setTooltip({ show: false, x: 0, y: 0, content: "" });
+    // --- Background quadrant shading ---
+    const quadrants = [
+      { x1: 0, x2: 0.5, y1: 0, y2: 1, fill: "#f0fdf4", label: "" }, // top-left
+      { x1: 0.5, x2: 1, y1: 0, y2: 1, fill: "#eff6ff", label: "" }, // top-right
+      { x1: 0, x2: 0.5, y1: -1, y2: 0, fill: "#fef2f2", label: "" }, // bottom-left
+      { x1: 0.5, x2: 1, y1: -1, y2: 0, fill: "#fafafa", label: "" }, // bottom-right
+    ];
+    quadrants.forEach(q => {
+      g.append("rect")
+        .attr("x", xScale(q.x1)).attr("y", yScale(q.y2))
+        .attr("width", xScale(q.x2) - xScale(q.x1))
+        .attr("height", yScale(q.y1) - yScale(q.y2))
+        .attr("fill", q.fill).attr("opacity", 0.7);
     });
 
-  }, [data, setTooltip]);
+    // --- Kano S-Curves ---
+    // Attractive/Delighters: starts flat near 0, shoots up exponentially
+    const attractivePoints = d3.range(0, 1.01, 0.02).map(t => ({ t, v: Math.pow(t, 2.2) * 0.95 }));
+    // Performance/One-dimensional: near-linear through origin
+    const performancePoints = d3.range(0, 1.01, 0.02).map(t => ({ t, v: t * 2 - 1 }));
+    // Must-be/Basic: starts with steep drop when absent, flattens near 0 when present
+    const mustBePoints = d3.range(0, 1.01, 0.02).map(t => ({ t, v: -Math.pow(1 - t, 2.2) * 0.95 }));
+    // Indifferent: flat line at 0
+    const indiffPoints = d3.range(0, 1.01, 0.1).map(t => ({ t, v: 0 }));
 
+    const lineGen = d3.line().x(d => xScale(d.t)).y(d => yScale(d.v)).curve(d3.curveCatmullRom.alpha(0.5));
+
+    const curves = [
+      { pts: attractivePoints, color: "#6366f1", dash: "", label: "Attractive (Delighters)", lx: 0.58, ly: 0.7 },
+      { pts: performancePoints, color: "#0ea5e9", dash: "5,3", label: "Performance (Linear)", lx: 0.7, ly: 0.38 },
+      { pts: mustBePoints, color: "#f43f5e", dash: "3,3", label: "Must-be (Basic)", lx: 0.55, ly: -0.68 },
+      { pts: indiffPoints, color: "#94a3b8", dash: "6,4", label: "Indifferent", lx: 0.72, ly: 0.06 },
+    ];
+
+    curves.forEach(c => {
+      g.append("path").datum(c.pts)
+        .attr("fill", "none")
+        .attr("stroke", c.color)
+        .attr("stroke-width", 2.5)
+        .attr("stroke-dasharray", c.dash)
+        .attr("opacity", 0.85)
+        .attr("d", lineGen);
+      // Curve label
+      g.append("text")
+        .attr("x", xScale(c.lx)).attr("y", yScale(c.ly))
+        .attr("fill", c.color).attr("font-size", enlarged ? "11px" : "9px")
+        .attr("font-weight", "700").attr("text-anchor", "middle")
+        .text(c.label);
+    });
+
+    // --- Axes ---
+    // X axis at y=0 (neutral satisfaction)
+    const xAxisG = g.append("g").attr("transform", `translate(0,${yScale(0)})`);
+    xAxisG.call(d3.axisBottom(xScale).ticks(5).tickFormat(d => d === 0 ? "Absent" : d === 1 ? "Present" : ""))
+      .call(gg => gg.select(".domain").attr("stroke", "#94a3b8"))
+      .selectAll("text").attr("fill", "#64748b").attr("font-size", "10px");
+
+    // Y axis at x=0
+    const yAxisG = g.append("g").attr("transform", `translate(${xScale(0)},0)`);
+    yAxisG.call(d3.axisLeft(yScale).ticks(5).tickFormat(d => d === 1 ? "Very Satisfied" : d === -1 ? "Very Dissatisfied" : d === 0 ? "Neutral" : ""))
+      .call(gg => gg.select(".domain").attr("stroke", "#94a3b8"))
+      .selectAll("text").attr("fill", "#64748b").attr("font-size", "10px");
+
+    // Axis labels
+    svg.append("text").attr("x", W / 2).attr("y", H - 10)
+      .attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b")
+      .text("Feature Functionality (Absent → Fully Implemented)");
+    svg.append("text").attr("transform", "rotate(-90)")
+      .attr("x", -(H / 2)).attr("y", 14)
+      .attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b")
+      .text("Customer Satisfaction");
+
+    // --- Plot data points if available ---
+    if (data && data.length > 0) {
+      // Map better/worse coords to Kano curve space:
+      // x = (1 + worse) maps worse [-1,0] to functionality [0,1] (absent when worse=-1, present near 0)
+      // y = better [0,1] maps to satisfaction [0,1]
+      const mapToKano = (d) => ({
+        fx: 1 + (Number(d.worse) || 0),  // 0..1
+        fy: Number(d.better) || 0,        // 0..1
+      });
+
+      const dots = g.selectAll(".kano-dot")
+        .data(data).enter().append("g").attr("class", "kano-dot cursor-help");
+
+      dots.append("circle")
+        .attr("cx", d => { const m = mapToKano(d); return xScale(m.fx); })
+        .attr("cy", d => { const m = mapToKano(d); return yScale(m.fy); })
+        .attr("r", 7)
+        .attr("fill", d => {
+          if (d.classification === "Delighter") return "#6366f1";
+          if (d.classification === "Performance") return "#0ea5e9";
+          if (d.classification === "Must-be") return "#f43f5e";
+          return "#94a3b8";
+        })
+        .attr("stroke", "#fff").attr("stroke-width", 2)
+        .attr("opacity", 0.9);
+
+      dots.append("text")
+        .attr("x", d => { const m = mapToKano(d); return xScale(m.fx) + 10; })
+        .attr("y", d => { const m = mapToKano(d); return yScale(m.fy) + 4; })
+        .text(d => d.name)
+        .attr("font-size", "9px").attr("font-weight", "700").attr("fill", "#334155");
+
+      dots.on("mouseover", (event, d) => {
+        const m = mapToKano(d);
+        setTooltip({ show: true, x: event.pageX, y: event.pageY,
+          content: `<strong>${d.name}</strong><br/>Category: <b>${d.classification}</b><br/>Better coeff: ${d.better}<br/>Worse coeff: ${d.worse}` });
+      })
+      .on("mousemove", (event) => setTooltip(p => ({ ...p, x: event.pageX, y: event.pageY })))
+      .on("mouseout", () => setTooltip({ show: false, x: 0, y: 0, content: "" }));
+    }
+
+    // --- Legend ---
+    const legendData = [
+      { color: "#6366f1", label: "Delighters (Attractive)" },
+      { color: "#0ea5e9", label: "Performance (Linear)" },
+      { color: "#f43f5e", label: "Must-be (Basic)" },
+      { color: "#94a3b8", label: "Indifferent" },
+    ];
+    const legend = svg.append("g").attr("transform", `translate(${margin.left + 8}, ${margin.top + 8})`);
+    legendData.forEach((item, i) => {
+      const row = legend.append("g").attr("transform", `translate(0,${i * 16})`);
+      row.append("circle").attr("r", 4).attr("cx", 4).attr("cy", 0).attr("fill", item.color);
+      row.append("text").attr("x", 12).attr("y", 4).attr("font-size", "9px").attr("fill", "#475569").attr("font-weight", "600").text(item.label);
+    });
+
+  }, [data, setTooltip, W, H, enlarged]);
+
+  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
+  if (enlarged) return chart;
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Kano Better vs Worse Matrix</span>
-      <svg ref={svgRef} width="450" height="320" className="max-w-full" />
-    </div>
+    <ChartWrapper title="Kano Model — S-Curves & Feature Classification"
+      badge={<span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase">Kano Curves</span>}
+      modalChildren={<KanoModelChart data={data} setTooltip={setTooltip} enlarged />}
+    >
+      {chart}
+    </ChartWrapper>
   );
 };
 
@@ -642,13 +759,12 @@ const BCGBubbleChart = ({ data, onUpdateRow, setTooltip }) => {
   }, [data, onUpdateRow, setTooltip]);
 
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <div className="flex items-center gap-1.5 mb-2">
-        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">BCG Bubble Matrix</span>
-        <span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bubbles to Edit</span>
-      </div>
+    <ChartWrapper
+      title="BCG Bubble Matrix"
+      badge={<span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bubbles to Edit</span>}
+    >
       <svg ref={svgRef} width="450" height="320" className="max-w-full" />
-    </div>
+    </ChartWrapper>
   );
 };
 
@@ -735,10 +851,9 @@ const AARRRFunnelChart = ({ data, setTooltip }) => {
   }, [data, setTooltip]);
 
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">AARRR Pirate Funnel Conversion</span>
+    <ChartWrapper title="AARRR Pirate Funnel Conversion">
       <svg ref={svgRef} width="450" height="300" className="max-w-full" />
-    </div>
+    </ChartWrapper>
   );
 };
 
@@ -852,10 +967,9 @@ const ABTestChart = ({ data, setTooltip }) => {
   }, [data, setTooltip]);
 
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Conversion Comparison (95% CI error bars)</span>
+    <ChartWrapper title="Conversion Comparison (95% CI Error Bars)">
       <svg ref={svgRef} width="450" height="280" className="max-w-full" />
-    </div>
+    </ChartWrapper>
   );
 };
 
@@ -964,13 +1078,12 @@ const PorterForcesChart = ({ data, onUpdateRow, setTooltip }) => {
   }, [data, onUpdateRow, setTooltip]);
 
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <div className="flex items-center gap-1.5 mb-2">
-        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Five Forces Interactive Bars</span>
-        <span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bars to Edit</span>
-      </div>
+    <ChartWrapper
+      title="Five Forces Interactive Bars"
+      badge={<span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bars to Edit</span>}
+    >
       <svg ref={svgRef} width="450" height="280" className="max-w-full" />
-    </div>
+    </ChartWrapper>
   );
 };
 
@@ -1064,10 +1177,9 @@ const MoscowDonutChart = ({ data, setTooltip }) => {
   }, [data, setTooltip]);
 
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Moscow Effort Donut Distribution</span>
+    <ChartWrapper title="MoSCoW Effort Donut Distribution">
       <svg ref={svgRef} width="450" height="280" className="max-w-full" />
-    </div>
+    </ChartWrapper>
   );
 };
 
@@ -1242,10 +1354,9 @@ const NorthStarLineChart = ({ trajectory, setTooltip }) => {
   }, [trajectory, setTooltip]);
 
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <span className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">NSM Trajectory (Interactive Focus line)</span>
+    <ChartWrapper title="NSM Trajectory (Interactive Focus Line)">
       <svg ref={svgRef} width="450" height="280" className="max-w-full" />
-    </div>
+    </ChartWrapper>
   );
 };
 
@@ -1385,13 +1496,12 @@ const CohortRetentionChart = ({ data, setTooltip }) => {
   }, [data, setTooltip]);
 
   return (
-    <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center shadow-sm w-full">
-      <div className="flex items-center gap-1.5 mb-2">
-        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Retention Performance (Curves)</span>
-        <span className="text-[9px] bg-purple-50 border border-purple-200 px-2 py-0.5 rounded text-purple-600 font-bold uppercase animate-pulse">Hover Curves/Legend to Highlight</span>
-      </div>
+    <ChartWrapper
+      title="Retention Performance (Curves)"
+      badge={<span className="text-[9px] bg-purple-50 border border-purple-200 px-2 py-0.5 rounded text-purple-600 font-bold uppercase animate-pulse">Hover Curves/Legend to Highlight</span>}
+    >
       <svg ref={svgRef} width="450" height="280" className="max-w-full" />
-    </div>
+    </ChartWrapper>
   );
 };
 
@@ -2622,7 +2732,7 @@ const AdminPMPlayground = () => {
                     if (activeTab === "RICE") return <RiceBarChart data={PM_TEMPLATES.RICE.calculate(frameworkData.RICE.rows)} setTooltip={setTooltip} />;
                     if (activeTab === "WeightedScoring") return <WeightedBarChart data={PM_TEMPLATES.WeightedScoring.calculate(frameworkData.WeightedScoring.rows, frameworkData.WeightedScoring.weights)} setTooltip={setTooltip} />;
                     if (activeTab === "ValueVsEffort") return <ValueVsEffortChart data={frameworkData.ValueVsEffort.rows} onUpdateRow={(id, fields) => handleRowDataUpdate("ValueVsEffort", id, fields)} setTooltip={setTooltip} />;
-                    if (activeTab === "KanoModel") return <KanoScatterPlot data={PM_TEMPLATES.KanoModel.calculate(frameworkData.KanoModel.rows)} setTooltip={setTooltip} />;
+                    if (activeTab === "KanoModel") return <KanoModelChart data={PM_TEMPLATES.KanoModel.calculate(frameworkData.KanoModel.rows)} setTooltip={setTooltip} />;
                     if (activeTab === "WSJF") {
                       const finalWsjf = PM_TEMPLATES.WSJF.calculate(frameworkData.WSJF.rows);
                       return <RiceBarChart data={finalWsjf.map(d => ({ name: d.name, score: d.wsjf, rank: d.rank }))} setTooltip={setTooltip} />;
