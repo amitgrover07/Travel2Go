@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as d3 from 'd3';
 import { 
   Sliders, 
@@ -21,24 +21,56 @@ import toast from 'react-hot-toast';
 import { PM_TEMPLATES } from '../utils/pmTemplates';
 
 // ============================================================================
-// --- CENTRAL STATE TOOLTIP CONTEXT ---
+// --- DOM-REF TOOLTIP (bypasses React state to prevent chart redraws) ---
 // ============================================================================
-// A single floating HTML tooltip component.
-const Tooltip = ({ tooltip }) => {
-  if (!tooltip.show) return null;
-  return (
-    <div 
-      className="absolute bg-slate-900 text-slate-100 p-3 rounded-lg shadow-xl text-xs pointer-events-none z-[100] border border-slate-800 max-w-xs transition-all duration-75 select-none"
-      style={{ left: tooltip.x + 15, top: tooltip.y - 20 }}
-      dangerouslySetInnerHTML={{ __html: tooltip.content }}
-    />
-  );
+// The tooltip is a plain DOM div controlled imperatively via a ref.
+// This means hovering over charts NEVER triggers React re-renders.
+const useTooltipRef = () => {
+  const elRef = useRef(null);
+
+  const showTooltip = useCallback((x, y, content) => {
+    const el = elRef.current;
+    if (!el) return;
+    el.innerHTML = content;
+    el.style.left = (x + 15) + 'px';
+    el.style.top = (y - 20) + 'px';
+    el.style.display = 'block';
+  }, []);
+
+  const moveTooltip = useCallback((x, y) => {
+    const el = elRef.current;
+    if (!el) return;
+    el.style.left = (x + 15) + 'px';
+    el.style.top = (y - 20) + 'px';
+  }, []);
+
+  const hideTooltip = useCallback(() => {
+    const el = elRef.current;
+    if (!el) return;
+    el.style.display = 'none';
+  }, []);
+
+  return { elRef, showTooltip, moveTooltip, hideTooltip };
 };
 
+// The rendered tooltip div (position: fixed so it floats over everything)
+const TooltipEl = ({ elRef }) => (
+  <div
+    ref={elRef}
+    style={{ display: 'none', position: 'fixed', zIndex: 9999, pointerEvents: 'none' }}
+    className="bg-slate-900 text-slate-100 p-3 rounded-lg shadow-xl text-xs border border-slate-800 max-w-xs select-none"
+  />
+);
+
 // ============================================================================
-// --- CHART MODAL (FULL SCREEN ENLARGE) ---
+// --- CHART MODAL (RESIZABLE FULL-SCREEN ENLARGE) ---
 // ============================================================================
 const ChartModal = ({ isOpen, onClose, title, children }) => {
+  const modalRef = useRef(null);
+  const [size, setSize] = useState({ w: null, h: null });
+  const resizing = useRef(false);
+  const startPos = useRef({ x: 0, y: 0, w: 0, h: 0 });
+
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
     if (isOpen) {
@@ -50,6 +82,36 @@ const ChartModal = ({ isOpen, onClose, title, children }) => {
       document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
+
+  // Reset size when modal re-opens
+  useEffect(() => {
+    if (isOpen) setSize({ w: null, h: null });
+  }, [isOpen]);
+
+  const onResizeMouseDown = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const el = modalRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    resizing.current = true;
+    startPos.current = { x: e.clientX, y: e.clientY, w: rect.width, h: rect.height };
+
+    const onMove = (ev) => {
+      if (!resizing.current) return;
+      const newW = Math.max(360, startPos.current.w + (ev.clientX - startPos.current.x));
+      const newH = Math.max(280, startPos.current.h + (ev.clientY - startPos.current.y));
+      setSize({ w: newW, h: newH });
+    };
+    const onUp = () => {
+      resizing.current = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, []);
+
   if (!isOpen) return null;
   return (
     <div
@@ -58,23 +120,45 @@ const ChartModal = ({ isOpen, onClose, title, children }) => {
       onClick={onClose}
     >
       <div
+        ref={modalRef}
         className="relative bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 flex flex-col items-center"
-        style={{ maxWidth: '92vw', maxHeight: '90vh', minWidth: 340, overflow: 'auto' }}
+        style={{
+          width: size.w ? size.w : 'auto',
+          height: size.h ? size.h : 'auto',
+          maxWidth: '96vw', maxHeight: '94vh',
+          minWidth: 360, minHeight: 280,
+          overflow: 'auto',
+        }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between w-full mb-4">
           <span className="text-sm font-extrabold text-slate-700 uppercase tracking-wider">{title}</span>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 transition-colors ml-4"
-          >
-            <X size={16} />
-          </button>
+          <div className="flex items-center gap-2 ml-4">
+            <span className="text-[10px] text-slate-400 font-medium hidden sm:block">Drag ↘ corner to resize</span>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
-        <div className="w-full flex justify-center">
+        <div className="w-full flex justify-center flex-1 overflow-auto">
           {children}
         </div>
-        <p className="text-[10px] text-slate-400 mt-4 font-medium">Press Esc or click outside to close</p>
+        <p className="text-[10px] text-slate-400 mt-3 font-medium">Press Esc or click outside to close</p>
+
+        {/* Resize handle */}
+        <div
+          onMouseDown={onResizeMouseDown}
+          title="Drag to resize"
+          className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize flex items-end justify-end p-1 rounded-br-2xl"
+          style={{ zIndex: 10 }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M11 1L1 11M11 6L6 11M11 11" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
       </div>
     </div>
   );
@@ -126,7 +210,7 @@ const drawGrid = (g, yScale, chartWidth) => {
 };
 
 // 1. RICE / WSJF / Opportunity Bar Chart (Horizontal Bars)
-const RiceBarChart = ({ data, setTooltip, enlarged }) => {
+const RiceBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
   const W = enlarged ? 760 : 420;
   const H = enlarged ? 420 : 280;
@@ -186,13 +270,12 @@ const RiceBarChart = ({ data, setTooltip, enlarged }) => {
 
     bars.on("mouseover", (event, d) => {
         d3.select(event.currentTarget).transition().duration(100).attr("fill", "#3730a3");
-        setTooltip({ show: true, x: event.pageX, y: event.pageY,
-          content: `<strong>${d.name}</strong><br/>Score: <b>${Math.round(d.score)}</b><br/>Rank: #${d.rank || '-'}` });
+        setTooltip(event.pageX, event.pageY, `<strong>${d.name}</strong><br/>Score: <b>${Math.round(d.score)}</b><br/>Rank: #${d.rank || '-'}`);
       })
-      .on("mousemove", (event) => setTooltip(p => ({ ...p, x: event.pageX, y: event.pageY })))
+      .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
       .on("mouseout", (event) => {
         d3.select(event.currentTarget).transition().duration(100).attr("fill", `url(#riceGrad${enlarged ? 'L' : 'S'})`);
-        setTooltip({ show: false, x: 0, y: 0, content: "" });
+        hideTooltip();
       });
 
     // Labels
@@ -203,19 +286,19 @@ const RiceBarChart = ({ data, setTooltip, enlarged }) => {
       .attr("fill", "#4338ca").attr("font-size", "10px").attr("font-weight", "700")
       .text(d => Math.round(d.score));
 
-  }, [data, setTooltip, W, H]);
+  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
   if (enlarged) return chart;
   return (
-    <ChartWrapper title="Prioritisation Scoreboard" modalChildren={<RiceBarChart data={data} setTooltip={setTooltip} enlarged />}>
+    <ChartWrapper title="Prioritisation Scoreboard" modalChildren={<RiceBarChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}>
       {chart}
     </ChartWrapper>
   );
 };
 
 // 2. Weighted Scoring Bar Chart
-const WeightedBarChart = ({ data, setTooltip, enlarged }) => {
+const WeightedBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
   const W = enlarged ? 760 : 420;
   const H = enlarged ? 420 : 280;
@@ -267,13 +350,12 @@ const WeightedBarChart = ({ data, setTooltip, enlarged }) => {
 
     bars.on("mouseover", (event, d) => {
         d3.select(event.currentTarget).transition().duration(100).attr("fill", "#075985");
-        setTooltip({ show: true, x: event.pageX, y: event.pageY,
-          content: `<strong>${d.name}</strong><br/>Score: <b>${d.score?.toFixed(2)}</b>` });
+        setTooltip(event.pageX, event.pageY, `<strong>${d.name}</strong><br/>Score: <b>${d.score?.toFixed(2)}</b>`);
       })
-      .on("mousemove", (event) => setTooltip(p => ({ ...p, x: event.pageX, y: event.pageY })))
+      .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
       .on("mouseout", (event) => {
         d3.select(event.currentTarget).transition().duration(100).attr("fill", `url(#${gradId})`);
-        setTooltip({ show: false, x: 0, y: 0, content: "" });
+        hideTooltip();
       });
 
     g.selectAll(".label").data(sortedData).enter().append("text")
@@ -283,19 +365,19 @@ const WeightedBarChart = ({ data, setTooltip, enlarged }) => {
       .attr("fill", "#0369a1").attr("font-size", "10px").attr("font-weight", "700")
       .text(d => typeof d.score === 'number' ? d.score.toFixed(2) : '');
 
-  }, [data, setTooltip, W, H]);
+  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
   if (enlarged) return chart;
   return (
-    <ChartWrapper title="Weighted Performance" modalChildren={<WeightedBarChart data={data} setTooltip={setTooltip} enlarged />}>
+    <ChartWrapper title="Weighted Performance" modalChildren={<WeightedBarChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}>
       {chart}
     </ChartWrapper>
   );
 };
 
 // 3. Value vs Effort (2x2 DRAGGABLE Scatter Plot)
-const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip }) => {
+const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTooltip }) => {
   const svgRef = useRef(null);
   const dataRef = useRef(data);
   dataRef.current = data;
@@ -375,7 +457,7 @@ const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip }) => {
     // Drag behaviour
     const dragHandler = d3.drag()
       .on("start", (event) => {
-        setTooltip({ show: false, x: 0, y: 0, content: "" });
+        hideTooltip();
       })
       .on("drag", function(event, d) {
         const coords = d3.pointer(event, g.node());
@@ -440,21 +522,12 @@ const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip }) => {
 
     // Add tooltips to dots
     dots.on("mouseover", (event, d) => {
-      setTooltip({
-        show: true,
-        x: event.pageX,
-        y: event.pageY,
-        content: `<strong>${d.name}</strong><br/>Value: ${d.value}/10<br/>Effort: ${d.effort}/10<br/><span class="text-indigo-400 font-bold">Drag dot to edit!</span>`
-      });
+      setTooltip(event.pageX, event.pageY, `<strong>${d.name}</strong><br/>Value: ${d.value}/10<br/>Effort: ${d.effort}/10<br/><span class="text-indigo-400 font-bold">Drag dot to edit!</span>`);
     })
-    .on("mousemove", (event) => {
-      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-    })
-    .on("mouseout", () => {
-      setTooltip({ show: false, x: 0, y: 0, content: "" });
-    });
+    .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
+    .on("mouseout", () => hideTooltip());
 
-  }, [data, onUpdateRow, setTooltip]);
+  }, [data, onUpdateRow]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <ChartWrapper
@@ -467,7 +540,7 @@ const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip }) => {
 };
 
 // 4. Kano Model Chart with proper S-curves
-const KanoModelChart = ({ data, setTooltip, enlarged }) => {
+const KanoModelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
   const W = enlarged ? 760 : 440;
   const H = enlarged ? 500 : 360;
@@ -591,12 +664,10 @@ const KanoModelChart = ({ data, setTooltip, enlarged }) => {
         .attr("font-size", "9px").attr("font-weight", "700").attr("fill", "#334155");
 
       dots.on("mouseover", (event, d) => {
-        const m = mapToKano(d);
-        setTooltip({ show: true, x: event.pageX, y: event.pageY,
-          content: `<strong>${d.name}</strong><br/>Category: <b>${d.classification}</b><br/>Better coeff: ${d.better}<br/>Worse coeff: ${d.worse}` });
+        setTooltip(event.pageX, event.pageY, `<strong>${d.name}</strong><br/>Category: <b>${d.classification}</b><br/>Better coeff: ${d.better}<br/>Worse coeff: ${d.worse}`);
       })
-      .on("mousemove", (event) => setTooltip(p => ({ ...p, x: event.pageX, y: event.pageY })))
-      .on("mouseout", () => setTooltip({ show: false, x: 0, y: 0, content: "" }));
+      .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
+      .on("mouseout", () => hideTooltip());
     }
 
     // --- Legend ---
@@ -613,14 +684,14 @@ const KanoModelChart = ({ data, setTooltip, enlarged }) => {
       row.append("text").attr("x", 12).attr("y", 4).attr("font-size", "9px").attr("fill", "#475569").attr("font-weight", "600").text(item.label);
     });
 
-  }, [data, setTooltip, W, H, enlarged]);
+  }, [data, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
   if (enlarged) return chart;
   return (
     <ChartWrapper title="Kano Model — S-Curves & Feature Classification"
       badge={<span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase">Kano Curves</span>}
-      modalChildren={<KanoModelChart data={data} setTooltip={setTooltip} enlarged />}
+      modalChildren={<KanoModelChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
       {chart}
     </ChartWrapper>
@@ -628,7 +699,7 @@ const KanoModelChart = ({ data, setTooltip, enlarged }) => {
 };
 
 // 5. BCG Matrix (DRAGGABLE Bubble Chart)
-const BCGBubbleChart = ({ data, onUpdateRow, setTooltip }) => {
+const BCGBubbleChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTooltip }) => {
   const svgRef = useRef(null);
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
@@ -683,7 +754,7 @@ const BCGBubbleChart = ({ data, onUpdateRow, setTooltip }) => {
     // Drag Listener
     const dragHandler = d3.drag()
       .on("start", () => {
-        setTooltip({ show: false, x: 0, y: 0, content: "" });
+        hideTooltip();
       })
       .on("drag", function(event, d) {
         const coords = d3.pointer(event, g.node());
@@ -742,21 +813,12 @@ const BCGBubbleChart = ({ data, onUpdateRow, setTooltip }) => {
       .style("stroke-linejoin", "round");
 
     bubbles.on("mouseover", (event, d) => {
-      setTooltip({
-        show: true,
-        x: event.pageX,
-        y: event.pageY,
-        content: `<strong>${d.name}</strong><br/>Market Growth: ${(d.growth * 100).toFixed(1)}%<br/>Mkt Share: ${d.share}x<br/>Revenue: ₹${d.revenue} cr<br/><span class="text-indigo-400 font-bold block mt-1">Drag bubble to edit!</span>`
-      });
+      setTooltip(event.pageX, event.pageY, `<strong>${d.name}</strong><br/>Market Growth: ${(d.growth * 100).toFixed(1)}%<br/>Mkt Share: ${d.share}x<br/>Revenue: ₹${d.revenue} cr<br/><span class="text-indigo-400 font-bold block mt-1">Drag bubble to edit!</span>`);
     })
-    .on("mousemove", (event) => {
-      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-    })
-    .on("mouseout", () => {
-      setTooltip({ show: false, x: 0, y: 0, content: "" });
-    });
+    .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
+    .on("mouseout", () => hideTooltip());
 
-  }, [data, onUpdateRow, setTooltip]);
+  }, [data, onUpdateRow]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <ChartWrapper
@@ -769,15 +831,17 @@ const BCGBubbleChart = ({ data, onUpdateRow, setTooltip }) => {
 };
 
 // 6. AARRR Funnel Visual Chart
-const AARRRFunnelChart = ({ data, setTooltip }) => {
+const AARRRFunnelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const W = enlarged ? 720 : 450;
+  const H = enlarged ? 460 : 300;
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 300;
+    const width = W;
+    const height = H;
     const margin = { top: 20, right: 30, bottom: 20, left: 55 };
 
     const chartWidth = width - margin.left - margin.right;
@@ -811,19 +875,10 @@ const AARRRFunnelChart = ({ data, setTooltip }) => {
         .attr("stroke-width", 1.5)
         .attr("class", "cursor-help transition-all duration-100 hover:opacity-100")
         .on("mouseover", (event) => {
-          setTooltip({
-            show: true,
-            x: event.pageX,
-            y: event.pageY,
-            content: `<strong>${d.stage}</strong><br/>Users: ${(d.users).toLocaleString()}<br/>Step Conv: ${idx === 0 ? '-' : (d.stepConv * 100).toFixed(1) + '%'}<br/>Conversion of Top: ${(d.totalConv * 100).toFixed(1)}%`
-          });
+          setTooltip(event.pageX, event.pageY, `<strong>${d.stage}</strong><br/>Users: ${(d.users).toLocaleString()}<br/>Step Conv: ${idx === 0 ? '-' : (d.stepConv * 100).toFixed(1) + '%'}<br/>Conversion of Top: ${(d.totalConv * 100).toFixed(1)}%`);
         })
-        .on("mousemove", (event) => {
-          setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-        })
-        .on("mouseout", () => {
-          setTooltip({ show: false, x: 0, y: 0, content: "" });
-        });
+        .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
+        .on("mouseout", () => hideTooltip());
 
       // Label inside funnel
       g.append("text")
@@ -848,25 +903,31 @@ const AARRRFunnelChart = ({ data, setTooltip }) => {
       }
     });
 
-  }, [data, setTooltip]);
+  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
+  if (enlarged) return chart;
   return (
-    <ChartWrapper title="AARRR Pirate Funnel Conversion">
-      <svg ref={svgRef} width="450" height="300" className="max-w-full" />
+    <ChartWrapper title="AARRR Pirate Funnel Conversion"
+      modalChildren={<AARRRFunnelChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
+    >
+      {chart}
     </ChartWrapper>
   );
 };
 
 // 7. A/B Test Rates Chart
-const ABTestChart = ({ data, setTooltip }) => {
+const ABTestChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const W = enlarged ? 700 : 450;
+  const H = enlarged ? 440 : 280;
   useEffect(() => {
     if (!svgRef.current || !data) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 280;
+    const width = W;
+    const height = H;
     const margin = { top: 30, right: 30, bottom: 40, left: 60 };
 
     const chartWidth = width - margin.left - margin.right;
@@ -906,19 +967,10 @@ const ABTestChart = ({ data, setTooltip }) => {
       .attr("rx", 5)
       .attr("class", "cursor-help hover:opacity-90")
       .on("mouseover", (event, d) => {
-        setTooltip({
-          show: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: `<strong>${d.name}</strong><br/>Conv. Rate: ${(d.rate * 100).toFixed(2)}%<br/>Visitors: ${d.visitors.toLocaleString()}<br/>Conversions: ${d.conv.toLocaleString()}`
-        });
+        setTooltip(event.pageX, event.pageY, `<strong>${d.name}</strong><br/>Conv. Rate: ${(d.rate * 100).toFixed(2)}%<br/>Visitors: ${d.visitors.toLocaleString()}<br/>Conversions: ${d.conv.toLocaleString()}`);
       })
-      .on("mousemove", (event) => {
-        setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-      })
-      .on("mouseout", () => {
-        setTooltip({ show: false, x: 0, y: 0, content: "" });
-      });
+      .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
+      .on("mouseout", () => hideTooltip());
 
     // Error bars / confidence intervals (95%)
     chartData.forEach(d => {
@@ -964,17 +1016,21 @@ const ABTestChart = ({ data, setTooltip }) => {
       .attr("font-weight", "bold")
       .text(d => (d.rate * 100).toFixed(2) + "%");
 
-  }, [data, setTooltip]);
+  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
+  if (enlarged) return chart;
   return (
-    <ChartWrapper title="Conversion Comparison (95% CI Error Bars)">
-      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
+    <ChartWrapper title="Conversion Comparison (95% CI Error Bars)"
+      modalChildren={<ABTestChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
+    >
+      {chart}
     </ChartWrapper>
   );
 };
 
 // 8. Custom D3 INTERACTIVE SLIDER Bar Chart for Porter's 5 Forces
-const PorterForcesChart = ({ data, onUpdateRow, setTooltip }) => {
+const PorterForcesChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTooltip }) => {
   const svgRef = useRef(null);
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
@@ -1061,21 +1117,12 @@ const PorterForcesChart = ({ data, onUpdateRow, setTooltip }) => {
 
     // Tooltips
     bars.on("mouseover", (event, d) => {
-      setTooltip({
-        show: true,
-        x: event.pageX,
-        y: event.pageY,
-        content: `<strong>${d.force}</strong><br/>Threat: ${d.threat}/5<br/>Notes: ${d.notes || 'None'}<br/><span class="text-indigo-400 font-bold block mt-1">Drag bar horizontal to edit!</span>`
-      });
+      setTooltip(event.pageX, event.pageY, `<strong>${d.force}</strong><br/>Threat: ${d.threat}/5<br/>Notes: ${d.notes || 'None'}<br/><span class="text-indigo-400 font-bold block mt-1">Drag bar horizontal to edit!</span>`);
     })
-    .on("mousemove", (event) => {
-      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-    })
-    .on("mouseout", () => {
-      setTooltip({ show: false, x: 0, y: 0, content: "" });
-    });
+    .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
+    .on("mouseout", () => hideTooltip());
 
-  }, [data, onUpdateRow, setTooltip]);
+  }, [data, onUpdateRow]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <ChartWrapper
@@ -1088,15 +1135,17 @@ const PorterForcesChart = ({ data, onUpdateRow, setTooltip }) => {
 };
 
 // 9. Custom D3 Donut Chart with Exploding Slices (Replaces MoSCoW Pie Chart)
-const MoscowDonutChart = ({ data, setTooltip }) => {
+const MoscowDonutChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const W = enlarged ? 680 : 450;
+  const H = enlarged ? 420 : 280;
   useEffect(() => {
     if (!data) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 280;
+    const width = W;
+    const height = H;
     const radius = Math.min(width, height) / 2 - 20;
 
     const g = svg.append("g")
@@ -1128,23 +1177,15 @@ const MoscowDonutChart = ({ data, setTooltip }) => {
         d3.select(this)
           .transition().duration(150)
           .attr("d", hoverArc);
-        
         const pct = data.totalEffort > 0 ? (d.data.val / data.totalEffort * 100).toFixed(0) : 0;
-        setTooltip({
-          show: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: `<strong>${d.data.key}</strong><br/>Effort: ${d.data.val} days (${pct}%)<br/>Items: ${d.data.count}`
-        });
+        setTooltip(event.pageX, event.pageY, `<strong>${d.data.key}</strong><br/>Effort: ${d.data.val} days (${pct}%)<br/>Items: ${d.data.count}`);
       })
-      .on("mousemove", (event) => {
-        setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-      })
+      .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
       .on("mouseout", function() {
         d3.select(this)
           .transition().duration(150)
           .attr("d", arc);
-        setTooltip({ show: false, x: 0, y: 0, content: "" });
+        hideTooltip();
       });
 
     // Add labels outside donut
@@ -1174,25 +1215,31 @@ const MoscowDonutChart = ({ data, setTooltip }) => {
       .attr("font-weight", "900")
       .text(`${data.totalEffort} days`);
 
-  }, [data, setTooltip]);
+  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
+  if (enlarged) return chart;
   return (
-    <ChartWrapper title="MoSCoW Effort Donut Distribution">
-      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
+    <ChartWrapper title="MoSCoW Effort Donut Distribution"
+      modalChildren={<MoscowDonutChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
+    >
+      {chart}
     </ChartWrapper>
   );
 };
 
 // 10. Custom D3 Line Chart with Interactive Mouse Tracker Focus Rule (Replaces North Star Google Line Chart)
-const NorthStarLineChart = ({ trajectory, setTooltip }) => {
+const NorthStarLineChart = ({ trajectory, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const W = enlarged ? 720 : 450;
+  const H = enlarged ? 440 : 280;
   useEffect(() => {
     if (!trajectory) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 280;
+    const width = W;
+    const height = H;
     const margin = { top: 20, right: 35, bottom: 40, left: 45 };
 
     const chartWidth = width - margin.left - margin.right;
@@ -1337,39 +1384,40 @@ const NorthStarLineChart = ({ trajectory, setTooltip }) => {
           circleTarget.style("display", "none");
         }
 
-        setTooltip({
-          show: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: `<strong>Month: ${pt.month}</strong><br/>Actual: ${pt.actual !== null ? pt.actual.toFixed(2) + ' mn' : '—'}<br/>Target: ${pt.target !== null ? pt.target.toFixed(2) + ' mn' : '—'}`
-        });
+        setTooltip(event.pageX, event.pageY, `<strong>Month: ${pt.month}</strong><br/>Actual: ${pt.actual !== null ? pt.actual.toFixed(2) + ' mn' : '—'}<br/>Target: ${pt.target !== null ? pt.target.toFixed(2) + ' mn' : '—'}`);
       })
       .on("mouseout", () => {
         focusLine.style("display", "none");
         circleActual.style("display", "none");
         circleTarget.style("display", "none");
-        setTooltip({ show: false, x: 0, y: 0, content: "" });
+        hideTooltip();
       });
 
-  }, [trajectory, setTooltip]);
+  }, [trajectory, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
+  if (enlarged) return chart;
   return (
-    <ChartWrapper title="NSM Trajectory (Interactive Focus Line)">
-      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
+    <ChartWrapper title="NSM Trajectory (Interactive Focus Line)"
+      modalChildren={<NorthStarLineChart trajectory={trajectory} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
+    >
+      {chart}
     </ChartWrapper>
   );
 };
 
 // 11. Custom D3 Multi-line Curves with Curve Highlighting (Replaces Cohort Curves Google Line Chart)
-const CohortRetentionChart = ({ data, setTooltip }) => {
+const CohortRetentionChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const W = enlarged ? 720 : 450;
+  const H = enlarged ? 440 : 280;
   useEffect(() => {
     if (!data || !data.calculated) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 280;
+    const width = W;
+    const height = H;
     const margin = { top: 25, right: 90, bottom: 40, left: 45 };
 
     const chartWidth = width - margin.left - margin.right;
@@ -1476,31 +1524,26 @@ const CohortRetentionChart = ({ data, setTooltip }) => {
 
     paths.on("mouseover", function(event, d) {
       triggerHighlight(d.name);
-      
       const ptsDesc = d.points.map(pt => `${pt.month}: ${Math.round(pt.val)}%`).join(" | ");
-      setTooltip({
-        show: true,
-        x: event.pageX,
-        y: event.pageY,
-        content: `<strong>${d.name}</strong><br/><span class="font-mono text-[10px] text-indigo-200">${ptsDesc}</span>`
-      });
+      setTooltip(event.pageX, event.pageY, `<strong>${d.name}</strong><br/><span class="font-mono text-[10px] text-indigo-200">${ptsDesc}</span>`);
     })
-    .on("mousemove", (event) => {
-      setTooltip(prev => ({ ...prev, x: event.pageX, y: event.pageY }));
-    })
+    .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
     .on("mouseout", () => {
       resetHighlight();
-      setTooltip({ show: false, x: 0, y: 0, content: "" });
+      hideTooltip();
     });
 
-  }, [data, setTooltip]);
+  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
+  if (enlarged) return chart;
   return (
     <ChartWrapper
       title="Retention Performance (Curves)"
       badge={<span className="text-[9px] bg-purple-50 border border-purple-200 px-2 py-0.5 rounded text-purple-600 font-bold uppercase animate-pulse">Hover Curves/Legend to Highlight</span>}
+      modalChildren={<CohortRetentionChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
+      {chart}
     </ChartWrapper>
   );
 };
@@ -1513,7 +1556,7 @@ const CohortRetentionChart = ({ data, setTooltip }) => {
 const AdminPMPlayground = () => {
   const [activeTab, setActiveTab] = useState('index'); // 'index' | templateKey (e.g. 'RICE')
   const [searchQuery, setSearchQuery] = useState('');
-  const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, content: "" });
+  const { elRef: tooltipElRef, showTooltip, moveTooltip, hideTooltip } = useTooltipRef();
 
   // Initialise state from localStorage or load defaults
   const [frameworkData, setFrameworkData] = useState(() => {
@@ -2131,8 +2174,8 @@ const AdminPMPlayground = () => {
                                 <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                                   <tr>
                                     <th className="p-3">Input Driver</th>
-                                    <th className="p-3 bg-yellow-500/10 text-yellow-750">Current</th>
-                                    <th className="p-3 bg-yellow-500/10 text-yellow-750">90-Day Target</th>
+                                    <th className="p-3 bg-yellow-500/10 text-yellow-750">Current (baseline)</th>
+                                    <th className="p-3 bg-yellow-500/10 text-yellow-750">90-Day Target (stretch goal)</th>
                                     <th className="p-3 text-right">Numeric Change</th>
                                     <th className="p-3 text-right">% Change</th>
                                   </tr>
@@ -2207,8 +2250,8 @@ const AdminPMPlayground = () => {
                                 <thead className="bg-slate-50 text-slate-655 font-bold border-b border-slate-200">
                                   <tr>
                                     <th className="p-2.5 pl-4">Month</th>
-                                    <th className="p-2.5 bg-yellow-500/10 text-yellow-750">NSM Actual (mn)</th>
-                                    <th className="p-2.5 bg-yellow-500/10 text-yellow-750">NSM Target (mn)</th>
+                                    <th className="p-2.5 bg-yellow-500/10 text-yellow-750">NSM Actual (e.g. 2.90)</th>
+                                    <th className="p-2.5 bg-yellow-500/10 text-yellow-750">NSM Target (e.g. 3.00)</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -2255,7 +2298,7 @@ const AdminPMPlayground = () => {
                             <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                               <div>
                                 <label className="block text-xs text-slate-500 mb-1">
-                                  ARPU (Average Revenue Per User / month)
+                                  ARPU — Average Revenue Per User / month (₹, e.g. 300)
                                 </label>
                                 <input
                                   type="number"
@@ -2294,7 +2337,7 @@ const AdminPMPlayground = () => {
                               </div>
                               <div>
                                 <label className="block text-xs text-slate-500 mb-1">
-                                  CAC (Customer Acquisition Cost)
+                                  CAC — Customer Acquisition Cost (₹, e.g. 900)
                                 </label>
                                 <input
                                   type="number"
@@ -2384,7 +2427,7 @@ const AdminPMPlayground = () => {
                                 <span className="text-[10px] font-bold uppercase text-slate-500">Control (A)</span>
                               </div>
                               <div>
-                                <label className="block text-[10px] text-slate-500 mb-1">Visitors</label>
+                                <label className="block text-[10px] text-slate-500 mb-1">Visitors (raw count, e.g. 20000)</label>
                                 <input
                                   type="number"
                                   value={data.inputs.controlVisitors}
@@ -2393,7 +2436,7 @@ const AdminPMPlayground = () => {
                                 />
                               </div>
                               <div>
-                                <label className="block text-[10px] text-slate-500 mb-1">Conversions</label>
+                                <label className="block text-[10px] text-slate-500 mb-1">Conversions (raw count, e.g. 1600)</label>
                                 <input
                                   type="number"
                                   value={data.inputs.controlConversions}
@@ -2406,7 +2449,7 @@ const AdminPMPlayground = () => {
                                 <span className="text-[10px] font-bold uppercase text-indigo-650">Variant (B)</span>
                               </div>
                               <div>
-                                <label className="block text-[10px] text-slate-500 mb-1">Visitors</label>
+                                <label className="block text-[10px] text-slate-500 mb-1">Visitors (raw count, e.g. 20000)</label>
                                 <input
                                   type="number"
                                   value={data.inputs.variantVisitors}
@@ -2415,7 +2458,7 @@ const AdminPMPlayground = () => {
                                 />
                               </div>
                               <div>
-                                <label className="block text-[10px] text-slate-500 mb-1">Conversions</label>
+                                <label className="block text-[10px] text-slate-500 mb-1">Conversions (raw count, e.g. 1760)</label>
                                 <input
                                   type="number"
                                   value={data.inputs.variantConversions}
@@ -2729,64 +2772,64 @@ const AdminPMPlayground = () => {
                   
                   {/* Left Column: Visual Chart representation */}
                   {(() => {
-                    if (activeTab === "RICE") return <RiceBarChart data={PM_TEMPLATES.RICE.calculate(frameworkData.RICE.rows)} setTooltip={setTooltip} />;
-                    if (activeTab === "WeightedScoring") return <WeightedBarChart data={PM_TEMPLATES.WeightedScoring.calculate(frameworkData.WeightedScoring.rows, frameworkData.WeightedScoring.weights)} setTooltip={setTooltip} />;
-                    if (activeTab === "ValueVsEffort") return <ValueVsEffortChart data={frameworkData.ValueVsEffort.rows} onUpdateRow={(id, fields) => handleRowDataUpdate("ValueVsEffort", id, fields)} setTooltip={setTooltip} />;
-                    if (activeTab === "KanoModel") return <KanoModelChart data={PM_TEMPLATES.KanoModel.calculate(frameworkData.KanoModel.rows)} setTooltip={setTooltip} />;
+                    if (activeTab === "RICE") return <RiceBarChart data={PM_TEMPLATES.RICE.calculate(frameworkData.RICE.rows)} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
+                    if (activeTab === "WeightedScoring") return <WeightedBarChart data={PM_TEMPLATES.WeightedScoring.calculate(frameworkData.WeightedScoring.rows, frameworkData.WeightedScoring.weights)} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
+                    if (activeTab === "ValueVsEffort") return <ValueVsEffortChart data={frameworkData.ValueVsEffort.rows} onUpdateRow={(id, fields) => handleRowDataUpdate("ValueVsEffort", id, fields)} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
+                    if (activeTab === "KanoModel") return <KanoModelChart data={PM_TEMPLATES.KanoModel.calculate(frameworkData.KanoModel.rows)} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     if (activeTab === "WSJF") {
                       const finalWsjf = PM_TEMPLATES.WSJF.calculate(frameworkData.WSJF.rows);
-                      return <RiceBarChart data={finalWsjf.map(d => ({ name: d.name, score: d.wsjf, rank: d.rank }))} setTooltip={setTooltip} />;
+                      return <RiceBarChart data={finalWsjf.map(d => ({ name: d.name, score: d.wsjf, rank: d.rank }))} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "MoSCoW") {
                       const stats = PM_TEMPLATES.MoSCoW.calculate(frameworkData.MoSCoW.rows);
-                      return <MoscowDonutChart data={stats} setTooltip={setTooltip} />;
+                      return <MoscowDonutChart data={stats} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "OpportunityScoring") {
                       const finalOpp = PM_TEMPLATES.OpportunityScoring.calculate(frameworkData.OpportunityScoring.rows);
-                      return <WeightedBarChart data={finalOpp.map(d => ({ name: d.name, score: d.opportunity }))} setTooltip={setTooltip} />;
+                      return <WeightedBarChart data={finalOpp.map(d => ({ name: d.name, score: d.opportunity }))} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "BCGMatrix") {
-                      return <BCGBubbleChart data={PM_TEMPLATES.BCGMatrix.calculate(frameworkData.BCGMatrix.rows)} onUpdateRow={(id, fields) => handleRowDataUpdate("BCGMatrix", id, fields)} setTooltip={setTooltip} />;
+                      return <BCGBubbleChart data={PM_TEMPLATES.BCGMatrix.calculate(frameworkData.BCGMatrix.rows)} onUpdateRow={(id, fields) => handleRowDataUpdate("BCGMatrix", id, fields)} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "AnsoffMatrix") {
                       const finalAnsoff = PM_TEMPLATES.AnsoffMatrix.calculate(frameworkData.AnsoffMatrix.rows);
-                      return <WeightedBarChart data={finalAnsoff.map(d => ({ name: d.name, score: d.riskAdjusted }))} setTooltip={setTooltip} />;
+                      return <WeightedBarChart data={finalAnsoff.map(d => ({ name: d.name, score: d.riskAdjusted }))} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "Porter5Forces") {
-                      return <PorterForcesChart data={frameworkData.Porter5Forces.rows} onUpdateRow={handlePorterRowUpdate} setTooltip={setTooltip} />;
+                      return <PorterForcesChart data={frameworkData.Porter5Forces.rows} onUpdateRow={handlePorterRowUpdate} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "NorthStar") {
-                      return <NorthStarLineChart trajectory={frameworkData.NorthStar.trajectory} setTooltip={setTooltip} />;
+                      return <NorthStarLineChart trajectory={frameworkData.NorthStar.trajectory} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "AARRR") {
                       const finalAarrr = PM_TEMPLATES.AARRR.calculate(frameworkData.AARRR.rows);
-                      return <AARRRFunnelChart data={finalAarrr} setTooltip={setTooltip} />;
+                      return <AARRRFunnelChart data={finalAarrr} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "HEART") {
                       const finalHeart = PM_TEMPLATES.HEART.calculate(frameworkData.HEART.rows);
-                      return <WeightedBarChart data={finalHeart.map(d => ({ name: d.category, score: d.attainment * 100 }))} setTooltip={setTooltip} />;
+                      return <WeightedBarChart data={finalHeart.map(d => ({ name: d.category, score: d.attainment * 100 }))} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "UnitEconomics") {
                       const ueStats = PM_TEMPLATES.UnitEconomics.calculate(frameworkData.UnitEconomics.inputs);
-                      return <WeightedBarChart data={ueStats.sensitivity.map(s => ({ name: `${(s.churn * 100).toFixed(0)}% Churn`, score: s.ratio }))} setTooltip={setTooltip} />;
+                      return <WeightedBarChart data={ueStats.sensitivity.map(s => ({ name: `${(s.churn * 100).toFixed(0)}% Churn`, score: s.ratio }))} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "CohortRetention") {
                       const finalCohort = PM_TEMPLATES.CohortRetention.calculate(frameworkData.CohortRetention.rows);
-                      return <CohortRetentionChart data={finalCohort} setTooltip={setTooltip} />;
+                      return <CohortRetentionChart data={finalCohort} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "PMFSurvey") {
                       const finalPmf = PM_TEMPLATES.PMFSurvey.calculate(frameworkData.PMFSurvey.rows);
                       return <ABTestChart data={{
                         cr: finalPmf.score, vr: 0.40, inputs: { controlVisitors: finalPmf.valid, controlConversions: 0, variantVisitors: 100, variantConversions: 40 }
-                      }} setTooltip={setTooltip} />;
+                      }} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "ABTest") {
                       const abStats = PM_TEMPLATES.ABTest.calculate(frameworkData.ABTest.inputs);
-                      return <ABTestChart data={abStats} setTooltip={setTooltip} />;
+                      return <ABTestChart data={abStats} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     if (activeTab === "OKRTracker") {
                       const finalOkrs = PM_TEMPLATES.OKRTracker.calculate(frameworkData.OKRTracker.rows);
-                      return <RiceBarChart data={finalOkrs.map(d => ({ name: d.kr, score: d.progress * 100 }))} setTooltip={setTooltip} />;
+                      return <RiceBarChart data={finalOkrs.map(d => ({ name: d.kr, score: d.progress * 100 }))} setTooltip={showTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} />;
                     }
                     
                     return null;
@@ -2851,7 +2894,7 @@ const AdminPMPlayground = () => {
       </section>
 
       {/* FLOATING RICH D3 TOOLTIP CONTAINER */}
-      <Tooltip tooltip={tooltip} />
+      <TooltipEl elRef={tooltipElRef} />
 
     </div>
   );

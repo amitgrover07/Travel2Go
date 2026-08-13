@@ -22,10 +22,10 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Feature / Idea", type: "text", editable: true },
-      { key: "reach", label: "Reach (users/qtr)", type: "number", min: 0, editable: true },
+      { key: "reach", label: "Reach (users/qtr, e.g. 5000)", type: "number", min: 0, editable: true },
       { 
         key: "impact", 
-        label: "Impact (0.25-3)", 
+        label: "Impact — pick from list", 
         type: "select", 
         valueType: "number",
         editable: true, 
@@ -37,8 +37,8 @@ export const PM_TEMPLATES = {
           { value: 0.25, label: "0.25 - Minimal" }
         ] 
       },
-      { key: "confidence", label: "Confidence (%)", type: "number", min: 0, max: 100, editable: true },
-      { key: "effort", label: "Effort (p-months)", type: "number", min: 0.1, editable: true },
+      { key: "confidence", label: "Confidence (enter 0–100, e.g. 90 = 90%)", type: "number", min: 0, max: 100, editable: true },
+      { key: "effort", label: "Effort (person-months, e.g. 2)", type: "number", min: 0.1, editable: true },
       { key: "score", label: "RICE Score", type: "number", editable: false },
       { key: "rank", label: "Rank", type: "number", editable: false }
     ],
@@ -95,11 +95,11 @@ export const PM_TEMPLATES = {
     },
     headers: [
       { key: "name", label: "Option", type: "text", editable: true },
-      { key: "fit", label: "Strategic fit (1-5)", type: "number", min: 1, max: 5, editable: true },
-      { key: "revenue", label: "Revenue upside (1-5)", type: "number", min: 1, max: 5, editable: true },
-      { key: "speed", label: "Speed to ship (1-5)", type: "number", min: 1, max: 5, editable: true },
-      { key: "risk", label: "Low risk (1-5)", type: "number", min: 1, max: 5, editable: true },
-      { key: "score", label: "Weighted total", type: "number", editable: false }
+      { key: "fit", label: "Strategic fit (1–5, 5=best)", type: "number", min: 1, max: 5, editable: true },
+      { key: "revenue", label: "Revenue upside (1–5, 5=best)", type: "number", min: 1, max: 5, editable: true },
+      { key: "speed", label: "Speed to ship (1–5, 5=fastest)", type: "number", min: 1, max: 5, editable: true },
+      { key: "risk", label: "Low risk (1–5, 5=lowest risk)", type: "number", min: 1, max: 5, editable: true },
+      { key: "score", label: "Weighted total (auto-calculated)", type: "number", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Tier-2 metros", fit: 4, revenue: 5, speed: 3, risk: 3 },
@@ -143,9 +143,9 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Item / Feature", type: "text", editable: true },
-      { key: "value", label: "Value (1-10)", type: "number", min: 1, max: 10, editable: true },
-      { key: "effort", label: "Effort (1-10)", type: "number", min: 1, max: 10, editable: true },
-      { key: "quadrant", label: "Quadrant", type: "text", editable: false }
+      { key: "value", label: "Value (1–10, 10=highest)", type: "number", min: 1, max: 10, editable: true },
+      { key: "effort", label: "Effort (1–10, 10=most effort)", type: "number", min: 1, max: 10, editable: true },
+      { key: "quadrant", label: "Quadrant (auto)", type: "text", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Live tracking", value: 9, effort: 3 },
@@ -191,14 +191,14 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Feature / Idea", type: "text", editable: true },
-      { key: "attractive", label: "Attractive (Delight)", type: "number", min: 0, editable: true },
-      { key: "performance", label: "Performance", type: "number", min: 0, editable: true },
-      { key: "mustBe", label: "Must-be (Basic)", type: "number", min: 0, editable: true },
-      { key: "indifferent", label: "Indifferent", type: "number", min: 0, editable: true },
-      { key: "reverse", label: "Reverse", type: "number", min: 0, editable: true },
-      { key: "better", label: "Better coeff. (0 to 1)", type: "number", editable: false },
-      { key: "worse", label: "Worse coeff. (-1 to 0)", type: "number", editable: false },
-      { key: "classification", label: "Kano Category", type: "text", editable: false }
+      { key: "attractive", label: "Attractive / Delight (# survey votes)", type: "number", min: 0, editable: true },
+      { key: "performance", label: "Performance / Linear (# survey votes)", type: "number", min: 0, editable: true },
+      { key: "mustBe", label: "Must-be / Basic (# survey votes)", type: "number", min: 0, editable: true },
+      { key: "indifferent", label: "Indifferent (# survey votes)", type: "number", min: 0, editable: true },
+      { key: "reverse", label: "Reverse (# survey votes)", type: "number", min: 0, editable: true },
+      { key: "better", label: "Better coeff. (auto, 0–1)", type: "number", editable: false },
+      { key: "worse", label: "Worse coeff. (auto, -1–0)", type: "number", editable: false },
+      { key: "classification", label: "Kano Category (auto)", type: "text", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Live tracking", attractive: 30, performance: 45, mustBe: 20, indifferent: 5, reverse: 0 },
@@ -266,13 +266,13 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Feature / Job", type: "text", editable: true },
-      { key: "value", label: "User/Biz Value (1-10)", type: "number", min: 1, max: 10, editable: true },
-      { key: "criticality", label: "Time Criticality (1-10)", type: "number", min: 1, max: 10, editable: true },
-      { key: "opportunity", label: "Risk/Opp Enable (1-10)", type: "number", min: 1, max: 10, editable: true },
-      { key: "cod", label: "Cost of Delay", type: "number", editable: false },
-      { key: "size", label: "Job Size (relative)", type: "number", min: 1, editable: true },
-      { key: "wsjf", label: "WSJF Score", type: "number", editable: false },
-      { key: "rank", label: "Rank", type: "number", editable: false }
+      { key: "value", label: "User/Biz Value (1–10, relative)", type: "number", min: 1, max: 10, editable: true },
+      { key: "criticality", label: "Time Criticality (1–10, relative)", type: "number", min: 1, max: 10, editable: true },
+      { key: "opportunity", label: "Risk/Opp Enablement (1–10, relative)", type: "number", min: 1, max: 10, editable: true },
+      { key: "cod", label: "Cost of Delay (auto = sum above)", type: "number", editable: false },
+      { key: "size", label: "Job Size (relative effort, e.g. 3)", type: "number", min: 1, editable: true },
+      { key: "wsjf", label: "WSJF Score (auto = CoD ÷ Size)", type: "number", editable: false },
+      { key: "rank", label: "Rank (auto)", type: "number", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Live tracking", value: 8, criticality: 7, opportunity: 5, size: 3 },
@@ -320,8 +320,8 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Backlog Item", type: "text", editable: true },
-      { key: "category", label: "Category (M/S/C/W)", type: "select", editable: true, options: ["M", "S", "C", "W"] },
-      { key: "effort", label: "Effort (days)", type: "number", min: 0, editable: true }
+      { key: "category", label: "Category (M=Must / S=Should / C=Could / W=Won't)", type: "select", editable: true, options: ["M", "S", "C", "W"] },
+      { key: "effort", label: "Effort (working days, e.g. 5)", type: "number", min: 0, editable: true }
     ],
     defaultRows: [
       { id: "1", name: "Checkout works", category: "M", effort: 6 },
@@ -375,10 +375,10 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Desired Customer Outcome (Job Step)", type: "text", editable: true },
-      { key: "importance", label: "Importance (1-10)", type: "number", min: 1, max: 10, editable: true },
-      { key: "satisfaction", label: "Satisfaction (1-10)", type: "number", min: 1, max: 10, editable: true },
-      { key: "opportunity", label: "Opportunity Score", type: "number", editable: false },
-      { key: "rank", label: "Rank", type: "number", editable: false }
+      { key: "importance", label: "Importance (1–10, from user survey)", type: "number", min: 1, max: 10, editable: true },
+      { key: "satisfaction", label: "Satisfaction (1–10, from user survey)", type: "number", min: 1, max: 10, editable: true },
+      { key: "opportunity", label: "Opportunity Score (auto)", type: "number", editable: false },
+      { key: "rank", label: "Rank (auto)", type: "number", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Get food fast when hungry", importance: 9, satisfaction: 6 },
@@ -422,10 +422,10 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "name", label: "Product / Line", type: "text", editable: true },
-      { key: "growth", label: "Market Growth (e.g. 0.15 = 15%)", type: "number", min: 0, max: 1, editable: true },
-      { key: "share", label: "Relative Share (x)", type: "number", min: 0, max: 10, editable: true },
-      { key: "revenue", label: "Revenue (₹ cr)", type: "number", min: 0, editable: true },
-      { key: "category", label: "Category", type: "text", editable: false }
+      { key: "growth", label: "Market Growth (decimal: enter 0.15 for 15%)", type: "number", min: 0, max: 1, editable: true },
+      { key: "share", label: "Relative Market Share (×, e.g. 1.4 = 1.4× leader)", type: "number", min: 0, max: 10, editable: true },
+      { key: "revenue", label: "Annual Revenue (₹ cr, e.g. 220)", type: "number", min: 0, editable: true },
+      { key: "category", label: "BCG Category (auto)", type: "text", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Food delivery", growth: 0.18, share: 1.4, revenue: 220 },
@@ -471,9 +471,9 @@ export const PM_TEMPLATES = {
     headers: [
       { key: "name", label: "Initiative", type: "text", editable: true },
       { key: "vector", label: "Growth Vector", type: "select", editable: true, options: ["Market Penetration", "Product Development", "Market Development", "Diversification"] },
-      { key: "revenue", label: "Expected Rev (₹ cr)", type: "number", min: 0, editable: true },
-      { key: "probability", label: "Success Prob. (%)", type: "number", min: 0, max: 100, editable: true },
-      { key: "riskAdjusted", label: "Risk-Adjusted Value", type: "number", editable: false }
+      { key: "revenue", label: "Expected Revenue (₹ cr, e.g. 90)", type: "number", min: 0, editable: true },
+      { key: "probability", label: "Success Probability (enter 0–100, e.g. 85 = 85%)", type: "number", min: 0, max: 100, editable: true },
+      { key: "riskAdjusted", label: "Risk-Adjusted Value (auto = Rev × Prob%)", type: "number", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Push reorders to existing users", vector: "Market Penetration", revenue: 40, probability: 85 },
@@ -510,8 +510,8 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "force", label: "Force", type: "text", editable: false },
-      { key: "threat", label: "Threat Level (1-5)", type: "number", min: 1, max: 5, editable: true },
-      { key: "notes", label: "Notes / Evidence", type: "text", editable: true }
+      { key: "threat", label: "Threat Level (1=low threat → 5=brutal)", type: "number", min: 1, max: 5, editable: true },
+      { key: "notes", label: "Notes / Evidence (free text)", type: "text", editable: true }
     ],
     defaultRows: [
       { id: "1", force: "Competitive rivalry", threat: 4, notes: "Zomato, Swiggy, local aggregators" },
@@ -622,7 +622,7 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "stage", label: "Funnel Stage", type: "text", editable: false },
-      { key: "users", label: "Users", type: "number", min: 0, editable: true },
+      { key: "users", label: "Users (raw count, e.g. 10000)", type: "number", min: 0, editable: true },
       { key: "stepConv", label: "Step Conversion", type: "percent", editable: false },
       { key: "totalConv", label: "% of Acquisition", type: "percent", editable: false },
       { key: "definition", label: "Definition", type: "text", editable: false }
@@ -674,10 +674,10 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "category", label: "UX Category", type: "text", editable: false },
-      { key: "metric", label: "Signal Metric", type: "text", editable: true },
-      { key: "current", label: "Current", type: "number", min: 0, editable: true },
-      { key: "target", label: "Target Goal", type: "number", min: 0.1, editable: true },
-      { key: "attainment", label: "% Attainment", type: "percent", editable: false }
+      { key: "metric", label: "Signal Metric (what you're measuring)", type: "text", editable: true },
+      { key: "current", label: "Current Value (same unit as Target)", type: "number", min: 0, editable: true },
+      { key: "target", label: "Target Goal (same unit as Current)", type: "number", min: 0.1, editable: true },
+      { key: "attainment", label: "% Attainment (auto = Current ÷ Target)", type: "percent", editable: false }
     ],
     defaultRows: [
       { id: "1", category: "Happiness", metric: "CSAT / app store rating", current: 72, target: 85 },
@@ -781,14 +781,14 @@ export const PM_TEMPLATES = {
       "Declaring PMF before the curve flattens."
     ],
     headers: [
-      { key: "cohort", label: "Cohort", type: "text", editable: true },
-      { key: "size", label: "Size (M0)", type: "number", min: 1, editable: true },
-      { key: "m1", label: "M1", type: "number", min: 0, editable: true },
-      { key: "m2", label: "M2", type: "number", min: 0, editable: true },
-      { key: "m3", label: "M3", type: "number", min: 0, editable: true },
-      { key: "m4", label: "M4", type: "number", min: 0, editable: true },
-      { key: "m5", label: "M5", type: "number", min: 0, editable: true },
-      { key: "m6", label: "M6", type: "number", min: 0, editable: true }
+      { key: "cohort", label: "Cohort (e.g. Jan, Feb)", type: "text", editable: true },
+      { key: "size", label: "M0 Cohort Size (# users at start)", type: "number", min: 1, editable: true },
+      { key: "m1", label: "M1 (# users still active at Month 1)", type: "number", min: 0, editable: true },
+      { key: "m2", label: "M2 (# users still active at Month 2)", type: "number", min: 0, editable: true },
+      { key: "m3", label: "M3 (# users still active at Month 3)", type: "number", min: 0, editable: true },
+      { key: "m4", label: "M4 (# users still active at Month 4)", type: "number", min: 0, editable: true },
+      { key: "m5", label: "M5 (# users still active at Month 5)", type: "number", min: 0, editable: true },
+      { key: "m6", label: "M6 (# users still active at Month 6)", type: "number", min: 0, editable: true }
     ],
     defaultRows: [
       { id: "1", cohort: "Jan", size: 5000, m1: 2900, m2: 2100, m3: 1750, m4: 1550, m5: 1450, m6: 1400 },
@@ -856,7 +856,7 @@ export const PM_TEMPLATES = {
     ],
     headers: [
       { key: "label", label: "Response Option", type: "text", editable: false },
-      { key: "count", label: "User Count", type: "number", min: 0, editable: true }
+      { key: "count", label: "User Count (raw number)", type: "number", min: 0, editable: true }
     ],
     defaultRows: [
       { key: "very", label: "Very disappointed", count: 210 },
@@ -961,11 +961,11 @@ export const PM_TEMPLATES = {
     headers: [
       { key: "objective", label: "Objective", type: "text", editable: true },
       { key: "kr", label: "Key Result", type: "text", editable: true },
-      { key: "start", label: "Start", type: "number", editable: true },
-      { key: "current", label: "Current", type: "number", editable: true },
-      { key: "target", label: "Target Goal", type: "number", editable: true },
-      { key: "progress", label: "Progress", type: "percent", editable: false },
-      { key: "status", label: "Status", type: "text", editable: false }
+      { key: "start", label: "Start Value (baseline at period start)", type: "number", editable: true },
+      { key: "current", label: "Current Value (latest measured value)", type: "number", editable: true },
+      { key: "target", label: "Target Value (stretch goal for period)", type: "number", editable: true },
+      { key: "progress", label: "Progress % (auto = (Current-Start)÷(Target-Start))", type: "percent", editable: false },
+      { key: "status", label: "Status (auto)", type: "text", editable: false }
     ],
     defaultRows: [
       { id: "1", objective: "Make ordering effortless", kr: "D30 retention (%)", start: 28, current: 33, target: 40 },
