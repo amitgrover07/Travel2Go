@@ -7,7 +7,8 @@ export const PM_TEMPLATES = {
     stage: "Prioritisation",
     category: "Prioritisation",
     whenToUse: "Comparing a backlog of features/ideas objectively. Reach = how many users this affects per period. Impact = per-user effect (3=massive, 2=high, 1=medium, 0.5=low, 0.25=minimal). Confidence = how sure you are (100/80/50%). Effort = person-months of work.",
-    inPlainWords: "Score = (Reach × Impact × Confidence) ÷ Effort. The higher the score, the sooner you build it.",
+    inPlainWords: "RICE Score = (Reach × Impact × Confidence %) ÷ Effort",
+    inputGuidance: "Fill in yellow columns: Reach (number of users affected per quarter), Impact (select rating scale 0.25 to 3.0), Confidence (enter 0–100 for percentage certainty), and Effort (estimated person-months of effort). The formula automatically computes the RICE Score and ranks features.",
     howToRun: [
       "Estimate Reach (users/qtr) from real analytics, not hope.",
       "Rate Impact on a fixed scale (3=massive, 2=high, 1=medium, 0.5=low, 0.25=minimal).",
@@ -21,26 +22,26 @@ export const PM_TEMPLATES = {
       "Treating the score as gospel; it's an input to judgement, not a verdict."
     ],
     headers: [
-      { key: "name", label: "Feature / Idea", type: "text", editable: true },
-      { key: "reach", label: "Reach (users/qtr, e.g. 5000)", type: "number", min: 0, editable: true },
+      { key: "name", label: "Feature / Idea Name", type: "text", editable: true },
+      { key: "reach", label: "Reach (Users affected / quarter)", type: "number", min: 0, editable: true },
       { 
         key: "impact", 
-        label: "Impact — pick from list", 
+        label: "Impact Rating (3=Massive, 2=High, 1=Med, 0.5=Low)", 
         type: "select", 
         valueType: "number",
         editable: true, 
         options: [
-          { value: 3.0, label: "3 - Massive" },
-          { value: 2.0, label: "2 - High" },
-          { value: 1.0, label: "1 - Medium" },
+          { value: 3.0, label: "3.0 - Massive" },
+          { value: 2.0, label: "2.0 - High" },
+          { value: 1.0, label: "1.0 - Medium" },
           { value: 0.5, label: "0.5 - Low" },
           { value: 0.25, label: "0.25 - Minimal" }
         ] 
       },
-      { key: "confidence", label: "Confidence (enter 0–100, e.g. 90 = 90%)", type: "number", min: 0, max: 100, editable: true },
-      { key: "effort", label: "Effort (person-months, e.g. 2)", type: "number", min: 0.1, editable: true },
-      { key: "score", label: "RICE Score", type: "number", editable: false },
-      { key: "rank", label: "Rank", type: "number", editable: false }
+      { key: "confidence", label: "Confidence % (Enter 0–100, e.g. 80 = 80%)", type: "number", min: 0, max: 100, editable: true },
+      { key: "effort", label: "Effort (Person-months required)", type: "number", min: 0.1, editable: true },
+      { key: "score", label: "RICE Score (Auto = R×I×C ÷ E)", type: "number", editable: false },
+      { key: "rank", label: "Rank (Auto)", type: "number", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "1-tap reorder", reach: 42000, impact: 2.0, confidence: 90, effort: 2.0 },
@@ -75,7 +76,8 @@ export const PM_TEMPLATES = {
     stage: "Prioritisation",
     category: "Prioritisation",
     whenToUse: "Choosing between a few strategic options (e.g. which market to enter) where several criteria matter unequally. Set weights on the weights row (they must sum to 100%). Score each option 1-5 on each criterion.",
-    inPlainWords: "Rank options against weighted criteria — weights carry the strategy and must sum to 100%.",
+    inPlainWords: "Weighted Total Score = ∑ (Criterion Rating [1–5] × Criterion Weight %)",
+    inputGuidance: "1) Adjust criteria weights above (Fit, Revenue, Speed, Risk) so their sum equals 100%. 2) Rate each strategic option from 1 (poor) to 5 (excellent) on each criterion. The backend automatically computes the weighted total score.",
     howToRun: [
       "List the criteria that actually drive the decision.",
       "Agree on weights with stakeholders BEFORE scoring anything.",
@@ -94,12 +96,12 @@ export const PM_TEMPLATES = {
       risk: 15
     },
     headers: [
-      { key: "name", label: "Option", type: "text", editable: true },
-      { key: "fit", label: "Strategic fit (1–5, 5=best)", type: "number", min: 1, max: 5, editable: true },
-      { key: "revenue", label: "Revenue upside (1–5, 5=best)", type: "number", min: 1, max: 5, editable: true },
-      { key: "speed", label: "Speed to ship (1–5, 5=fastest)", type: "number", min: 1, max: 5, editable: true },
-      { key: "risk", label: "Low risk (1–5, 5=lowest risk)", type: "number", min: 1, max: 5, editable: true },
-      { key: "score", label: "Weighted total (auto-calculated)", type: "number", editable: false }
+      { key: "name", label: "Strategic Option Name", type: "text", editable: true },
+      { key: "fit", label: "Strategic Fit (1–5 Rating, 5=Best)", type: "number", min: 1, max: 5, editable: true },
+      { key: "revenue", label: "Revenue Upside (1–5 Rating, 5=Best)", type: "number", min: 1, max: 5, editable: true },
+      { key: "speed", label: "Speed to Ship (1–5 Rating, 5=Fastest)", type: "number", min: 1, max: 5, editable: true },
+      { key: "risk", label: "Low Risk (1–5 Rating, 5=Lowest Risk)", type: "number", min: 1, max: 5, editable: true },
+      { key: "score", label: "Weighted Total (Auto-calculated)", type: "number", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Tier-2 metros", fit: 4, revenue: 5, speed: 3, risk: 3 },
@@ -128,7 +130,8 @@ export const PM_TEMPLATES = {
     stage: "Prioritisation",
     category: "Prioritisation",
     whenToUse: "A fast, visual triage in a workshop or meeting when you need a decision in ten minutes, not a spreadsheet. Rate Value and Effort 1-10.",
-    inPlainWords: "The fastest triage: do the high-value, low-effort Quick Wins first; avoid the Money Pits.",
+    inPlainWords: "Quadrant Classification: Quick Win (Val≥5, Eff<5), Big Bet (Val≥5, Eff≥5), Fill-in (Val<5, Eff<5), Money Pit (Val<5, Eff≥5)",
+    inputGuidance: "Enter Value (1=Lowest, 10=Highest business/user impact) and Effort (1=Lowest, 10=Highest engineering effort). You can also click & drag dots directly on the 2x2 scatter chart to update values!",
     howToRun: [
       "Rate every item on Value and Effort (1-10).",
       "Plot on the 2x2 grid.",
@@ -142,10 +145,10 @@ export const PM_TEMPLATES = {
       "Living only in Quick Wins and never making a strategic Big Bet."
     ],
     headers: [
-      { key: "name", label: "Item / Feature", type: "text", editable: true },
-      { key: "value", label: "Value (1–10, 10=highest)", type: "number", min: 1, max: 10, editable: true },
-      { key: "effort", label: "Effort (1–10, 10=most effort)", type: "number", min: 1, max: 10, editable: true },
-      { key: "quadrant", label: "Quadrant (auto)", type: "text", editable: false }
+      { key: "name", label: "Item / Feature Name", type: "text", editable: true },
+      { key: "value", label: "Value Score (1–10 Rating, 10=Highest)", type: "number", min: 1, max: 10, editable: true },
+      { key: "effort", label: "Effort Score (1–10 Rating, 10=Most Effort)", type: "number", min: 1, max: 10, editable: true },
+      { key: "quadrant", label: "Quadrant (Auto)", type: "text", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Live tracking", value: 9, effort: 3 },
@@ -176,7 +179,8 @@ export const PM_TEMPLATES = {
     stage: "Prioritisation",
     category: "Prioritisation",
     whenToUse: "Balancing a roadmap so it isn't all shiny delighters with a broken core - or all boring table-stakes. Survey users with functional and dysfunctional questions.",
-    inPlainWords: "Features fall into Must-bes, Performance and Delighters - and yesterday's delighter becomes tomorrow's must-be.",
+    inPlainWords: "Better Coeff = (Attractive + Performance) ÷ Total Votes; Worse Coeff = - (Performance + Must-be) ÷ Total Votes",
+    inputGuidance: "Enter user survey vote counts for each feature across the 5 Kano categories: Attractive (Delighters), Performance (Linear utility), Must-be (Basic core expectations), Indifferent (Users don't care), and Reverse (Users dislike feature). The backend computes Better (0 to +1) and Worse (-1 to 0) satisfaction coefficients and assigns the dominant classification.",
     howToRun: [
       "Run the paired Kano survey (feature functional vs dysfunctional) on real users.",
       "Tally responses and classify each user's response into Attractive, Performance, Must-be, Indifferent, or Reverse.",
@@ -190,15 +194,15 @@ export const PM_TEMPLATES = {
       "Skipping the survey and just guessing the categories."
     ],
     headers: [
-      { key: "name", label: "Feature / Idea", type: "text", editable: true },
-      { key: "attractive", label: "Attractive / Delight (# survey votes)", type: "number", min: 0, editable: true },
-      { key: "performance", label: "Performance / Linear (# survey votes)", type: "number", min: 0, editable: true },
-      { key: "mustBe", label: "Must-be / Basic (# survey votes)", type: "number", min: 0, editable: true },
-      { key: "indifferent", label: "Indifferent (# survey votes)", type: "number", min: 0, editable: true },
-      { key: "reverse", label: "Reverse (# survey votes)", type: "number", min: 0, editable: true },
-      { key: "better", label: "Better coeff. (auto, 0–1)", type: "number", editable: false },
-      { key: "worse", label: "Worse coeff. (auto, -1–0)", type: "number", editable: false },
-      { key: "classification", label: "Kano Category (auto)", type: "text", editable: false }
+      { key: "name", label: "Feature / Idea Name", type: "text", editable: true },
+      { key: "attractive", label: "Attractive Votes (# Survey Count)", type: "number", min: 0, editable: true },
+      { key: "performance", label: "Performance Votes (# Survey Count)", type: "number", min: 0, editable: true },
+      { key: "mustBe", label: "Must-be Votes (# Survey Count)", type: "number", min: 0, editable: true },
+      { key: "indifferent", label: "Indifferent Votes (# Survey Count)", type: "number", min: 0, editable: true },
+      { key: "reverse", label: "Reverse Votes (# Survey Count)", type: "number", min: 0, editable: true },
+      { key: "better", label: "Better Coeff (Auto, 0 to 1)", type: "number", editable: false },
+      { key: "worse", label: "Worse Coeff (Auto, -1 to 0)", type: "number", editable: false },
+      { key: "classification", label: "Kano Category (Auto)", type: "text", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Live tracking", attractive: 30, performance: 45, mustBe: 20, indifferent: 5, reverse: 0 },
@@ -252,7 +256,8 @@ export const PM_TEMPLATES = {
     stage: "Prioritisation",
     category: "Prioritisation",
     whenToUse: "Agile/SAFe backlogs where sequencing many items well matters more than a one-off pick. Ranks work by economic urgency per unit of effort.",
-    inPlainWords: "Weighted Shortest Job First: do the shortest, most valuable jobs first. WSJF = Cost of Delay ÷ Job Size.",
+    inPlainWords: "Cost of Delay (CoD) = User Value + Time Criticality + Risk/Opp Enablement; WSJF = CoD ÷ Job Size",
+    inputGuidance: "Rate relative scores (1–10) for User/Biz Value, Time Criticality, and Risk/Opp Enablement. Enter Job Size (relative effort / story points). The backend calculates Cost of Delay = Value + Criticality + Opportunity, and WSJF Score = CoD / Job Size.",
     howToRun: [
       "Score each component relatively 1-10: User/Biz Value, Time Criticality, Risk/Opportunity.",
       "Cost of Delay = Value + Time Criticality + Risk/Opportunity.",
@@ -265,14 +270,14 @@ export const PM_TEMPLATES = {
       "Gaming Job Size down to jump the queue."
     ],
     headers: [
-      { key: "name", label: "Feature / Job", type: "text", editable: true },
-      { key: "value", label: "User/Biz Value (1–10, relative)", type: "number", min: 1, max: 10, editable: true },
-      { key: "criticality", label: "Time Criticality (1–10, relative)", type: "number", min: 1, max: 10, editable: true },
-      { key: "opportunity", label: "Risk/Opp Enablement (1–10, relative)", type: "number", min: 1, max: 10, editable: true },
-      { key: "cod", label: "Cost of Delay (auto = sum above)", type: "number", editable: false },
-      { key: "size", label: "Job Size (relative effort, e.g. 3)", type: "number", min: 1, editable: true },
-      { key: "wsjf", label: "WSJF Score (auto = CoD ÷ Size)", type: "number", editable: false },
-      { key: "rank", label: "Rank (auto)", type: "number", editable: false }
+      { key: "name", label: "Feature / Job Name", type: "text", editable: true },
+      { key: "value", label: "User/Biz Value (1–10 Rating)", type: "number", min: 1, max: 10, editable: true },
+      { key: "criticality", label: "Time Criticality (1–10 Rating)", type: "number", min: 1, max: 10, editable: true },
+      { key: "opportunity", label: "Risk/Opp Enablement (1–10 Rating)", type: "number", min: 1, max: 10, editable: true },
+      { key: "cod", label: "Cost of Delay (Auto = Sum of 3 above)", type: "number", editable: false },
+      { key: "size", label: "Job Size (Relative Effort, e.g. 3)", type: "number", min: 1, editable: true },
+      { key: "wsjf", label: "WSJF Score (Auto = CoD ÷ Size)", type: "number", editable: false },
+      { key: "rank", label: "Rank (Auto)", type: "number", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Live tracking", value: 8, criticality: 7, opportunity: 5, size: 3 },
@@ -306,7 +311,8 @@ export const PM_TEMPLATES = {
     stage: "Prioritisation",
     category: "Prioritisation",
     whenToUse: "Agreeing MVP or release scope with stakeholders. Makes trade-offs visible and consensual. Tag items M/S/C/W.",
-    inPlainWords: "Split scope into Must / Should / Could / Won't - and keep Musts under ~60% of effort.",
+    inPlainWords: "Must-have Effort % = (Must Effort ÷ Total Effort) × 100 (Recommended: Keep Musts ≤ 60%)",
+    inputGuidance: "Tag each backlog item as M (Must-have), S (Should-have), C (Could-have), or W (Won't-have). Enter estimated Effort in working days. The backend calculates total effort per category and alerts you if Must-haves exceed 60% of total release effort.",
     howToRun: [
       "Tag each backlog item M, S, C, or W with the team.",
       "Enter estimated effort (days) per item.",
@@ -319,9 +325,9 @@ export const PM_TEMPLATES = {
       "Musts eating all the slack, leaving no room for surprises."
     ],
     headers: [
-      { key: "name", label: "Backlog Item", type: "text", editable: true },
-      { key: "category", label: "Category (M=Must / S=Should / C=Could / W=Won't)", type: "select", editable: true, options: ["M", "S", "C", "W"] },
-      { key: "effort", label: "Effort (working days, e.g. 5)", type: "number", min: 0, editable: true }
+      { key: "name", label: "Backlog Item Name", type: "text", editable: true },
+      { key: "category", label: "Category Tag (M=Must / S=Should / C=Could / W=Won't)", type: "select", editable: true, options: ["M", "S", "C", "W"] },
+      { key: "effort", label: "Effort (Working days required)", type: "number", min: 0, editable: true }
     ],
     defaultRows: [
       { id: "1", name: "Checkout works", category: "M", effort: 6 },
@@ -361,7 +367,8 @@ export const PM_TEMPLATES = {
     stage: "Prioritisation",
     category: "Prioritisation",
     whenToUse: "Deciding which customer needs to invest in, grounded in survey data rather than the loudest stakeholder.",
-    inPlainWords: "Attack outcomes users rate important but under-served: Opportunity = Importance + max(Importance - Satisfaction, 0).",
+    inPlainWords: "Opportunity Score = Importance + max(Importance - Satisfaction, 0)",
+    inputGuidance: "Enter customer survey ratings (1–10 scale) for outcome Importance and current Satisfaction. The backend calculates Opportunity Score. Scores >10 represent strong opportunities, while scores >15 represent underserved market gaps.",
     howToRun: [
       "Survey users: rate outcome Importance and current Satisfaction (both 1-10).",
       "Opportunity = Importance + max(Importance - Satisfaction, 0).",
@@ -374,11 +381,11 @@ export const PM_TEMPLATES = {
       "Investing in already-satisfied outcomes because they're easy."
     ],
     headers: [
-      { key: "name", label: "Desired Customer Outcome (Job Step)", type: "text", editable: true },
-      { key: "importance", label: "Importance (1–10, from user survey)", type: "number", min: 1, max: 10, editable: true },
-      { key: "satisfaction", label: "Satisfaction (1–10, from user survey)", type: "number", min: 1, max: 10, editable: true },
-      { key: "opportunity", label: "Opportunity Score (auto)", type: "number", editable: false },
-      { key: "rank", label: "Rank (auto)", type: "number", editable: false }
+      { key: "name", label: "Desired Customer Outcome / Job Step", type: "text", editable: true },
+      { key: "importance", label: "Importance Rating (1–10 from Survey)", type: "number", min: 1, max: 10, editable: true },
+      { key: "satisfaction", label: "Satisfaction Rating (1–10 from Survey)", type: "number", min: 1, max: 10, editable: true },
+      { key: "opportunity", label: "Opportunity Score (Auto)", type: "number", editable: false },
+      { key: "rank", label: "Rank (Auto)", type: "number", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Get food fast when hungry", importance: 9, satisfaction: 6 },
@@ -408,7 +415,8 @@ export const PM_TEMPLATES = {
     stage: "Strategy & Portfolio",
     category: "Strategy & Portfolio",
     whenToUse: "Allocating budget and product attention across multiple product lines during strategic portfolio reviews.",
-    inPlainWords: "A portfolio view: fund Stars, milk Cash Cows, choose your Question Marks, exit Dogs.",
+    inPlainWords: "Category: Stars (Growth≥10%, Share≥1.0x), Cash Cows (Growth<10%, Share≥1.0x), Question Marks (Growth≥10%, Share<1.0x), Dogs (Growth<10%, Share<1.0x)",
+    inputGuidance: "Enter Market Growth Rate as a decimal (e.g. 0.18 for 18%), Relative Market Share vs leading competitor (e.g. 1.4 for 1.4x), and Annual Revenue in ₹ Cr. You can also click & drag bubbles directly on the BCG chart to edit values!",
     howToRun: [
       "Plot each product line on Market Growth (Y-axis) and Relative Market Share (X-axis).",
       "Relative Market Share = your revenue/share divided by leading competitor's.",
@@ -421,11 +429,11 @@ export const PM_TEMPLATES = {
       "Killing a Dog that quietly retains high-value users."
     ],
     headers: [
-      { key: "name", label: "Product / Line", type: "text", editable: true },
-      { key: "growth", label: "Market Growth (decimal: enter 0.15 for 15%)", type: "number", min: 0, max: 1, editable: true },
-      { key: "share", label: "Relative Market Share (×, e.g. 1.4 = 1.4× leader)", type: "number", min: 0, max: 10, editable: true },
-      { key: "revenue", label: "Annual Revenue (₹ cr, e.g. 220)", type: "number", min: 0, editable: true },
-      { key: "category", label: "BCG Category (auto)", type: "text", editable: false }
+      { key: "name", label: "Product / Line Name", type: "text", editable: true },
+      { key: "growth", label: "Market Growth Rate (Decimal: e.g. 0.18 = 18%)", type: "number", min: 0, max: 1, editable: true },
+      { key: "share", label: "Relative Market Share (× vs Leader, e.g. 1.4)", type: "number", min: 0, max: 10, editable: true },
+      { key: "revenue", label: "Annual Revenue (₹ Cr, e.g. 220)", type: "number", min: 0, editable: true },
+      { key: "category", label: "BCG Category (Auto)", type: "text", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Food delivery", growth: 0.18, share: 1.4, revenue: 220 },
@@ -456,7 +464,8 @@ export const PM_TEMPLATES = {
     stage: "Strategy & Portfolio",
     category: "Strategy & Portfolio",
     whenToUse: "Choosing the direction of growth, and balancing a portfolio of safe vs ambitious growth bets.",
-    inPlainWords: "Four ways to grow, in rising order of risk: market penetration, product dev, market dev, diversification.",
+    inPlainWords: "Risk-Adjusted Value (₹ Cr) = Expected Revenue (₹ Cr) × (Success Probability % ÷ 100)",
+    inputGuidance: "Select Growth Vector quadrant (Market Penetration, Product Development, Market Development, or Diversification). Enter Expected Revenue (₹ Cr) and Success Probability % (0–100). The backend calculates Risk-Adjusted Value.",
     howToRun: [
       "Classify each growth idea into one of the four quadrants.",
       "Estimate expected revenue and a success probability for each.",
@@ -469,11 +478,11 @@ export const PM_TEMPLATES = {
       "No probability weighting (makes risky bets look best)."
     ],
     headers: [
-      { key: "name", label: "Initiative", type: "text", editable: true },
-      { key: "vector", label: "Growth Vector", type: "select", editable: true, options: ["Market Penetration", "Product Development", "Market Development", "Diversification"] },
-      { key: "revenue", label: "Expected Revenue (₹ cr, e.g. 90)", type: "number", min: 0, editable: true },
-      { key: "probability", label: "Success Probability (enter 0–100, e.g. 85 = 85%)", type: "number", min: 0, max: 100, editable: true },
-      { key: "riskAdjusted", label: "Risk-Adjusted Value (auto = Rev × Prob%)", type: "number", editable: false }
+      { key: "name", label: "Growth Initiative Name", type: "text", editable: true },
+      { key: "vector", label: "Growth Vector Quadrant", type: "select", editable: true, options: ["Market Penetration", "Product Development", "Market Development", "Diversification"] },
+      { key: "revenue", label: "Expected Revenue (₹ Cr)", type: "number", min: 0, editable: true },
+      { key: "probability", label: "Success Probability % (0–100)", type: "number", min: 0, max: 100, editable: true },
+      { key: "riskAdjusted", label: "Risk-Adjusted Value (Auto = Rev × Prob)", type: "number", editable: false }
     ],
     defaultRows: [
       { id: "1", name: "Push reorders to existing users", vector: "Market Penetration", revenue: 40, probability: 85 },
@@ -496,7 +505,8 @@ export const PM_TEMPLATES = {
     stage: "Strategy & Portfolio",
     category: "Strategy & Portfolio",
     whenToUse: "Deciding whether to enter a market, or explaining to leadership why industry margins are structurally low.",
-    inPlainWords: "Industry profitability is set by five structural forces - know them before you enter.",
+    inPlainWords: "Average Threat = Sum(5 Forces) ÷ 5; Market Attractiveness = 6 - Average Threat Score",
+    inputGuidance: "Score the Threat Level from 1 (Low Threat / Favorable) to 5 (Brutal Threat / Hostile) across all 5 forces. You can also drag horizontal bars directly on the chart to update threat ratings!",
     howToRun: [
       "Score the threat level of each force from benign (1) to brutal (5) with evidence.",
       "Attractiveness = 6 - average score (higher is better).",
@@ -509,9 +519,9 @@ export const PM_TEMPLATES = {
       "Forgetting complementors and regulation."
     ],
     headers: [
-      { key: "force", label: "Force", type: "text", editable: false },
-      { key: "threat", label: "Threat Level (1=low threat → 5=brutal)", type: "number", min: 1, max: 5, editable: true },
-      { key: "notes", label: "Notes / Evidence (free text)", type: "text", editable: true }
+      { key: "force", label: "Industry Force", type: "text", editable: false },
+      { key: "threat", label: "Threat Rating (1=Low Threat → 5=Brutal)", type: "number", min: 1, max: 5, editable: true },
+      { key: "notes", label: "Notes & Qualitative Evidence", type: "text", editable: true }
     ],
     defaultRows: [
       { id: "1", force: "Competitive rivalry", threat: 4, notes: "Zomato, Swiggy, local aggregators" },
@@ -545,7 +555,8 @@ export const PM_TEMPLATES = {
     stage: "Metrics & Growth",
     category: "Metrics & Growth",
     whenToUse: "Aligning product teams behind user value rather than vanity/revenue numbers.",
-    inPlainWords: "One metric that captures the value customers get - decomposed into inputs a team can move.",
+    inPlainWords: "North Star Metric (Monthly On-Time Orders Mn) = (MAU × Orders/User × On-Time Rate %) ÷ 1000",
+    inputGuidance: "1) Enter baseline Current values and 90-Day Stretch Targets for the 3 input drivers. The backend computes the resulting North Star Metric impact. 2) Update the monthly trajectory actual vs target figures.",
     howToRun: [
       "Choose an NSM that reflects delivered value (e.g. weekly on-time orders).",
       "Decompose it into inputs (Active users × Orders/user × On-time rate).",
@@ -608,7 +619,8 @@ export const PM_TEMPLATES = {
     stage: "Metrics & Growth",
     category: "Metrics & Growth",
     whenToUse: "Diagnosing growth leaks and deciding where to focus product/onboarding optimization.",
-    inPlainWords: "The lifecycle funnel: Acquisition, Activation, Retention, Revenue, Referral. Fix the leakiest step.",
+    inPlainWords: "Step Conversion % = Stage Users ÷ Previous Stage Users; Total Conversion % = Stage Users ÷ Acquisition Users",
+    inputGuidance: "Enter raw user counts for each funnel stage (Acquisition, Activation, Retention, Revenue, Referral). The backend automatically calculates step-by-step conversion rates and overall top-of-funnel retention.",
     howToRun: [
       "Define one clear, trackable action for each stage.",
       "Enter the count of users reaching each stage.",
@@ -621,11 +633,11 @@ export const PM_TEMPLATES = {
       "Ignoring referral (the cheapest growth channel)."
     ],
     headers: [
-      { key: "stage", label: "Funnel Stage", type: "text", editable: false },
-      { key: "users", label: "Users (raw count, e.g. 10000)", type: "number", min: 0, editable: true },
-      { key: "stepConv", label: "Step Conversion", type: "percent", editable: false },
-      { key: "totalConv", label: "% of Acquisition", type: "percent", editable: false },
-      { key: "definition", label: "Definition", type: "text", editable: false }
+      { key: "stage", label: "Funnel Stage Name", type: "text", editable: false },
+      { key: "users", label: "User Count (# Users reaching stage)", type: "number", min: 0, editable: true },
+      { key: "stepConv", label: "Step Conv % (Auto = Users ÷ Prev Stage)", type: "percent", editable: false },
+      { key: "totalConv", label: "% of Acquisition (Auto = Users ÷ Acq)", type: "percent", editable: false },
+      { key: "definition", label: "Stage Metric Definition", type: "text", editable: false }
     ],
     defaultRows: [
       { id: "1", stage: "Acquisition", users: 100000, definition: "People who arrive at the landing page" },
@@ -660,7 +672,8 @@ export const PM_TEMPLATES = {
     stage: "Metrics & Growth",
     category: "Metrics & Growth",
     whenToUse: "Measuring UX quality of a specific feature or workflow, capturing what business metrics miss.",
-    inPlainWords: "Turn 'good UX' into trackable numbers across Happiness, Engagement, Adoption, Retention, Task success.",
+    inPlainWords: "% Attainment = Current Value ÷ Target Goal",
+    inputGuidance: "For each UX category (Happiness, Engagement, Adoption, Retention, Task success), enter the Signal Metric name, Current measured value, and Target goal. The backend computes the % Attainment towards target.",
     howToRun: [
       "Select the 2-3 HEART categories that matter for the feature.",
       "For each, write the Goal, the Signal, and the Metric.",
@@ -673,11 +686,11 @@ export const PM_TEMPLATES = {
       "No Goal-Signal-Metric connection."
     ],
     headers: [
-      { key: "category", label: "UX Category", type: "text", editable: false },
-      { key: "metric", label: "Signal Metric (what you're measuring)", type: "text", editable: true },
-      { key: "current", label: "Current Value (same unit as Target)", type: "number", min: 0, editable: true },
-      { key: "target", label: "Target Goal (same unit as Current)", type: "number", min: 0.1, editable: true },
-      { key: "attainment", label: "% Attainment (auto = Current ÷ Target)", type: "percent", editable: false }
+      { key: "category", label: "UX Category Name", type: "text", editable: false },
+      { key: "metric", label: "Signal Metric Description", type: "text", editable: true },
+      { key: "current", label: "Current Value (Same unit as target)", type: "number", min: 0, editable: true },
+      { key: "target", label: "Target Goal (Same unit as current)", type: "number", min: 0.1, editable: true },
+      { key: "attainment", label: "% Attainment (Auto = Current ÷ Target)", type: "percent", editable: false }
     ],
     defaultRows: [
       { id: "1", category: "Happiness", metric: "CSAT / app store rating", current: 72, target: 85 },
@@ -704,7 +717,8 @@ export const PM_TEMPLATES = {
     stage: "Metrics & Growth",
     category: "Metrics & Growth",
     whenToUse: "Before scaling marketing spend; investor discussions; or sanity-checking growth plans.",
-    inPlainWords: "Does each customer make more than they cost? Aim for LTV:CAC ≥ 3 and payback ≤ 12 months.",
+    inPlainWords: "Contribution = ARPU × Margin %; LTV = Contribution ÷ Churn %; Payback = CAC ÷ Contribution; LTV:CAC = LTV ÷ CAC",
+    inputGuidance: "Enter ARPU (monthly revenue per user in ₹), Gross Margin % (0-100), Monthly Churn Rate % (0-100), and CAC (customer acquisition cost in ₹). The backend calculates LTV, Payback period in months, LTV:CAC ratio, and generates a sensitivity heatmap.",
     howToRun: [
       "Compute contribution per user = ARPU × Gross Margin.",
       "Estimate customer lifetime = 1 ÷ Monthly Churn.",
@@ -768,7 +782,8 @@ export const PM_TEMPLATES = {
     stage: "Metrics & Growth",
     category: "Metrics & Growth",
     whenToUse: "Judging real product stickiness and product-market fit. Watching whether product improvements retain newer cohorts higher.",
-    inPlainWords: "Group users by when they joined and watch each cohort over time - the truest read on stickiness.",
+    inPlainWords: "Month N Retention % = (# Active Users at Month N ÷ M0 Starting Cohort Size)",
+    inputGuidance: "Enter Cohort Name (e.g. Jan), M0 Cohort Size (# starting users), and the raw number of active users remaining at Month 1 through Month 6. The backend calculates retention percentages and plots cohort curves.",
     howToRun: [
       "Define cohort key (signup month) and the retention action.",
       "Calculate active users remaining at Month 1 to Month 6.",
@@ -781,14 +796,14 @@ export const PM_TEMPLATES = {
       "Declaring PMF before the curve flattens."
     ],
     headers: [
-      { key: "cohort", label: "Cohort (e.g. Jan, Feb)", type: "text", editable: true },
-      { key: "size", label: "M0 Cohort Size (# users at start)", type: "number", min: 1, editable: true },
-      { key: "m1", label: "M1 (# users still active at Month 1)", type: "number", min: 0, editable: true },
-      { key: "m2", label: "M2 (# users still active at Month 2)", type: "number", min: 0, editable: true },
-      { key: "m3", label: "M3 (# users still active at Month 3)", type: "number", min: 0, editable: true },
-      { key: "m4", label: "M4 (# users still active at Month 4)", type: "number", min: 0, editable: true },
-      { key: "m5", label: "M5 (# users still active at Month 5)", type: "number", min: 0, editable: true },
-      { key: "m6", label: "M6 (# users still active at Month 6)", type: "number", min: 0, editable: true }
+      { key: "cohort", label: "Cohort Name (Month)", type: "text", editable: true },
+      { key: "size", label: "M0 Cohort Size (# Users at start)", type: "number", min: 1, editable: true },
+      { key: "m1", label: "M1 Active Users", type: "number", min: 0, editable: true },
+      { key: "m2", label: "M2 Active Users", type: "number", min: 0, editable: true },
+      { key: "m3", label: "M3 Active Users", type: "number", min: 0, editable: true },
+      { key: "m4", label: "M4 Active Users", type: "number", min: 0, editable: true },
+      { key: "m5", label: "M5 Active Users", type: "number", min: 0, editable: true },
+      { key: "m6", label: "M6 Active Users", type: "number", min: 0, editable: true }
     ],
     defaultRows: [
       { id: "1", cohort: "Jan", size: 5000, m1: 2900, m2: 2100, m3: 1750, m4: 1550, m5: 1450, m6: 1400 },
@@ -842,7 +857,8 @@ export const PM_TEMPLATES = {
     stage: "Metrics & Growth",
     category: "Metrics & Growth",
     whenToUse: "Gauging whether you have product-market fit before pouring fuel on scaling marketing spend.",
-    inPlainWords: "If ≥40% of users would be 'very disappointed' to lose your product, you likely have PMF.",
+    inPlainWords: "PMF Score % = Very Disappointed Count ÷ (Very + Somewhat + Not Disappointed)",
+    inputGuidance: "Enter raw user survey response counts for 'Very disappointed', 'Somewhat disappointed', 'Not disappointed', and 'N/A – no longer use'. The backend computes the PMF score (benchmark: ≥ 40% confirms Product-Market Fit signal).",
     howToRun: [
       "Survey active users with the Sean Ellis question.",
       "Exclude N/A users who no longer use the product.",
@@ -855,8 +871,8 @@ export const PM_TEMPLATES = {
       "Declaring PMF from one good week; confirm with retention."
     ],
     headers: [
-      { key: "label", label: "Response Option", type: "text", editable: false },
-      { key: "count", label: "User Count (raw number)", type: "number", min: 0, editable: true }
+      { key: "label", label: "Survey Response Option", type: "text", editable: false },
+      { key: "count", label: "User Count (# Survey responses)", type: "number", min: 0, editable: true }
     ],
     defaultRows: [
       { key: "very", label: "Very disappointed", count: 210 },
@@ -891,7 +907,8 @@ export const PM_TEMPLATES = {
     stage: "Experiments",
     category: "Experiments & Goals",
     whenToUse: "High-traffic decisions where a real, measurable metric can settle a debate objectively.",
-    inPlainWords: "Let controlled experiments, not opinions, decide - but design them so the result is real, not noise.",
+    inPlainWords: "Z-Score = (Variant Conv Rate - Control Conv Rate) ÷ Pooled Standard Error",
+    inputGuidance: "Enter raw visitor counts and conversion counts for Control (A) and Variant (B). The backend calculates individual conversion rates, relative uplift %, Z-score, and checks statistical significance at 95% (|z| > 1.96) and 99% (|z| > 2.576).",
     howToRun: [
       "Form one clear hypothesis and pick a single primary metric.",
       "Enter visitors and conversions for Control and Variant.",
@@ -946,7 +963,8 @@ export const PM_TEMPLATES = {
     stage: "Experiments",
     category: "Experiments & Goals",
     whenToUse: "Quarterly goal-setting and mid-cycle check-ins across product teams.",
-    inPlainWords: "An ambitious, qualitative Objective proven by 2-4 measurable Key Results.",
+    inPlainWords: "Progress % = (Current Value - Start Value) ÷ (Target Value - Start Value)",
+    inputGuidance: "Enter Objective, Key Result metric name, Start baseline value, Current measured value, and Target stretch goal. The backend computes Progress % (clamped 0–100%) and sets Status (On Track if ≥70%, At Risk if ≥40%, Off Track if <40%).",
     howToRun: [
       "Set 1-3 Objectives per team - memorable, time-boxed.",
       "Attach 2-4 Key Results that are measurable and outcome-based.",
@@ -959,13 +977,13 @@ export const PM_TEMPLATES = {
       "Tying 100%-or-bust bonuses to stretch goals, killing ambition."
     ],
     headers: [
-      { key: "objective", label: "Objective", type: "text", editable: true },
-      { key: "kr", label: "Key Result", type: "text", editable: true },
-      { key: "start", label: "Start Value (baseline at period start)", type: "number", editable: true },
-      { key: "current", label: "Current Value (latest measured value)", type: "number", editable: true },
-      { key: "target", label: "Target Value (stretch goal for period)", type: "number", editable: true },
-      { key: "progress", label: "Progress % (auto = (Current-Start)÷(Target-Start))", type: "percent", editable: false },
-      { key: "status", label: "Status (auto)", type: "text", editable: false }
+      { key: "objective", label: "Objective Description", type: "text", editable: true },
+      { key: "kr", label: "Key Result Metric Description", type: "text", editable: true },
+      { key: "start", label: "Start Baseline (Value at period start)", type: "number", editable: true },
+      { key: "current", label: "Current Measured Value", type: "number", editable: true },
+      { key: "target", label: "Target Stretch Goal Value", type: "number", editable: true },
+      { key: "progress", label: "Progress % (Auto = (Current-Start)÷(Target-Start))", type: "percent", editable: false },
+      { key: "status", label: "Status (Auto)", type: "text", editable: false }
     ],
     defaultRows: [
       { id: "1", objective: "Make ordering effortless", kr: "D30 retention (%)", start: 28, current: 33, target: 40 },
@@ -999,3 +1017,4 @@ export const PM_TEMPLATES = {
     }
   }
 };
+

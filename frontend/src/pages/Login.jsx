@@ -112,8 +112,15 @@ const Login = () => {
        localStorage.setItem('oauth_autoOpenBooking', 'true');
     }
     
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-    const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+    let baseUrl;
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (apiUrl) {
+      baseUrl = apiUrl.replace(/\/api\/?$/, '');
+    } else {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      baseUrl = isLocalhost ? 'http://localhost:8080' : window.location.origin;
+    }
+    
     window.location.href = `${baseUrl}/oauth2/authorization/${provider}`;
   };
 

@@ -1,10 +1,14 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
-  let url = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+  let url = import.meta.env.VITE_API_URL;
+  if (!url) {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    url = isLocalhost ? 'http://localhost:8080/api' : '/api';
+  }
   
   if (!url || typeof url !== 'string') {
-    return 'http://localhost:8080/api';
+    return '/api';
   }
 
   // Remove trailing slash
@@ -12,8 +16,8 @@ const getBaseUrl = () => {
     url = url.slice(0, -1);
   }
 
-  // Ensure it ends with /api for the gateway
-  if (!url.endsWith('/api')) {
+  // Ensure it ends with /api for the gateway (unless it is a relative path)
+  if (!url.endsWith('/api') && !url.startsWith('/')) {
     url = url + '/api';
   }
   

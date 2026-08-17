@@ -63,6 +63,29 @@ const TooltipEl = ({ elRef }) => (
 );
 
 // ============================================================================
+// --- HOOK: Observe container dimensions for responsive charts ---
+// ============================================================================
+const useChartDimensions = () => {
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    // Trigger initial measurement
+    setDims({ width: Math.floor(el.clientWidth), height: Math.floor(el.clientHeight) });
+    return () => ro.disconnect();
+  }, []);
+  return [containerRef, dims];
+};
+
+// ============================================================================
 // --- CHART MODAL (RESIZABLE FULL-SCREEN ENLARGE) ---
 // ============================================================================
 const ChartModal = ({ isOpen, onClose, title, children }) => {
@@ -70,6 +93,8 @@ const ChartModal = ({ isOpen, onClose, title, children }) => {
   const [size, setSize] = useState({ w: null, h: null });
   const resizing = useRef(false);
   const startPos = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  // Track whether a mousedown started on the backdrop (to avoid closing on drag-release)
+  const backdropMouseDownRef = useRef(false);
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -99,8 +124,8 @@ const ChartModal = ({ isOpen, onClose, title, children }) => {
 
     const onMove = (ev) => {
       if (!resizing.current) return;
-      const newW = Math.max(360, startPos.current.w + (ev.clientX - startPos.current.x));
-      const newH = Math.max(280, startPos.current.h + (ev.clientY - startPos.current.y));
+      const newW = Math.max(420, startPos.current.w + (ev.clientX - startPos.current.x));
+      const newH = Math.max(320, startPos.current.h + (ev.clientY - startPos.current.y));
       setSize({ w: newW, h: newH });
     };
     const onUp = () => {
@@ -117,21 +142,31 @@ const ChartModal = ({ isOpen, onClose, title, children }) => {
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center"
       style={{ background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(6px)' }}
-      onClick={onClose}
+      onMouseDown={(e) => {
+        // Only set the flag when the mousedown target is the backdrop itself
+        backdropMouseDownRef.current = (e.target === e.currentTarget);
+      }}
+      onMouseUp={(e) => {
+        // Only close if both mousedown AND mouseup happened on the backdrop (true click, not drag-release)
+        if (backdropMouseDownRef.current && e.target === e.currentTarget) {
+          onClose();
+        }
+        backdropMouseDownRef.current = false;
+      }}
     >
       <div
         ref={modalRef}
-        className="relative bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 flex flex-col items-center"
+        className="relative bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 flex flex-col"
         style={{
-          width: size.w ? size.w : 'auto',
-          height: size.h ? size.h : 'auto',
-          maxWidth: '96vw', maxHeight: '94vh',
-          minWidth: 360, minHeight: 280,
-          overflow: 'auto',
+          width: size.w ? size.w : '90vw',
+          height: size.h ? size.h : '88vh',
+          maxWidth: '98vw', maxHeight: '96vh',
+          minWidth: 420, minHeight: 320,
+          overflow: 'hidden',
         }}
-        onClick={e => e.stopPropagation()}
+        onMouseDown={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between w-full mb-4">
+        <div className="flex items-center justify-between w-full mb-4 shrink-0">
           <span className="text-sm font-extrabold text-slate-700 uppercase tracking-wider">{title}</span>
           <div className="flex items-center gap-2 ml-4">
             <span className="text-[10px] text-slate-400 font-medium hidden sm:block">Drag ↘ corner to resize</span>
@@ -143,19 +178,19 @@ const ChartModal = ({ isOpen, onClose, title, children }) => {
             </button>
           </div>
         </div>
-        <div className="w-full flex justify-center flex-1 overflow-auto">
+        {/* Chart fills the remaining space */}
+        <div className="w-full flex-1 min-h-0 overflow-hidden">
           {children}
         </div>
-        <p className="text-[10px] text-slate-400 mt-3 font-medium">Press Esc or click outside to close</p>
+        <p className="text-[10px] text-slate-400 mt-3 font-medium shrink-0">Press Esc or click outside to close</p>
 
         {/* Resize handle */}
         <div
           onMouseDown={onResizeMouseDown}
           title="Drag to resize"
-          className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize flex items-end justify-end p-1 rounded-br-2xl"
-          style={{ zIndex: 10 }}
+          className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize flex items-end justify-end p-1.5 rounded-br-2xl z-10"
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
             <path d="M11 1L1 11M11 6L6 11M11 11" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </div>
@@ -194,6 +229,13 @@ const ChartWrapper = ({ title, badge, children, modalChildren }) => {
   );
 };
 
+// Helper: Responsive SVG container that fills its parent
+const ResponsiveSVGContainer = ({ children, style }) => (
+  <div style={{ width: '100%', height: '100%', position: 'relative', ...style }}>
+    {children}
+  </div>
+);
+
 // ============================================================================
 // --- CUSTOM D3 CHART COMPONENTS ---
 // ============================================================================
@@ -212,20 +254,39 @@ const drawGrid = (g, yScale, chartWidth) => {
 // 1. RICE / WSJF / Opportunity Bar Chart (Horizontal Bars)
 const RiceBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
-  const W = enlarged ? 760 : 420;
-  const H = enlarged ? 420 : 280;
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 420, height: enlarged ? 500 : 280 });
+
   useEffect(() => {
-    if (!svgRef.current || !data || data.length === 0) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
+  useEffect(() => {
+    if (!svgRef.current || !data || data.length === 0 || W === 0 || H === 0) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const margin = { top: 20, right: 50, bottom: 40, left: 120 };
-    const chartWidth = W - margin.left - margin.right;
-    const chartHeight = H - margin.top - margin.bottom;
+    const margin = { top: 20, right: 70, bottom: 45, left: 140 };
+    const chartWidth = Math.max(10, W - margin.left - margin.right);
+    const chartHeight = Math.max(10, H - margin.top - margin.bottom);
 
     // Defs
     const defs = svg.append("defs");
-    const grad = defs.append("linearGradient").attr("id", `riceGrad${enlarged ? 'L' : 'S'}`)
+    const grad = defs.append("linearGradient").attr("id", `riceGrad_${enlarged ? 'L' : 'S'}`)
       .attr("x1", "0%").attr("x2", "100%");
     grad.append("stop").attr("offset", "0%").attr("stop-color", "#818cf8");
     grad.append("stop").attr("offset", "100%").attr("stop-color", "#4338ca");
@@ -244,25 +305,37 @@ const RiceBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) 
     g.append("g").attr("class", "grid")
       .call(d3.axisBottom(xScale).ticks(5).tickSize(chartHeight).tickFormat(""))
       .call(gg => gg.select(".domain").remove())
-      .call(gg => gg.selectAll("line").attr("stroke", "#e2e8f0").attr("stroke-dasharray", "3,3").attr("transform", `translate(0,0)`));
+      .call(gg => gg.selectAll("line").attr("stroke", "#e2e8f0").attr("stroke-dasharray", "3,3"));
 
     // Axes
     g.append("g").attr("transform", `translate(0,${chartHeight})`)
       .call(d3.axisBottom(xScale).ticks(5))
       .call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"))
-      .selectAll("text").attr("fill", "#64748b").attr("font-size", "10px");
+      .selectAll("text").attr("fill", "#64748b").attr("font-size", enlarged ? "12px" : "10px");
 
-    g.append("g").call(d3.axisLeft(yScale))
-      .call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"))
-      .selectAll("text").attr("font-size", "10px").attr("font-weight", "600").attr("fill", "#334155");
+    const yAxis = g.append("g").call(d3.axisLeft(yScale));
+    yAxis.call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"));
+    yAxis.selectAll("text")
+      .attr("font-size", enlarged ? "12px" : "10px")
+      .attr("font-weight", "600")
+      .attr("fill", "#334155")
+      .each(function() {
+        const self = d3.select(this);
+        const txt = self.text();
+        if (txt.length > 18) {
+          self.text(txt.slice(0, 16) + '…');
+          self.append('title').text(txt);
+        }
+      });
 
     // Bars with enter animation
+    const gradId = `riceGrad_${enlarged ? 'L' : 'S'}`;
     const bars = g.selectAll(".bar").data(sortedData).enter().append("rect")
       .attr("class", "bar cursor-help")
       .attr("y", d => yScale(d.name)).attr("x", 0)
       .attr("height", yScale.bandwidth())
       .attr("width", 0)
-      .attr("fill", `url(#riceGrad${enlarged ? 'L' : 'S'})`)
+      .attr("fill", `url(#${gradId})`)
       .attr("rx", 5);
 
     bars.transition().duration(600).ease(d3.easeCubicOut)
@@ -274,7 +347,7 @@ const RiceBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) 
       })
       .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
       .on("mouseout", (event) => {
-        d3.select(event.currentTarget).transition().duration(100).attr("fill", `url(#riceGrad${enlarged ? 'L' : 'S'})`);
+        d3.select(event.currentTarget).transition().duration(100).attr("fill", `url(#${gradId})`);
         hideTooltip();
       });
 
@@ -283,16 +356,25 @@ const RiceBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) 
       .attr("class", "pointer-events-none")
       .attr("y", d => yScale(d.name) + yScale.bandwidth() / 2 + 4)
       .attr("x", d => xScale(d.score) + 6)
-      .attr("fill", "#4338ca").attr("font-size", "10px").attr("font-weight", "700")
+      .attr("fill", "#4338ca").attr("font-size", enlarged ? "12px" : "10px").attr("font-weight", "700")
       .text(d => Math.round(d.score));
 
-  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
-  if (enlarged) return chart;
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 320 }}>
+        <svg ref={svgRef} width={W || '100%'} height={H || '100%'} style={{ display: 'block', width: '100%', height: '100%' }} />
+      </div>
+    );
+  }
   return (
-    <ChartWrapper title="Prioritisation Scoreboard" modalChildren={<RiceBarChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}>
-      {chart}
+    <ChartWrapper title="Prioritisation Scoreboard"
+      modalChildren={<RiceBarChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
+    >
+      <div style={{ width: '100%', minHeight: 220 }}>
+        <svg ref={svgRef} width={W} height={280} style={{ display: 'block', width: '100%', overflow: 'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
@@ -300,19 +382,38 @@ const RiceBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) 
 // 2. Weighted Scoring Bar Chart
 const WeightedBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
-  const W = enlarged ? 760 : 420;
-  const H = enlarged ? 420 : 280;
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 420, height: enlarged ? 500 : 280 });
+
   useEffect(() => {
-    if (!svgRef.current || !data || data.length === 0) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
+  useEffect(() => {
+    if (!svgRef.current || !data || data.length === 0 || W === 0 || H === 0) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const margin = { top: 20, right: 60, bottom: 40, left: 120 };
-    const chartWidth = W - margin.left - margin.right;
-    const chartHeight = H - margin.top - margin.bottom;
+    const margin = { top: 20, right: 75, bottom: 45, left: 140 };
+    const chartWidth = Math.max(10, W - margin.left - margin.right);
+    const chartHeight = Math.max(10, H - margin.top - margin.bottom);
 
     const defs = svg.append("defs");
-    const gradId = `wGrad${enlarged ? 'L' : 'S'}`;
+    const gradId = `wGrad_${enlarged ? 'L' : 'S'}`;
     const grad = defs.append("linearGradient").attr("id", gradId).attr("x1", "0%").attr("x2", "100%");
     grad.append("stop").attr("offset", "0%").attr("stop-color", "#22d3ee");
     grad.append("stop").attr("offset", "100%").attr("stop-color", "#0284c7");
@@ -333,11 +434,22 @@ const WeightedBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged
     g.append("g").attr("transform", `translate(0,${chartHeight})`)
       .call(d3.axisBottom(xScale).ticks(5))
       .call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"))
-      .selectAll("text").attr("fill", "#64748b").attr("font-size", "10px");
+      .selectAll("text").attr("fill", "#64748b").attr("font-size", enlarged ? "12px" : "10px");
 
-    g.append("g").call(d3.axisLeft(yScale))
-      .call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"))
-      .selectAll("text").attr("font-size", "10px").attr("font-weight", "600").attr("fill", "#334155");
+    const yAxis = g.append("g").call(d3.axisLeft(yScale));
+    yAxis.call(gg => gg.select(".domain").attr("stroke", "#cbd5e1"));
+    yAxis.selectAll("text")
+      .attr("font-size", enlarged ? "12px" : "10px")
+      .attr("font-weight", "600")
+      .attr("fill", "#334155")
+      .each(function() {
+        const self = d3.select(this);
+        const txt = self.text();
+        if (txt.length > 18) {
+          self.text(txt.slice(0, 16) + '…');
+          self.append('title').text(txt);
+        }
+      });
 
     // Bars
     const bars = g.selectAll(".bar").data(sortedData).enter().append("rect")
@@ -362,37 +474,63 @@ const WeightedBarChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged
       .attr("class", "pointer-events-none")
       .attr("y", d => yScale(d.name) + yScale.bandwidth() / 2 + 4)
       .attr("x", d => xScale(d.score || 0) + 6)
-      .attr("fill", "#0369a1").attr("font-size", "10px").attr("font-weight", "700")
+      .attr("fill", "#0369a1").attr("font-size", enlarged ? "12px" : "10px").attr("font-weight", "700")
       .text(d => typeof d.score === 'number' ? d.score.toFixed(2) : '');
 
-  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
-  if (enlarged) return chart;
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 320 }}>
+        <svg ref={svgRef} width={W || '100%'} height={H || '100%'} style={{ display: 'block', width: '100%', height: '100%' }} />
+      </div>
+    );
+  }
   return (
-    <ChartWrapper title="Weighted Performance" modalChildren={<WeightedBarChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}>
-      {chart}
+    <ChartWrapper title="Weighted Performance"
+      modalChildren={<WeightedBarChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
+    >
+      <div style={{ width: '100%', minHeight: 220 }}>
+        <svg ref={svgRef} width={W} height={280} style={{ display: 'block', width: '100%', overflow: 'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
 
-// 3. Value vs Effort (2x2 DRAGGABLE Scatter Plot)
-const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTooltip }) => {
+// 3. Value vs Effort (2x2 DRAGGABLE Scatter Plot) — responsive
+const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const containerRef = useRef(null);
   const dataRef = useRef(data);
   dataRef.current = data;
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 450, height: enlarged ? 520 : 320 });
 
   useEffect(() => {
-    if (!svgRef.current || !data || data.length === 0) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
+  useEffect(() => {
+    if (!svgRef.current || !data || data.length === 0 || W === 0 || H === 0) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 320;
-    const margin = { top: 25, right: 30, bottom: 40, left: 45 };
-
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
+    const margin = { top: 30, right: 70, bottom: 50, left: 65 };
+    const chartWidth = Math.max(10, W - margin.left - margin.right);
+    const chartHeight = Math.max(10, H - margin.top - margin.bottom);
 
     const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
 
@@ -400,141 +538,93 @@ const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTo
     const yScale = d3.scaleLinear().domain([0, 10]).range([chartHeight, 0]);
 
     // Background quadrant fills
-    g.append("rect")
-      .attr("x", xScale(0)).attr("y", yScale(10))
-      .attr("width", xScale(5) - xScale(0))
-      .attr("height", yScale(5) - yScale(10))
-      .attr("fill", "#22c55e").attr("opacity", 0.06);
-
-    g.append("rect")
-      .attr("x", xScale(5)).attr("y", yScale(10))
-      .attr("width", xScale(10) - xScale(5))
-      .attr("height", yScale(5) - yScale(10))
-      .attr("fill", "#3b82f6").attr("opacity", 0.06);
-
-    g.append("rect")
-      .attr("x", xScale(0)).attr("y", yScale(5))
-      .attr("width", xScale(5) - xScale(0))
-      .attr("height", yScale(0) - yScale(5))
-      .attr("fill", "#64748b").attr("opacity", 0.06);
-
-    g.append("rect")
-      .attr("x", xScale(5)).attr("y", yScale(5))
-      .attr("width", xScale(10) - xScale(5))
-      .attr("height", yScale(0) - yScale(5))
-      .attr("fill", "#ef4444").attr("opacity", 0.06);
+    g.append("rect").attr("x",xScale(0)).attr("y",yScale(10)).attr("width",xScale(5)-xScale(0)).attr("height",yScale(5)-yScale(10)).attr("fill","#22c55e").attr("opacity",0.06);
+    g.append("rect").attr("x",xScale(5)).attr("y",yScale(10)).attr("width",xScale(10)-xScale(5)).attr("height",yScale(5)-yScale(10)).attr("fill","#3b82f6").attr("opacity",0.06);
+    g.append("rect").attr("x",xScale(0)).attr("y",yScale(5)).attr("width",xScale(5)-xScale(0)).attr("height",yScale(0)-yScale(5)).attr("fill","#64748b").attr("opacity",0.06);
+    g.append("rect").attr("x",xScale(5)).attr("y",yScale(5)).attr("width",xScale(10)-xScale(5)).attr("height",yScale(0)-yScale(5)).attr("fill","#ef4444").attr("opacity",0.06);
 
     // Divider Lines
-    g.append("line")
-      .attr("x1", xScale(5)).attr("y1", yScale(0))
-      .attr("x2", xScale(5)).attr("y2", yScale(10))
-      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
+    g.append("line").attr("x1",xScale(5)).attr("y1",yScale(0)).attr("x2",xScale(5)).attr("y2",yScale(10)).attr("stroke","#cbd5e1").attr("stroke-dasharray","4,4").attr("stroke-width",1.5);
+    g.append("line").attr("x1",xScale(0)).attr("y1",yScale(5)).attr("x2",xScale(10)).attr("y2",yScale(5)).attr("stroke","#cbd5e1").attr("stroke-dasharray","4,4").attr("stroke-width",1.5);
 
-    g.append("line")
-      .attr("x1", xScale(0)).attr("y1", yScale(5))
-      .attr("x2", xScale(10)).attr("y2", yScale(5))
-      .attr("stroke", "#cbd5e1").attr("stroke-dasharray", "4,4").attr("stroke-width", 1.5);
-
-    // Quadrant titles
-    g.append("text").attr("x", xScale(2.5)).attr("y", yScale(9.4)).attr("text-anchor", "middle").attr("fill", "#15803d").attr("font-size", "10px").attr("font-weight", "bold").text("Quick Wins");
-    g.append("text").attr("x", xScale(7.5)).attr("y", yScale(9.4)).attr("text-anchor", "middle").attr("fill", "#1d4ed8").attr("font-size", "10px").attr("font-weight", "bold").text("Big Bets");
-    g.append("text").attr("x", xScale(2.5)).attr("y", yScale(0.6)).attr("text-anchor", "middle").attr("fill", "#475569").attr("font-size", "10px").attr("font-weight", "bold").text("Fill-ins");
-    g.append("text").attr("x", xScale(7.5)).attr("y", yScale(0.6)).attr("text-anchor", "middle").attr("fill", "#b91c1c").attr("font-size", "10px").attr("font-weight", "bold").text("Money Pits");
+    const fontSize = enlarged ? "12px" : "10px";
+    g.append("text").attr("x",xScale(2.5)).attr("y",yScale(9.4)).attr("text-anchor","middle").attr("fill","#15803d").attr("font-size",fontSize).attr("font-weight","bold").text("Quick Wins");
+    g.append("text").attr("x",xScale(7.5)).attr("y",yScale(9.4)).attr("text-anchor","middle").attr("fill","#1d4ed8").attr("font-size",fontSize).attr("font-weight","bold").text("Big Bets");
+    g.append("text").attr("x",xScale(2.5)).attr("y",yScale(0.6)).attr("text-anchor","middle").attr("fill","#475569").attr("font-size",fontSize).attr("font-weight","bold").text("Fill-ins");
+    g.append("text").attr("x",xScale(7.5)).attr("y",yScale(0.6)).attr("text-anchor","middle").attr("fill","#b91c1c").attr("font-size",fontSize).attr("font-weight","bold").text("Money Pits");
 
     // Axes
-    g.append("g")
-      .attr("transform", `translate(0, ${chartHeight})`)
-      .call(d3.axisBottom(xScale).ticks(10))
-      .attr("color", "#94a3b8");
+    g.append("g").attr("transform",`translate(0,${chartHeight})`).call(d3.axisBottom(xScale).ticks(10)).attr("color","#94a3b8").selectAll("text").attr("fill","#64748b").attr("font-size",fontSize);
+    g.append("g").call(d3.axisLeft(yScale).ticks(10)).attr("color","#94a3b8").selectAll("text").attr("fill","#64748b").attr("font-size",fontSize);
 
-    g.append("g")
-      .call(d3.axisLeft(yScale).ticks(10))
-      .attr("color", "#94a3b8");
-
-    svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Effort (1-10) →");
-    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 12).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Value (1-10) →");
+    svg.append("text").attr("x",W/2).attr("y",H-10).attr("text-anchor","middle").attr("font-size","12px").attr("fill","#64748b").text("Effort (1-10) →");
+    svg.append("text").attr("transform","rotate(-90)").attr("x",-H/2).attr("y",16).attr("text-anchor","middle").attr("font-size","12px").attr("fill","#64748b").text("Value (1-10) →");
 
     // Drag behaviour
     const dragHandler = d3.drag()
-      .on("start", (event) => {
-        hideTooltip();
-      })
+      .on("start", () => { hideTooltip(); })
       .on("drag", function(event, d) {
         const coords = d3.pointer(event, g.node());
-        // Map pointer position back to values clamped between 0.5 and 10
         const rawEffort = Math.max(0.5, Math.min(10, xScale.invert(coords[0])));
         const rawValue = Math.max(0.5, Math.min(10, yScale.invert(coords[1])));
-        
-        // Visual updates in DOM for drag responsiveness
-        d3.select(this).select("circle")
-          .attr("cx", xScale(rawEffort))
-          .attr("cy", yScale(rawValue))
-          .attr("fill", "#d946ef"); // color during drag
-
+        const isFarRight = rawEffort > 7;
+        d3.select(this).select("circle").attr("cx", xScale(rawEffort)).attr("cy", yScale(rawValue)).attr("fill", "#d946ef");
         d3.select(this).select("text")
-          .attr("x", xScale(rawEffort) + 9)
-          .attr("y", yScale(rawValue) + 4);
+          .attr("x", isFarRight ? xScale(rawEffort) - 10 : xScale(rawEffort) + 10)
+          .attr("y", yScale(rawValue) + 4)
+          .attr("text-anchor", isFarRight ? "end" : "start");
       })
       .on("end", function(event, d) {
         const coords = d3.pointer(event, g.node());
         const effort = Math.max(1, Math.min(10, Math.round(xScale.invert(coords[0]))));
         const value = Math.max(1, Math.min(10, Math.round(yScale.invert(coords[1]))));
-        
-        // Restore standard dot coloring
-        const defaultColor = (value >= 5 && effort < 5) ? "#22c55e" :
-                            (value >= 5 && effort >= 5) ? "#3b82f6" :
-                            (value < 5 && effort < 5) ? "#64748b" : "#ef4444";
-        
+        const defaultColor = (value>=5&&effort<5)?"#22c55e":(value>=5&&effort>=5)?"#3b82f6":(value<5&&effort<5)?"#64748b":"#ef4444";
         d3.select(this).select("circle").attr("fill", defaultColor);
         onUpdateRow(d.id, { effort, value });
       });
 
-    // Plot groups
-    const dots = g.selectAll(".dot-group")
-      .data(data)
-      .enter()
-      .append("g")
-      .attr("class", "dot-group cursor-grab active:cursor-grabbing")
-      .call(dragHandler);
+    const dots = g.selectAll(".dot-group").data(data).enter().append("g").attr("class","dot-group cursor-grab active:cursor-grabbing").call(dragHandler);
 
     dots.append("circle")
-      .attr("cx", d => xScale(Number(d.effort) || 0))
-      .attr("cy", d => yScale(Number(d.value) || 0))
-      .attr("r", 7)
-      .attr("fill", d => {
-        const val = Number(d.value) || 0;
-        const eff = Number(d.effort) || 0;
-        if (val >= 5 && eff < 5) return "#22c55e";
-        if (val >= 5 && eff >= 5) return "#3b82f6";
-        if (val < 5 && eff < 5) return "#64748b";
-        return "#ef4444";
-      })
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 1.5);
+      .attr("cx", d => xScale(Number(d.effort)||0)).attr("cy", d => yScale(Number(d.value)||0))
+      .attr("r", enlarged ? 9 : 7)
+      .attr("fill", d => { const v=Number(d.value)||0,e=Number(d.effort)||0; return (v>=5&&e<5)?"#22c55e":(v>=5&&e>=5)?"#3b82f6":(v<5&&e<5)?"#64748b":"#ef4444"; })
+      .attr("stroke","#fff").attr("stroke-width",1.5);
 
     dots.append("text")
-      .attr("x", d => xScale(Number(d.effort) || 0) + 9)
-      .attr("y", d => yScale(Number(d.value) || 0) + 4)
-      .text(d => d.name)
-      .attr("font-size", "9px")
-      .attr("font-weight", "700")
-      .attr("fill", "#334155");
+      .attr("x", d => {
+        const eff = Number(d.effort) || 0;
+        return eff > 7 ? xScale(eff) - 10 : xScale(eff) + 10;
+      })
+      .attr("y", d => yScale(Number(d.value)||0)+4)
+      .attr("text-anchor", d => {
+        const eff = Number(d.effort) || 0;
+        return eff > 7 ? "end" : "start";
+      })
+      .text(d => d.name).attr("font-size", enlarged ? "11px" : "9px").attr("font-weight","700").attr("fill","#334155");
 
-    // Add tooltips to dots
-    dots.on("mouseover", (event, d) => {
-      setTooltip(event.pageX, event.pageY, `<strong>${d.name}</strong><br/>Value: ${d.value}/10<br/>Effort: ${d.effort}/10<br/><span class="text-indigo-400 font-bold">Drag dot to edit!</span>`);
-    })
-    .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
-    .on("mouseout", () => hideTooltip());
+    dots.on("mouseover", (event,d) => { setTooltip(event.pageX, event.pageY, `<strong>${d.name}</strong><br/>Value: ${d.value}/10<br/>Effort: ${d.effort}/10<br/><span class="text-indigo-400 font-bold">Drag dot to edit!</span>`); })
+      .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
+      .on("mouseout", () => hideTooltip());
 
-  }, [data, onUpdateRow]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, onUpdateRow, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const badge = <span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Dots to Edit Table</span>;
+
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 320 }}>
+        <svg ref={svgRef} width={W||'100%'} height={H||'100%'} style={{ display:'block', width:'100%', height:'100%' }} />
+      </div>
+    );
+  }
   return (
-    <ChartWrapper
-      title="Value vs Effort Interactive 2x2"
-      badge={<span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Dots to Edit Table</span>}
+    <ChartWrapper title="Value vs Effort Interactive 2x2" badge={badge}
+      modalChildren={<ValueVsEffortChart data={data} onUpdateRow={onUpdateRow} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      <svg ref={svgRef} width="450" height="320" className="max-w-full" />
+      <div ref={containerRef} style={{ width:'100%', minHeight: 220 }}>
+        <svg ref={svgRef} width={W} height={320} style={{ display:'block', width:'100%', overflow:'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
@@ -542,16 +632,35 @@ const ValueVsEffortChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTo
 // 4. Kano Model Chart with proper S-curves
 const KanoModelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
-  const W = enlarged ? 760 : 440;
-  const H = enlarged ? 500 : 360;
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 440, height: enlarged ? 540 : 360 });
+
   useEffect(() => {
-    if (!svgRef.current) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
+  useEffect(() => {
+    if (!svgRef.current || W === 0 || H === 0) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const margin = { top: 30, right: 40, bottom: 55, left: 55 };
-    const chartWidth = W - margin.left - margin.right;
-    const chartHeight = H - margin.top - margin.bottom;
+    const margin = { top: 35, right: 65, bottom: 65, left: enlarged ? 115 : 105 };
+    const chartWidth = Math.max(10, W - margin.left - margin.right);
+    const chartHeight = Math.max(10, H - margin.top - margin.bottom);
 
     const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -627,7 +736,7 @@ const KanoModelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }
       .attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b")
       .text("Feature Functionality (Absent → Fully Implemented)");
     svg.append("text").attr("transform", "rotate(-90)")
-      .attr("x", -(H / 2)).attr("y", 14)
+      .attr("x", -(H / 2)).attr("y", enlarged ? 18 : 16)
       .attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b")
       .text("Customer Satisfaction");
 
@@ -658,8 +767,15 @@ const KanoModelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }
         .attr("opacity", 0.9);
 
       dots.append("text")
-        .attr("x", d => { const m = mapToKano(d); return xScale(m.fx) + 10; })
+        .attr("x", d => {
+          const m = mapToKano(d);
+          return m.fx > 0.7 ? xScale(m.fx) - 10 : xScale(m.fx) + 10;
+        })
         .attr("y", d => { const m = mapToKano(d); return yScale(m.fy) + 4; })
+        .attr("text-anchor", d => {
+          const m = mapToKano(d);
+          return m.fx > 0.7 ? "end" : "start";
+        })
         .text(d => d.name)
         .attr("font-size", "9px").attr("font-weight", "700").attr("fill", "#334155");
 
@@ -686,29 +802,57 @@ const KanoModelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }
 
   }, [data, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
-  if (enlarged) return chart;
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 340 }}>
+        <svg ref={svgRef} width={W||'100%'} height={H||'100%'} style={{ display:'block', width:'100%', height:'100%' }} />
+      </div>
+    );
+  }
   return (
     <ChartWrapper title="Kano Model — S-Curves & Feature Classification"
       badge={<span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase">Kano Curves</span>}
       modalChildren={<KanoModelChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      {chart}
+      <div ref={containerRef} style={{ width: '100%', minHeight: 280 }}>
+        <svg ref={svgRef} width={W} height={360} style={{ display:'block', width:'100%', overflow:'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
 
 // 5. BCG Matrix (DRAGGABLE Bubble Chart)
-const BCGBubbleChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTooltip }) => {
+const BCGBubbleChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 450, height: enlarged ? 520 : 320 });
+
   useEffect(() => {
-    if (!svgRef.current || !data || data.length === 0) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
+  useEffect(() => {
+    if (!svgRef.current || !data || data.length === 0 || W === 0 || H === 0) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 320;
-    const margin = { top: 25, right: 30, bottom: 40, left: 45 };
+    const width = W;
+    const height = H;
+    const margin = { top: 30, right: 50, bottom: 50, left: 60 };
 
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
@@ -749,7 +893,7 @@ const BCGBubbleChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideToolti
       .selectAll("text").attr("fill", "#64748b");
 
     svg.append("text").attr("x", width / 2).attr("y", height - 5).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Relative Market Share (x) →");
-    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 12).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Market Growth Rate (%) →");
+    svg.append("text").attr("transform", "rotate(-90)").attr("x", -height / 2).attr("y", 14).attr("text-anchor", "middle").attr("font-size", "11px").attr("fill", "#64748b").text("Market Growth Rate (%) →");
 
     // Drag Listener
     const dragHandler = d3.drag()
@@ -818,14 +962,24 @@ const BCGBubbleChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideToolti
     .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
     .on("mouseout", () => hideTooltip());
 
-  }, [data, onUpdateRow]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, onUpdateRow, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const badge = <span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bubbles to Edit</span>;
+
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 320 }}>
+        <svg ref={svgRef} width={W||'100%'} height={H||'100%'} style={{ display:'block', width:'100%', height:'100%' }} />
+      </div>
+    );
+  }
   return (
-    <ChartWrapper
-      title="BCG Bubble Matrix"
-      badge={<span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bubbles to Edit</span>}
+    <ChartWrapper title="BCG Bubble Matrix" badge={badge}
+      modalChildren={<BCGBubbleChart data={data} onUpdateRow={onUpdateRow} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      <svg ref={svgRef} width="450" height="320" className="max-w-full" />
+      <div ref={containerRef} style={{ width: '100%', minHeight: 320 }}>
+        <svg ref={svgRef} width={W} height={320} style={{ display:'block', width:'100%', overflow:'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
@@ -833,8 +987,27 @@ const BCGBubbleChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideToolti
 // 6. AARRR Funnel Visual Chart
 const AARRRFunnelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
-  const W = enlarged ? 720 : 450;
-  const H = enlarged ? 460 : 300;
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 450, height: enlarged ? 520 : 300 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
   useEffect(() => {
     if (!svgRef.current || !data || data.length === 0) return;
     const svg = d3.select(svgRef.current);
@@ -842,7 +1015,7 @@ const AARRRFunnelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged
 
     const width = W;
     const height = H;
-    const margin = { top: 20, right: 30, bottom: 20, left: 55 };
+    const margin = { top: 20, right: 30, bottom: 20, left: 70 };
 
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
@@ -903,15 +1076,22 @@ const AARRRFunnelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged
       }
     });
 
-  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
-  if (enlarged) return chart;
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 320 }}>
+        <svg ref={svgRef} width={W||'100%'} height={H||'100%'} style={{ display:'block', width:'100%', height:'100%' }} />
+      </div>
+    );
+  }
   return (
     <ChartWrapper title="AARRR Pirate Funnel Conversion"
       modalChildren={<AARRRFunnelChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      {chart}
+      <div ref={containerRef} style={{ width: '100%', minHeight: 220 }}>
+        <svg ref={svgRef} width={W} height={300} style={{ display:'block', width:'100%', overflow:'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
@@ -919,8 +1099,27 @@ const AARRRFunnelChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged
 // 7. A/B Test Rates Chart
 const ABTestChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
-  const W = enlarged ? 700 : 450;
-  const H = enlarged ? 440 : 280;
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 450, height: enlarged ? 520 : 280 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
   useEffect(() => {
     if (!svgRef.current || !data) return;
     const svg = d3.select(svgRef.current);
@@ -1016,30 +1215,58 @@ const ABTestChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) =
       .attr("font-weight", "bold")
       .text(d => (d.rate * 100).toFixed(2) + "%");
 
-  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
-  if (enlarged) return chart;
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 320 }}>
+        <svg ref={svgRef} width={W||'100%'} height={H||'100%'} style={{ display:'block', width:'100%', height:'100%' }} />
+      </div>
+    );
+  }
   return (
     <ChartWrapper title="Conversion Comparison (95% CI Error Bars)"
       modalChildren={<ABTestChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      {chart}
+      <div ref={containerRef} style={{ width: '100%', minHeight: 220 }}>
+        <svg ref={svgRef} width={W} height={280} style={{ display:'block', width:'100%', overflow:'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
 
 // 8. Custom D3 INTERACTIVE SLIDER Bar Chart for Porter's 5 Forces
-const PorterForcesChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTooltip }) => {
+const PorterForcesChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 450, height: enlarged ? 480 : 280 });
+
   useEffect(() => {
-    if (!svgRef.current || !data || data.length === 0) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
+  useEffect(() => {
+    if (!svgRef.current || !data || data.length === 0 || W === 0 || H === 0) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 450;
-    const height = 280;
-    const margin = { top: 20, right: 30, bottom: 40, left: 135 };
+    const width = W;
+    const height = H;
+    const margin = { top: 20, right: 35, bottom: 45, left: 160 };
 
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
@@ -1122,14 +1349,24 @@ const PorterForcesChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideToo
     .on("mousemove", (event) => moveTooltip(event.pageX, event.pageY))
     .on("mouseout", () => hideTooltip());
 
-  }, [data, onUpdateRow]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, onUpdateRow, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const badge = <span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bars to Edit</span>;
+
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 320 }}>
+        <svg ref={svgRef} width={W||'100%'} height={H||'100%'} style={{ display:'block', width:'100%', height:'100%' }} />
+      </div>
+    );
+  }
   return (
-    <ChartWrapper
-      title="Five Forces Interactive Bars"
-      badge={<span className="text-[9px] bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-indigo-600 font-bold uppercase animate-pulse">Drag Bars to Edit</span>}
+    <ChartWrapper title="Five Forces Interactive Bars" badge={badge}
+      modalChildren={<PorterForcesChart data={data} onUpdateRow={onUpdateRow} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      <svg ref={svgRef} width="450" height="280" className="max-w-full" />
+      <div ref={containerRef} style={{ width: '100%', minHeight: 220 }}>
+        <svg ref={svgRef} width={W} height={280} style={{ display:'block', width:'100%', overflow:'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
@@ -1137,8 +1374,27 @@ const PorterForcesChart = ({ data, onUpdateRow, setTooltip, moveTooltip, hideToo
 // 9. Custom D3 Donut Chart with Exploding Slices (Replaces MoSCoW Pie Chart)
 const MoscowDonutChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
-  const W = enlarged ? 680 : 450;
-  const H = enlarged ? 420 : 280;
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 700 : 450, height: enlarged ? 500 : 280 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
   useEffect(() => {
     if (!data) return;
     const svg = d3.select(svgRef.current);
@@ -1215,15 +1471,22 @@ const MoscowDonutChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged
       .attr("font-weight", "900")
       .text(`${data.totalEffort} days`);
 
-  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
-  if (enlarged) return chart;
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 340 }}>
+        <svg ref={svgRef} width={W||'100%'} height={H||'100%'} style={{ display:'block', width:'100%', height:'100%' }} />
+      </div>
+    );
+  }
   return (
     <ChartWrapper title="MoSCoW Effort Donut Distribution"
       modalChildren={<MoscowDonutChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      {chart}
+      <div ref={containerRef} style={{ width: '100%', minHeight: 220 }}>
+        <svg ref={svgRef} width={W} height={280} style={{ display:'block', width:'100%', overflow:'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
@@ -1231,8 +1494,27 @@ const MoscowDonutChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged
 // 10. Custom D3 Line Chart with Interactive Mouse Tracker Focus Rule (Replaces North Star Google Line Chart)
 const NorthStarLineChart = ({ trajectory, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
-  const W = enlarged ? 720 : 450;
-  const H = enlarged ? 440 : 280;
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 450, height: enlarged ? 520 : 280 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
   useEffect(() => {
     if (!trajectory) return;
     const svg = d3.select(svgRef.current);
@@ -1393,15 +1675,22 @@ const NorthStarLineChart = ({ trajectory, setTooltip, moveTooltip, hideTooltip, 
         hideTooltip();
       });
 
-  }, [trajectory, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [trajectory, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
-  if (enlarged) return chart;
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 340 }}>
+        <svg ref={svgRef} width={W||'100%'} height={H||'100%'} style={{ display:'block', width:'100%', height:'100%' }} />
+      </div>
+    );
+  }
   return (
     <ChartWrapper title="NSM Trajectory (Interactive Focus Line)"
       modalChildren={<NorthStarLineChart trajectory={trajectory} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      {chart}
+      <div ref={containerRef} style={{ width: '100%', minHeight: 220 }}>
+        <svg ref={svgRef} width={W} height={280} style={{ display:'block', width:'100%', overflow:'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
@@ -1409,8 +1698,27 @@ const NorthStarLineChart = ({ trajectory, setTooltip, moveTooltip, hideTooltip, 
 // 11. Custom D3 Multi-line Curves with Curve Highlighting (Replaces Cohort Curves Google Line Chart)
 const CohortRetentionChart = ({ data, setTooltip, moveTooltip, hideTooltip, enlarged }) => {
   const svgRef = useRef(null);
-  const W = enlarged ? 720 : 450;
-  const H = enlarged ? 440 : 280;
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ width: enlarged ? 800 : 450, height: enlarged ? 520 : 280 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) setDims({ width: Math.floor(width), height: Math.floor(height) });
+      }
+    });
+    ro.observe(el);
+    const { clientWidth: w, clientHeight: h } = el;
+    if (w > 0 && h > 0) setDims({ width: Math.floor(w), height: Math.floor(h) });
+    return () => ro.disconnect();
+  }, [enlarged]);
+
+  const W = dims.width;
+  const H = dims.height;
+
   useEffect(() => {
     if (!data || !data.calculated) return;
     const svg = d3.select(svgRef.current);
@@ -1533,17 +1841,24 @@ const CohortRetentionChart = ({ data, setTooltip, moveTooltip, hideTooltip, enla
       hideTooltip();
     });
 
-  }, [data, W, H]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, W, H, enlarged]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const chart = <svg ref={svgRef} width={W} height={H} className="max-w-full" />;
-  if (enlarged) return chart;
+  if (enlarged) {
+    return (
+      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 340 }}>
+        <svg ref={svgRef} width={W||'100%'} height={H||'100%'} style={{ display:'block', width:'100%', height:'100%' }} />
+      </div>
+    );
+  }
   return (
     <ChartWrapper
       title="Retention Performance (Curves)"
       badge={<span className="text-[9px] bg-purple-50 border border-purple-200 px-2 py-0.5 rounded text-purple-600 font-bold uppercase animate-pulse">Hover Curves/Legend to Highlight</span>}
       modalChildren={<CohortRetentionChart data={data} setTooltip={setTooltip} moveTooltip={moveTooltip} hideTooltip={hideTooltip} enlarged />}
     >
-      {chart}
+      <div ref={containerRef} style={{ width: '100%', minHeight: 220 }}>
+        <svg ref={svgRef} width={W} height={280} style={{ display:'block', width:'100%', overflow:'visible' }} />
+      </div>
     </ChartWrapper>
   );
 };
@@ -2156,6 +2471,27 @@ const AdminPMPlayground = () => {
                         <Plus size={14} />
                         <span>Add Row</span>
                       </button>
+                    )}
+                  </div>
+
+                  {/* Backend Calculation Logic & Input Guide Banner */}
+                  <div className="p-4 rounded-xl bg-slate-900 text-slate-100 border border-slate-800 space-y-2 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-pink-400 font-extrabold text-xs uppercase tracking-wider">
+                        <Activity size={14} className="animate-pulse text-pink-400" />
+                        <span>Backend Calculation Formula & Input Requirements</span>
+                      </div>
+                      <span className="text-[10px] bg-slate-800 border border-slate-700 text-slate-300 px-2.5 py-0.5 rounded font-mono font-bold">
+                        Formula Engine Active
+                      </span>
+                    </div>
+                    <div className="text-xs font-mono font-bold text-amber-300 bg-slate-950 px-3 py-2 rounded-lg border border-slate-800">
+                      Formula: {template.inPlainWords}
+                    </div>
+                    {template.inputGuidance && (
+                      <p className="text-[11px] text-slate-300 leading-relaxed font-medium pt-1">
+                        <strong className="text-pink-300 font-bold">Input Guidance:</strong> {template.inputGuidance}
+                      </p>
                     )}
                   </div>
 
