@@ -17,10 +17,10 @@ public class PaymentController {
 
     @PostMapping
     public ResponseEntity<Payment> charge(@RequestBody ChargeRequest request) {
-        Payment payment = paymentService.charge(
+        Payment payment = paymentService.createOrder(
                 request.getBookingRef(), request.getAmountPaise(), request.getMethod(), request.getQuoteToken());
 
-        if ("FAILED".equals(payment.getStatus())) {
+        if ("REJECTED".equals(payment.getStatus())) {
             return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(payment);
         }
         return ResponseEntity.ok(payment);
