@@ -33,15 +33,15 @@ public class PaymentService {
             return paymentRepository.save(rejected).block();
         }
 
-        // TODO: Update to use new PaymentProvider interface (createOrder/verifyAndParse/refund)
-        // PaymentResult result = paymentProvider.charge(bookingRef, amountPaise, method);
-        // For now, return a failure to allow Task 3 to proceed
+        PaymentResult result = paymentProvider.charge(bookingRef, amountPaise, method);
+
         Payment payment = Payment.builder()
                 .bookingRef(bookingRef)
                 .method(method)
-                .status("FAILED")
+                .status(result.getStatus())
                 .amountPaise(amountPaise)
                 .feePaise(0L)
+                .providerRef(result.getProviderRef())
                 .quoteTokenValidated(true)
                 .createdAt(new Date())
                 .build();

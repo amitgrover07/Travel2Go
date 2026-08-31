@@ -34,16 +34,15 @@ class PaymentServiceTest {
 
     @Test
     void charge_succeedsAndNeverAddsAFee() {
-        // TODO: Update to use new PaymentProvider interface (createOrder/verifyAndParse/refund)
         when(quoteTokenService.isValid("valid-token", "leg-1", 150000L)).thenReturn(true);
-        // when(paymentProvider.charge("leg-1", 150000L, "UPI"))
-        //         .thenReturn(new PaymentResult("SUCCESS", "SANDBOX-abc123"));
+        when(paymentProvider.charge("leg-1", 150000L, "UPI"))
+                .thenReturn(new PaymentResult("SUCCESS", "SANDBOX-abc123"));
 
         Payment result = paymentService.charge("leg-1", 150000L, "UPI", "valid-token");
 
-        // Currently returns FAILED due to incomplete Task 1-2 work
-        assertThat(result.getStatus()).isEqualTo("FAILED");
+        assertThat(result.getStatus()).isEqualTo("SUCCESS");
         assertThat(result.getFeePaise()).isEqualTo(0L);
+        assertThat(result.getProviderRef()).isEqualTo("SANDBOX-abc123");
     }
 
     @Test
@@ -54,6 +53,6 @@ class PaymentServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("FAILED");
         assertThat(result.getFeePaise()).isEqualTo(0L);
-        // verify(paymentProvider, never()).charge(any(), anyLong(), any());
+        verify(paymentProvider, never()).charge(any(), anyLong(), any());
     }
 }
