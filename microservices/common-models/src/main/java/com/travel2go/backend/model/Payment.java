@@ -20,12 +20,13 @@ public class Payment {
 
     private String bookingRef;
     private String method; // UPI | CARD | NETBANKING
-    private String status; // SUCCESS | FAILED
+    private String status; // CREATED | CAPTURED | FAILED | REJECTED | REFUNDED
 
     private Long amountPaise;
     private Long feePaise; // MUST always be 0 (G1 - zero booking/convenience fee)
 
-    private String providerRef;
+    private String providerRef; // provider ORDER id (set at CREATED)
+    private String providerPaymentId; // provider PAYMENT id (set on CAPTURED, from the webhook)
     private Boolean quoteTokenValidated;
 
     private Date createdAt;
