@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "booking-service", url = "${BOOKING_SERVICE_URL:http://localhost:8083}",
+@FeignClient(name = "booking-service", url = "${BOOKING_SERVICE_URL}",
         configuration = com.travel2go.backend.config.FeignConfig.class)
 public interface BookingClient {
 

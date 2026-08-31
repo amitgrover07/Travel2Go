@@ -240,16 +240,30 @@ jobs:
           esac
           RUN_SA="--service-account=${SA_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
 
+          # B6: startup probe on /actuator/health/readiness, only for services that
+          # expose it (booking, trip, identity, gateway). A service takes traffic
+          # only once ready. NOTE: verify this flag syntax against your deploy-cloudrun
+          # action / gcloud version; if it is rejected, drop STARTUP_PROBE here and set
+          # it out-of-band with:
+          #   gcloud run services update <svc> --region=$REGION \
+          #     --startup-probe=httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=10,periodSeconds=5,failureThreshold=12,timeoutSeconds=3
+          case "$SVC" in
+            booking-service|trip-service|identity-service|api-gateway)
+              STARTUP_PROBE="--startup-probe=httpGet.path=/actuator/health/readiness,httpGet.port=8080,initialDelaySeconds=10,periodSeconds=5,failureThreshold=12,timeoutSeconds=3" ;;
+            *)
+              STARTUP_PROBE="" ;;
+          esac
+
           if [ "$SVC" = "api-gateway" ]; then
-            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=1 --max-instances=3 --concurrency=80 --timeout=60 ${RUN_SA}" >> $GITHUB_ENV
+            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=1 --max-instances=3 --concurrency=80 --timeout=60 ${RUN_SA} ${STARTUP_PROBE}" >> $GITHUB_ENV
           elif [ "$SVC" = "trip-service" ] || [ "$SVC" = "payment-service" ] || [ "$SVC" = "booking-service" ]; then
             # Internal-only (--no-allow-unauthenticated). Combined with the
             # per-caller run.invoker bindings in infra/terraform/run-invoker.tf,
             # this now gives true isolation: only the intended caller SAs can
             # invoke these, not "any workload in the project".
-            echo "CR_FLAGS=--port=8080 --no-allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost ${RUN_SA}" >> $GITHUB_ENV
+            echo "CR_FLAGS=--port=8080 --no-allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost ${RUN_SA} ${STARTUP_PROBE}" >> $GITHUB_ENV
           else
-            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost ${RUN_SA}" >> $GITHUB_ENV
+            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost ${RUN_SA} ${STARTUP_PROBE}" >> $GITHUB_ENV
           fi
 
       - name: Deploy to Cloud Run
