@@ -41,12 +41,13 @@ jobs:
           distribution: 'corretto'
           cache: maven
 
-      - name: Build common-models
+      - name: Build shared modules (common-models, platform-security)
         run: |
           if [ -f "microservices/${{ matrix.service }}/pom.xml" ]; then
             cd microservices/common-models && ./mvnw clean install
+            cd ../platform-security && ./mvnw clean install
           else
-            echo "Non-Java service. Skipping common-models build."
+            echo "Non-Java service. Skipping shared-module build."
           fi
 
       - name: Build Microservice
@@ -124,59 +125,131 @@ jobs:
       - name: Build service-scoped env vars
         shell: bash
         run: |
+          # A3: each service receives ONLY the env vars it actually consumes,
+          # determined from its ${...} references and its pom starters. This
+          # replaces the previous block that emitted every secret to every
+          # service. Integration secrets keep their :placeholder property
+          # defaults, so a service that doesn't get one falls back harmlessly.
+          SVC="${{ matrix.service }}"
           {
             echo "CR_ENV_VARS<<ENVVARS_EOF"
-            echo "JWT_SECRET=${FINAL_JWT_SECRET}"
-            echo "GOOGLE_CLIENT_ID=${FINAL_GOOGLE_CLIENT_ID}"
-            echo "GOOGLE_CLIENT_SECRET=${FINAL_GOOGLE_CLIENT_SECRET}"
-            echo "MAIL_USERNAME=${FINAL_MAIL_USERNAME}"
-            echo "MAIL_PASSWORD=${FINAL_MAIL_PASSWORD}"
-            echo "TWILIO_ACCOUNT_SID=${FINAL_TWILIO_ACCOUNT_SID}"
-            echo "TWILIO_AUTH_TOKEN=${FINAL_TWILIO_AUTH_TOKEN}"
-            echo "TWILIO_PHONE_NUMBER=${FINAL_TWILIO_PHONE_NUMBER}"
-            echo "OAUTH2_REDIRECT_URI=https://travel2go.in/oauth2/redirect"
-            echo "IDENTITY_SERVICE_URL=${FINAL_IDENTITY_URL}"
-            echo "PACKAGE_SERVICE_URL=${FINAL_PACKAGE_URL}"
-            echo "BOOKING_SERVICE_URL=${FINAL_BOOKING_URL}"
-            echo "MEDIA_SERVICE_URL=${FINAL_MEDIA_URL}"
-            echo "NOTIFICATION_SERVICE_URL=${FINAL_NOTIFICATION_URL}"
-            echo "SPRING_REDIS_HOST=${FINAL_REDIS_HOST}"
-            echo "SPRING_REDIS_PORT=${FINAL_REDIS_PORT}"
-            echo "SPRING_REDIS_PASSWORD=${FINAL_REDIS_PASSWORD}"
-            echo "SPRING_REDIS_SSL_ENABLED=${FINAL_REDIS_SSL_ENABLED}"
-            echo "SPRING_RABBITMQ_HOST=${FINAL_RABBITMQ_HOST}"
-            echo "SPRING_RABBITMQ_PORT=${FINAL_RABBITMQ_PORT}"
-            echo "SPRING_RABBITMQ_USERNAME=${FINAL_RABBITMQ_USERNAME}"
-            echo "SPRING_RABBITMQ_PASSWORD=${FINAL_RABBITMQ_PASSWORD}"
-            echo "SPRING_RABBITMQ_SSL_ENABLED=${FINAL_RABBITMQ_SSL_ENABLED}"
-            echo "SPRING_RABBITMQ_VIRTUAL_HOST=${FINAL_RABBITMQ_VIRTUAL_HOST}"
-            # Scoped: only the services that actually read these get them, unlike
-            # the block above (a pre-existing sprawl pattern this fix doesn't
-            # touch). api-gateway is the only caller of trip-service, so it's the
-            # only one that needs to know its URL. QUOTE_TOKEN_SECRET only needs
-            # to reach the two services that sign/verify quote tokens.
-            if [ "${{ matrix.service }}" = "api-gateway" ]; then
-              echo "TRIP_SERVICE_URL=${FINAL_TRIP_URL}"
-            fi
-            if [ "${{ matrix.service }}" = "trip-service" ] || [ "${{ matrix.service }}" = "payment-service" ]; then
-              echo "QUOTE_TOKEN_SECRET=${FINAL_QUOTE_TOKEN_SECRET}"
-            fi
+
+            # JWT_SECRET -> the 6 services that depend on platform-security (JwtUtil).
+            # These have no property default and fail fast under 32 bytes, so the
+            # real secret is mandatory here.
+            case "$SVC" in
+              identity-service|package-service|booking-service|media-service|trip-service|payment-service)
+                echo "JWT_SECRET=${FINAL_JWT_SECRET}" ;;
+            esac
+
+            # QUOTE_TOKEN_SECRET -> only the two services that sign/verify quote tokens.
+            case "$SVC" in
+              trip-service|payment-service)
+                echo "QUOTE_TOKEN_SECRET=${FINAL_QUOTE_TOKEN_SECRET}" ;;
+            esac
+
+            # Google OAuth -> only services with the oauth2-client starter.
+            case "$SVC" in
+              identity-service|booking-service|notification-service)
+                echo "GOOGLE_CLIENT_ID=${FINAL_GOOGLE_CLIENT_ID}"
+                echo "GOOGLE_CLIENT_SECRET=${FINAL_GOOGLE_CLIENT_SECRET}" ;;
+            esac
+
+            # OAUTH2_REDIRECT_URI is a non-secret; give it to every service whose
+            # config references it.
+            case "$SVC" in
+              identity-service|package-service|booking-service|media-service|notification-service)
+                echo "OAUTH2_REDIRECT_URI=https://travel2go.in/oauth2/redirect" ;;
+            esac
+
+            # Mail -> only services with the mail starter.
+            case "$SVC" in
+              booking-service|notification-service)
+                echo "MAIL_USERNAME=${FINAL_MAIL_USERNAME}"
+                echo "MAIL_PASSWORD=${FINAL_MAIL_PASSWORD}" ;;
+            esac
+
+            # Twilio -> only services with the twilio starter.
+            case "$SVC" in
+              identity-service|booking-service|notification-service)
+                echo "TWILIO_ACCOUNT_SID=${FINAL_TWILIO_ACCOUNT_SID}"
+                echo "TWILIO_AUTH_TOKEN=${FINAL_TWILIO_AUTH_TOKEN}"
+                echo "TWILIO_PHONE_NUMBER=${FINAL_TWILIO_PHONE_NUMBER}" ;;
+            esac
+
+            # Inter-service URLs -> only the caller of each downstream (Feign clients
+            # / gateway routes). api-gateway fronts all; booking calls
+            # identity/package/notification; identity calls notification; trip calls booking.
+            case "$SVC" in
+              api-gateway)
+                echo "IDENTITY_SERVICE_URL=${FINAL_IDENTITY_URL}"
+                echo "PACKAGE_SERVICE_URL=${FINAL_PACKAGE_URL}"
+                echo "BOOKING_SERVICE_URL=${FINAL_BOOKING_URL}"
+                echo "MEDIA_SERVICE_URL=${FINAL_MEDIA_URL}"
+                echo "TRIP_SERVICE_URL=${FINAL_TRIP_URL}" ;;
+              booking-service)
+                echo "IDENTITY_SERVICE_URL=${FINAL_IDENTITY_URL}"
+                echo "PACKAGE_SERVICE_URL=${FINAL_PACKAGE_URL}"
+                echo "NOTIFICATION_SERVICE_URL=${FINAL_NOTIFICATION_URL}" ;;
+              identity-service)
+                echo "NOTIFICATION_SERVICE_URL=${FINAL_NOTIFICATION_URL}" ;;
+              trip-service)
+                echo "BOOKING_SERVICE_URL=${FINAL_BOOKING_URL}" ;;
+            esac
+
+            # RabbitMQ -> only services with the amqp starter.
+            case "$SVC" in
+              booking-service|trip-service|reactive-booking-function)
+                echo "SPRING_RABBITMQ_HOST=${FINAL_RABBITMQ_HOST}"
+                echo "SPRING_RABBITMQ_PORT=${FINAL_RABBITMQ_PORT}"
+                echo "SPRING_RABBITMQ_USERNAME=${FINAL_RABBITMQ_USERNAME}"
+                echo "SPRING_RABBITMQ_PASSWORD=${FINAL_RABBITMQ_PASSWORD}"
+                echo "SPRING_RABBITMQ_SSL_ENABLED=${FINAL_RABBITMQ_SSL_ENABLED}"
+                echo "SPRING_RABBITMQ_VIRTUAL_HOST=${FINAL_RABBITMQ_VIRTUAL_HOST}" ;;
+            esac
+
+            # Redis -> only the reactive function has the redis starter.
+            case "$SVC" in
+              reactive-booking-function)
+                echo "SPRING_REDIS_HOST=${FINAL_REDIS_HOST}"
+                echo "SPRING_REDIS_PORT=${FINAL_REDIS_PORT}"
+                echo "SPRING_REDIS_PASSWORD=${FINAL_REDIS_PASSWORD}"
+                echo "SPRING_REDIS_SSL_ENABLED=${FINAL_REDIS_SSL_ENABLED}" ;;
+            esac
+
             echo "ENVVARS_EOF"
           } >> "$GITHUB_ENV"
 
       - name: Set Cloud Run flags per service
         shell: bash
         run: |
-          if [ "${{ matrix.service }}" = "api-gateway" ]; then
-            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=1 --max-instances=3 --concurrency=80 --timeout=60" >> $GITHUB_ENV
-          elif [ "${{ matrix.service }}" = "trip-service" ] || [ "${{ matrix.service }}" = "payment-service" ] || [ "${{ matrix.service }}" = "booking-service" ]; then
-            # Internal-only: these are called by api-gateway/other services, never
-            # directly by end clients (see OPEN_QUESTIONS.md "Security follow-ups").
-            # Removing the gateway route alone doesn't stop direct Cloud Run access -
-            # this flag plus the IAM invoker binding below is what actually does that.
-            echo "CR_FLAGS=--port=8080 --no-allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost" >> $GITHUB_ENV
+          SVC="${{ matrix.service }}"
+
+          # A4: run each service as its own dedicated SA (created by
+          # infra/terraform), not the shared default compute SA.
+          case "$SVC" in
+            identity-service)             SA_ID=t2g-identity ;;
+            package-service)              SA_ID=t2g-package ;;
+            booking-service)              SA_ID=t2g-booking ;;
+            media-service)                SA_ID=t2g-media ;;
+            notification-service)         SA_ID=t2g-notification ;;
+            trip-service)                 SA_ID=t2g-trip ;;
+            payment-service)              SA_ID=t2g-payment ;;
+            api-gateway)                  SA_ID=t2g-gateway ;;
+            reactive-booking-function)    SA_ID=t2g-reactive ;;
+          esac
+          RUN_SA="--service-account=${SA_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+          if [ "$SVC" = "api-gateway" ]; then
+            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=1 --max-instances=3 --concurrency=80 --timeout=60 ${RUN_SA}" >> $GITHUB_ENV
+          elif [ "$SVC" = "trip-service" ] || [ "$SVC" = "payment-service" ] || [ "$SVC" = "booking-service" ]; then
+            # Internal-only (--no-allow-unauthenticated). Combined with the
+            # per-caller run.invoker bindings in infra/terraform/run-invoker.tf,
+            # this now gives true isolation: only the intended caller SAs can
+            # invoke these, not "any workload in the project".
+            echo "CR_FLAGS=--port=8080 --no-allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost ${RUN_SA}" >> $GITHUB_ENV
           else
-            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost" >> $GITHUB_ENV
+            echo "CR_FLAGS=--port=8080 --allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost ${RUN_SA}" >> $GITHUB_ENV
           fi
 
       - name: Deploy to Cloud Run
@@ -188,25 +261,10 @@ jobs:
           flags: ${{ env.CR_FLAGS }}
           env_vars: ${{ env.CR_ENV_VARS }}
 
-      - name: Restrict invoker to internal callers
-        if: matrix.service == 'trip-service' || matrix.service == 'payment-service' || matrix.service == 'booking-service'
-        shell: bash
-        run: |
-          # NOTE - this is a partial mitigation, not true per-service isolation.
-          # Every Cloud Run service in this project runs as the SAME default
-          # compute service account (none of the deploy steps set
-          # --service-account), so this binding grants invoker to every service
-          # in the project equally - it narrows the caller set from "the entire
-          # public internet" down to "any Cloud Run workload in this GCP
-          # project," not down to "only api-gateway/trip-service." Achieving
-          # real per-service isolation (only api-gateway can call trip-service,
-          # only trip-service can call booking-service, etc.) requires creating
-          # dedicated service accounts per service and assigning them via
-          # --service-account on deploy - a bigger change, tracked in
-          # OPEN_QUESTIONS.md, not done here without confirming it won't strip
-          # IAM roles the default SA currently has (Firestore/GCS/Pub-Sub access).
-          PROJECT_NUMBER=$(gcloud projects describe ${PROJECT_ID} --format='value(projectNumber)')
-          gcloud run services add-iam-policy-binding ${{ matrix.service }} \
-            --region=${REGION} \
-            --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-            --role="roles/run.invoker"
+      # A4: the old ad-hoc "Restrict invoker" step was removed. It bound the shared
+      # default compute SA, which (its own note admitted) narrowed callers only to
+      # "any workload in the project," not the real caller. Per-caller run.invoker
+      # bindings are now declared in infra/terraform/run-invoker.tf:
+      #   trip    <- gateway ;  booking <- gateway, trip ;  payment <- gateway
+      # Run `terraform apply` after a deploy has created the services (see
+      # infra/terraform/README.md).
