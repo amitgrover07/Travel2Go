@@ -104,7 +104,11 @@ jobs:
           set_env "FINAL_MEDIA_URL" "${{ secrets.MEDIA_SERVICE_URL }}" "http://media-tbd"
           set_env "FINAL_NOTIFICATION_URL" "${{ secrets.NOTIFICATION_SERVICE_URL }}" "http://notification-tbd"
           set_env "FINAL_TRIP_URL" "${{ secrets.TRIP_SERVICE_URL }}" "http://trip-tbd"
+          set_env "FINAL_PAYMENT_URL" "${{ secrets.PAYMENT_SERVICE_URL }}" "http://payment-tbd"
           set_env "FINAL_QUOTE_TOKEN_SECRET" "${{ secrets.QUOTE_TOKEN_SECRET }}" "placeholder_secret"
+          set_env "FINAL_RAZORPAY_KEY_ID" "${{ secrets.RAZORPAY_KEY_ID }}" "placeholder_key_id"
+          set_env "FINAL_RAZORPAY_KEY_SECRET" "${{ secrets.RAZORPAY_KEY_SECRET }}" "placeholder_secret"
+          set_env "FINAL_RAZORPAY_WEBHOOK_SECRET" "${{ secrets.RAZORPAY_WEBHOOK_SECRET }}" "placeholder_secret"
           set_env "FINAL_REDIS_HOST" "${{ secrets.SPRING_REDIS_HOST }}" "localhost"
           set_env "FINAL_REDIS_PORT" "${{ secrets.SPRING_REDIS_PORT }}" "6379"
           set_env "FINAL_REDIS_PASSWORD" "${{ secrets.SPRING_REDIS_PASSWORD }}" "none"
@@ -148,6 +152,14 @@ jobs:
                 echo "QUOTE_TOKEN_SECRET=${FINAL_QUOTE_TOKEN_SECRET}" ;;
             esac
 
+            # RAZORPAY_* -> payment-service only (order creation + webhook verification).
+            case "$SVC" in
+              payment-service)
+                echo "RAZORPAY_KEY_ID=${FINAL_RAZORPAY_KEY_ID}"
+                echo "RAZORPAY_KEY_SECRET=${FINAL_RAZORPAY_KEY_SECRET}"
+                echo "RAZORPAY_WEBHOOK_SECRET=${FINAL_RAZORPAY_WEBHOOK_SECRET}" ;;
+            esac
+
             # Google OAuth -> only services with the oauth2-client starter.
             case "$SVC" in
               identity-service|booking-service|notification-service)
@@ -186,7 +198,8 @@ jobs:
                 echo "PACKAGE_SERVICE_URL=${FINAL_PACKAGE_URL}"
                 echo "BOOKING_SERVICE_URL=${FINAL_BOOKING_URL}"
                 echo "MEDIA_SERVICE_URL=${FINAL_MEDIA_URL}"
-                echo "TRIP_SERVICE_URL=${FINAL_TRIP_URL}" ;;
+                echo "TRIP_SERVICE_URL=${FINAL_TRIP_URL}"
+                echo "PAYMENT_SERVICE_URL=${FINAL_PAYMENT_URL}" ;;
               booking-service)
                 echo "IDENTITY_SERVICE_URL=${FINAL_IDENTITY_URL}"
                 echo "PACKAGE_SERVICE_URL=${FINAL_PACKAGE_URL}"
@@ -199,7 +212,7 @@ jobs:
 
             # RabbitMQ -> only services with the amqp starter.
             case "$SVC" in
-              booking-service|trip-service|reactive-booking-function)
+              booking-service|trip-service|reactive-booking-function|payment-service)
                 echo "SPRING_RABBITMQ_HOST=${FINAL_RABBITMQ_HOST}"
                 echo "SPRING_RABBITMQ_PORT=${FINAL_RABBITMQ_PORT}"
                 echo "SPRING_RABBITMQ_USERNAME=${FINAL_RABBITMQ_USERNAME}"
