@@ -14,8 +14,8 @@ import java.util.Map;
 /**
  * B6: fail fast if any route target URL is missing/malformed, instead of the
  * gateway silently routing to a localhost default and returning errors at
- * request time. The gateway routes to identity, package, booking, media, trip.
- * URLs are not secrets.
+ * request time. The gateway routes to identity, package, booking, media,
+ * trip, and (P1.1) the payment-service webhook path.
  */
 @Component
 public class DownstreamUrlValidator implements ApplicationRunner {
@@ -29,12 +29,14 @@ public class DownstreamUrlValidator implements ApplicationRunner {
             @Value("${PACKAGE_SERVICE_URL:}") String packageUrl,
             @Value("${BOOKING_SERVICE_URL:}") String bookingUrl,
             @Value("${MEDIA_SERVICE_URL:}") String mediaUrl,
-            @Value("${TRIP_SERVICE_URL:}") String tripUrl) {
+            @Value("${TRIP_SERVICE_URL:}") String tripUrl,
+            @Value("${PAYMENT_SERVICE_URL:}") String paymentUrl) {
         requiredUrls.put("IDENTITY_SERVICE_URL", identityUrl);
         requiredUrls.put("PACKAGE_SERVICE_URL", packageUrl);
         requiredUrls.put("BOOKING_SERVICE_URL", bookingUrl);
         requiredUrls.put("MEDIA_SERVICE_URL", mediaUrl);
         requiredUrls.put("TRIP_SERVICE_URL", tripUrl);
+        requiredUrls.put("PAYMENT_SERVICE_URL", paymentUrl);
     }
 
     @Override
