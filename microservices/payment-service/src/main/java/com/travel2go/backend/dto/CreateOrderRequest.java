@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChargeRequest {
+public class CreateOrderRequest {
     private String bookingRef;
     private Long amountPaise;
     private String method;
