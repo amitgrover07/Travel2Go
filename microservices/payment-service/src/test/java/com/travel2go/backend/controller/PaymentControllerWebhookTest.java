@@ -7,12 +7,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.UncheckedIOException;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,5 +57,30 @@ class PaymentControllerWebhookTest {
                         .content("{}".getBytes())
                         .header("X-Razorpay-Signature", "wrong"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void webhook_malformedBodyReturns400() throws Exception {
+        doThrow(new UncheckedIOException("Malformed webhook payload", new java.io.IOException("bad json")))
+                .when(paymentService).applyWebhook(any(), any());
+
+        mockMvc.perform(post("/api/payments/webhook")
+                        .content("not-json".getBytes())
+                        .header("X-Razorpay-Signature", "sig-123"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createOrder_missingAmountPaiseReturns400() throws Exception {
+        when(jwtUtil.extractUsername(any())).thenReturn("test-user");
+        when(jwtUtil.extractRoles(any())).thenReturn(List.of());
+
+        mockMvc.perform(post("/api/payments/order")
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"bookingRef\":\"leg-1\",\"method\":\"UPI\",\"quoteToken\":\"tok\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(paymentService, never()).createOrder(any(), anyLong(), any(), any());
     }
 }

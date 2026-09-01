@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,7 +26,6 @@ import java.util.UUID;
 public class SandboxPaymentProvider implements PaymentProvider {
 
     private static final String HMAC_ALGO = "HmacSHA256";
-    static final String SIGNATURE_HEADER = "X-Razorpay-Signature";
 
     @Value("${razorpay.webhook-secret}")
     private String webhookSecret;
@@ -46,8 +46,9 @@ public class SandboxPaymentProvider implements PaymentProvider {
 
     @Override
     public WebhookEvent verifyAndParse(byte[] rawBody, Map<String, String> headers) {
-        String signature = headers.get(SIGNATURE_HEADER);
-        if (signature == null || !sign(rawBody).equals(signature)) {
+        String signature = headers.get(WebhookPayloadParser.SIGNATURE_HEADER);
+        if (signature == null || !MessageDigest.isEqual(
+                sign(rawBody).getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8))) {
             throw new InvalidWebhookSignatureException("sandbox webhook signature mismatch");
         }
         return WebhookPayloadParser.parse(rawBody);

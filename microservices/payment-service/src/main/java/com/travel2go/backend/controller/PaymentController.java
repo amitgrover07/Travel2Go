@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UncheckedIOException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.TreeMap;
@@ -23,6 +24,9 @@ public class PaymentController {
 
     @PostMapping("/order")
     public ResponseEntity<Payment> createOrder(@RequestBody CreateOrderRequest request) {
+        if (request.getAmountPaise() == null) {
+            return ResponseEntity.badRequest().build();
+        }
         Payment payment = paymentService.createOrder(
                 request.getBookingRef(), request.getAmountPaise(), request.getMethod(), request.getQuoteToken());
 
@@ -43,7 +47,7 @@ public class PaymentController {
         try {
             paymentService.applyWebhook(rawBody, headers);
             return ResponseEntity.ok().build();
-        } catch (InvalidWebhookSignatureException e) {
+        } catch (InvalidWebhookSignatureException | UncheckedIOException e) {
             return ResponseEntity.badRequest().build();
         }
     }

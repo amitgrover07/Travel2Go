@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -29,6 +30,13 @@ public class PaymentService {
     private final PaymentEventPublisher eventPublisher;
 
     public Payment createOrder(String bookingRef, long amountPaise, String method, String quoteToken) {
+        Payment existing = findRelevantPayment(bookingRef);
+        if (existing != null && ("CREATED".equals(existing.getStatus()) || "CAPTURED".equals(existing.getStatus()))) {
+            log.info("Order already exists for bookingRef {} in status {} - returning existing payment",
+                    bookingRef, existing.getStatus());
+            return existing;
+        }
+
         boolean quoteValid = quoteTokenService.isValid(quoteToken, bookingRef, amountPaise);
 
         if (!quoteValid) {
@@ -67,6 +75,17 @@ public class PaymentService {
             return;
         }
 
+        if (event.getProviderOrderId() == null) {
+            log.warn("Webhook for unknown provider order {}", event.getProviderOrderId());
+            return;
+        }
+
+        String dedupeKey = event.getProviderPaymentId();
+        if (dedupeKey != null && processedWebhookEventRepository.findById(dedupeKey).block() != null) {
+            log.info("Webhook for payment {} already processed, skipping", dedupeKey);
+            return;
+        }
+
         Payment payment = paymentRepository.findByProviderRef(event.getProviderOrderId())
                 .next()
                 .block();
@@ -79,12 +98,6 @@ public class PaymentService {
         if (!"CREATED".equals(payment.getStatus())) {
             log.info("Ignoring webhook for order {} - payment already in terminal status {}",
                     event.getProviderOrderId(), payment.getStatus());
-            return;
-        }
-
-        String dedupeKey = event.getProviderPaymentId();
-        if (dedupeKey != null && processedWebhookEventRepository.findById(dedupeKey).block() != null) {
-            log.info("Webhook for payment {} already processed, skipping", dedupeKey);
             return;
         }
 
@@ -103,8 +116,13 @@ public class PaymentService {
                         ProcessedWebhookEvent.builder().id(dedupeKey).processedAt(new Date()).build()).block();
             }
 
-            eventPublisher.publish("payment.captured",
-                    new PaymentCapturedEvent(payment.getBookingRef(), payment.getProviderPaymentId(), payment.getAmountPaise()));
+            try {
+                eventPublisher.publish("payment.captured",
+                        new PaymentCapturedEvent(payment.getBookingRef(), payment.getProviderPaymentId(), payment.getAmountPaise()));
+            } catch (Exception e) {
+                log.error("Failed to publish payment.captured event for bookingRef {} providerPaymentId {}: {}",
+                        payment.getBookingRef(), payment.getProviderPaymentId(), e.getMessage(), e);
+            }
         } else {
             payment.setStatus("FAILED");
             paymentRepository.save(payment).block();
@@ -112,12 +130,11 @@ public class PaymentService {
     }
 
     public Payment getStatus(String bookingRef) {
-        return paymentRepository.findByBookingRef(bookingRef)
-                .collectList()
-                .map(list -> list.stream()
-                        .max(Comparator.comparing(Payment::getCreatedAt))
-                        .orElseThrow(() -> new IllegalArgumentException("No payment found for bookingRef " + bookingRef)))
-                .block();
+        Payment payment = findRelevantPayment(bookingRef);
+        if (payment == null) {
+            throw new IllegalArgumentException("No payment found for bookingRef " + bookingRef);
+        }
+        return payment;
     }
 
     public Payment refund(String bookingRef) {
@@ -138,9 +155,39 @@ public class PaymentService {
         payment.setStatus("REFUNDED");
         Payment saved = paymentRepository.save(payment).block();
 
-        eventPublisher.publish("payment.refunded",
-                new PaymentRefundedEvent(bookingRef, result.getProviderRefundId(), payment.getAmountPaise()));
+        try {
+            eventPublisher.publish("payment.refunded",
+                    new PaymentRefundedEvent(bookingRef, result.getProviderRefundId(), payment.getAmountPaise()));
+        } catch (Exception e) {
+            log.error("Failed to publish payment.refunded event for bookingRef {} providerRefundId {}: {}",
+                    bookingRef, result.getProviderRefundId(), e.getMessage(), e);
+        }
 
         return saved;
+    }
+
+    /**
+     * Picks the payment that matters for a bookingRef when more than one
+     * exists: a settled (CAPTURED/REFUNDED) payment always wins over an
+     * unsettled (CREATED/REJECTED/FAILED) one, regardless of which is newer -
+     * so a stray/duplicate order created after a capture never hides the
+     * fact the booking is already paid for. Among payments of equal
+     * settledness, the newest (by createdAt, null-safe) wins. Returns null
+     * if there is no payment at all for this bookingRef.
+     */
+    private Payment findRelevantPayment(String bookingRef) {
+        List<Payment> payments = paymentRepository.findByBookingRef(bookingRef).collectList().block();
+        if (payments == null || payments.isEmpty()) {
+            return null;
+        }
+        return payments.stream()
+                .max(Comparator
+                        .<Payment>comparingInt(p -> isSettled(p) ? 1 : 0)
+                        .thenComparing(Payment::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder())))
+                .orElse(null);
+    }
+
+    private static boolean isSettled(Payment payment) {
+        return "CAPTURED".equals(payment.getStatus()) || "REFUNDED".equals(payment.getStatus());
     }
 }

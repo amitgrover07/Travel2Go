@@ -18,7 +18,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,6 +43,8 @@ class PaymentServiceTest {
                 paymentRepository, processedWebhookEventRepository, paymentProvider, quoteTokenService, eventPublisher);
         lenient().when(paymentRepository.save(any(Payment.class)))
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        lenient().when(processedWebhookEventRepository.findById(any(String.class))).thenReturn(Mono.empty());
+        lenient().when(paymentRepository.findByBookingRef(any())).thenReturn(Flux.empty());
     }
 
     private Payment createdPayment() {
@@ -82,6 +83,50 @@ class PaymentServiceTest {
         assertThat(result.getStatus()).isEqualTo("REJECTED");
         assertThat(result.getFeePaise()).isEqualTo(0L);
         verify(paymentProvider, never()).createOrder(any(), anyLong(), any());
+    }
+
+    @Test
+    void createOrder_returnsExistingPaymentWhenAlreadyCreatedForBookingRef() {
+        Payment existing = createdPayment();
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(existing));
+
+        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "any-token");
+
+        assertThat(result).isSameAs(existing);
+        assertThat(result.getStatus()).isEqualTo("CREATED");
+        verify(paymentProvider, never()).createOrder(any(), anyLong(), any());
+        verify(quoteTokenService, never()).isValid(any(), any(), anyLong());
+    }
+
+    @Test
+    void createOrder_returnsExistingPaymentWhenAlreadyCapturedForBookingRef() {
+        Payment captured = createdPayment();
+        captured.setStatus("CAPTURED");
+        captured.setProviderPaymentId("pay_1");
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(captured));
+
+        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "any-token");
+
+        assertThat(result).isSameAs(captured);
+        assertThat(result.getStatus()).isEqualTo("CAPTURED");
+        verify(paymentProvider, never()).createOrder(any(), anyLong(), any());
+        verify(quoteTokenService, never()).isValid(any(), any(), anyLong());
+    }
+
+    @Test
+    void createOrder_ignoresRejectedPaymentAndCreatesNewOrder() {
+        Payment rejected = createdPayment();
+        rejected.setStatus("REJECTED");
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(rejected));
+        when(quoteTokenService.isValid("valid-token", "leg-1", 150000L)).thenReturn(true);
+        when(paymentProvider.createOrder("leg-1", 150000L, "UPI"))
+                .thenReturn(new CreatedOrder("order_2", "key_1", 150000L, "INR"));
+
+        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "valid-token");
+
+        assertThat(result.getStatus()).isEqualTo("CREATED");
+        assertThat(result.getProviderRef()).isEqualTo("order_2");
+        verify(paymentProvider).createOrder("leg-1", 150000L, "UPI");
     }
 
     @Test
@@ -145,6 +190,17 @@ class PaymentServiceTest {
     }
 
     @Test
+    void applyWebhook_nullProviderOrderIdIsIgnored() {
+        when(paymentProvider.verifyAndParse(any(), any()))
+                .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, null, "pay_1", 150000L));
+
+        paymentService.applyWebhook("{}".getBytes(), Map.of());
+
+        verify(paymentRepository, never()).findByProviderRef(any());
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
     void applyWebhook_unknownOrderIsIgnored() {
         when(paymentRepository.findByProviderRef("order_unknown")).thenReturn(Flux.empty());
         when(paymentProvider.verifyAndParse(any(), any()))
@@ -181,5 +237,48 @@ class PaymentServiceTest {
         assertThat(result.getStatus()).isEqualTo("REFUNDED");
         verify(paymentProvider, never()).refund(any(), anyLong());
         verify(eventPublisher, never()).publish(eq("payment.refunded"), any());
+    }
+
+    @Test
+    void getStatus_prefersCapturedPaymentOverNewerRejectedPayment() {
+        Payment captured = createdPayment();
+        captured.setStatus("CAPTURED");
+        captured.setProviderPaymentId("pay_1");
+        captured.setCreatedAt(new Date(1000L));
+
+        Payment newerRejected = createdPayment();
+        newerRejected.setId("p2");
+        newerRejected.setStatus("REJECTED");
+        newerRejected.setCreatedAt(new Date(2000L));
+
+        // Newer payment listed first, to prove "newest" isn't blindly picked.
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(newerRejected, captured));
+
+        Payment result = paymentService.getStatus("leg-1");
+
+        assertThat(result.getStatus()).isEqualTo("CAPTURED");
+        assertThat(result.getId()).isEqualTo("p1");
+    }
+
+    @Test
+    void refund_prefersCapturedPaymentOverNewerRejectedPayment() {
+        Payment captured = createdPayment();
+        captured.setStatus("CAPTURED");
+        captured.setProviderPaymentId("pay_1");
+        captured.setCreatedAt(new Date(1000L));
+
+        Payment newerRejected = createdPayment();
+        newerRejected.setId("p2");
+        newerRejected.setStatus("REJECTED");
+        newerRejected.setCreatedAt(new Date(2000L));
+
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(newerRejected, captured));
+        when(paymentProvider.refund("pay_1", 150000L)).thenReturn(new RefundResult("SUCCESS", "rfnd_1"));
+
+        Payment result = paymentService.refund("leg-1");
+
+        assertThat(result.getStatus()).isEqualTo("REFUNDED");
+        assertThat(result.getId()).isEqualTo("p1");
+        verify(paymentProvider).refund("pay_1", 150000L);
     }
 }

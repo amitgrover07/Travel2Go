@@ -13,6 +13,8 @@ import java.io.UncheckedIOException;
  */
 final class WebhookPayloadParser {
 
+    static final String SIGNATURE_HEADER = "X-Razorpay-Signature";
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private WebhookPayloadParser() {
