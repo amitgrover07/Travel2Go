@@ -113,14 +113,14 @@ public class TripService {
                         .amountPaise(pricePaise)
                         .build());
 
-        leg.setStatus("CONFIRMED");
-        leg.setSupplierRef(response.getBookingId());
+        leg.setStatus("PENDING");
+        leg.setSupplierRef(response.getLegId());
         Leg saved = legRepository.save(leg).block();
 
         eventPublisher.publish("leg.booked", Map.of(
                 "tripId", tripId,
                 "legId", legId,
-                "bookingId", response.getBookingId()
+                "bookingId", response.getLegId()
         ));
 
         return saved;

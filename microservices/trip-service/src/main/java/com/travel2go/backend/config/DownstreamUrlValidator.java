@@ -22,7 +22,7 @@ public class DownstreamUrlValidator implements ApplicationRunner {
 
     private final Map<String, String> requiredUrls = new LinkedHashMap<>();
 
-    public DownstreamUrlValidator(@Value("${BOOKING_SERVICE_URL:}") String bookingUrl) {
+    public DownstreamUrlValidator(@Value("${BOOKING_SERVICE_URL:http://localhost:8083}") String bookingUrl) {
         requiredUrls.put("BOOKING_SERVICE_URL", bookingUrl);
     }
 

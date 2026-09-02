@@ -136,7 +136,7 @@ class TripServiceTest {
     }
 
     @Test
-    void bookLeg_confirmsLegAndPublishesEvent() {
+    void bookLeg_setsLegPendingAndPublishesEvent() {
         Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
         com.travel2go.backend.model.Leg leg = com.travel2go.backend.model.Leg.builder()
                 .id("leg-1").tripId("trip-1").status("SELECTED")
@@ -147,14 +147,14 @@ class TripServiceTest {
         when(quoteTokenService.isValid("quote-token-abc", "leg-1", 150000L)).thenReturn(true);
         when(bookingClient.createLegBooking(any())).thenReturn(
                 com.travel2go.backend.dto.LegBookingResponse.builder()
-                        .bookingId("booking-99").status("CONFIRMED").build());
+                        .legId("leg-1").status("PENDING").build());
         when(legRepository.save(any(com.travel2go.backend.model.Leg.class)))
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
 
         com.travel2go.backend.model.Leg result = tripService.bookLeg("trip-1", "leg-1", "user-1");
 
-        assertThat(result.getStatus()).isEqualTo("CONFIRMED");
-        assertThat(result.getSupplierRef()).isEqualTo("booking-99");
+        assertThat(result.getStatus()).isEqualTo("PENDING");
+        assertThat(result.getSupplierRef()).isEqualTo("leg-1");
         verify(eventPublisher).publish(eq("leg.booked"), any());
 
         org.mockito.ArgumentCaptor<com.travel2go.backend.dto.LegBookingRequest> captor =
