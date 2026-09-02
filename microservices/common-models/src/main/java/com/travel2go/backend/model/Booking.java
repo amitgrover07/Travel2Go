@@ -16,16 +16,16 @@ import java.util.Date;
 public class Booking {
     @DocumentId
     private String id;
-    
+
     private String firstName;
     private String lastName;
     private String email;
     private String phone;
     private String location;
-    
+
     private String packageId;
     private String packageTitle;
-    
+
     private Date bookingDate;
     private String status;
 
@@ -35,4 +35,7 @@ public class Booking {
     private String quoteToken;
     private Long amountPaise;
     private Long feePaise;
+    private String ownerUserId; // captured from the JWT at create time (P1.2)
+    private String providerPaymentId; // set on CONFIRMED, from the payment.captured event (P1.2)
+    private Date confirmedAt; // set on CONFIRMED (P1.2)
 }

@@ -28,6 +28,7 @@ public class Payment {
     private String providerRef; // provider ORDER id (set at CREATED)
     private String providerPaymentId; // provider PAYMENT id (set on CAPTURED, from the webhook)
     private Boolean quoteTokenValidated;
+    private String ownerUserId; // captured from the JWT at createOrder time (P1.2)
 
     private Date createdAt;
 }
