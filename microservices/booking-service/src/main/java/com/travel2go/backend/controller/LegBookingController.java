@@ -3,6 +3,7 @@ package com.travel2go.backend.controller;
 import com.travel2go.backend.dto.LegBookingRequest;
 import com.travel2go.backend.dto.LegBookingResponse;
 import com.travel2go.backend.model.Booking;
+import com.travel2go.backend.service.LegBookingConflictException;
 import com.travel2go.backend.service.LegBookingRejectedException;
 import com.travel2go.backend.service.LegBookingService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,8 @@ public class LegBookingController {
             return ResponseEntity.ok(new LegBookingResponse(booking.getLegId(), booking.getStatus()));
         } catch (LegBookingRejectedException e) {
             return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).build();
+        } catch (LegBookingConflictException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 

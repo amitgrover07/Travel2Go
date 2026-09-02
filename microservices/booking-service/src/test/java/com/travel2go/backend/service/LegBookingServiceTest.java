@@ -71,6 +71,58 @@ class LegBookingServiceTest {
     }
 
     @Test
+    void createLegBooking_samePendingOwnerIsIdempotent() {
+        Booking existing = Booking.builder().id("b1").legId("leg-1").status("PENDING").ownerUserId("user-1").build();
+        when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(existing));
+
+        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1");
+
+        assertThat(result).isSameAs(existing);
+        verify(quoteTokenService, never()).isValid(any(), any(), org.mockito.ArgumentMatchers.anyLong());
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void createLegBooking_differentOwnerPendingThrowsConflictAndDoesNotPersist() {
+        Booking existing = Booking.builder().id("b1").legId("leg-1").status("PENDING").ownerUserId("user-1").build();
+        when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(existing));
+
+        assertThatThrownBy(() ->
+                legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-2"))
+                .isInstanceOf(LegBookingConflictException.class);
+
+        verify(quoteTokenService, never()).isValid(any(), any(), org.mockito.ArgumentMatchers.anyLong());
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void createLegBooking_rejectedExistingAllowsFreshRetry() {
+        Booking rejected = Booking.builder().id("b1").legId("leg-1").status("REJECTED").ownerUserId("user-1").build();
+        when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(rejected));
+        when(quoteTokenService.isValid("quote-abc", "leg-1", 150000L)).thenReturn(true);
+
+        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1");
+
+        verify(quoteTokenService).isValid("quote-abc", "leg-1", 150000L);
+        assertThat(result.getStatus()).isEqualTo("PENDING");
+        assertThat(result.getOwnerUserId()).isEqualTo("user-1");
+        verify(bookingRepository).save(argThatStatusIs("PENDING"));
+    }
+
+    @Test
+    void getBooking_prefersActiveOverNewerRejected() {
+        Booking newerRejected = Booking.builder().id("b2").legId("leg-1").status("REJECTED")
+                .ownerUserId("user-1").bookingDate(new java.util.Date(2000L)).build();
+        Booking olderActive = Booking.builder().id("b1").legId("leg-1").status("PENDING")
+                .ownerUserId("user-1").bookingDate(new java.util.Date(1000L)).build();
+        when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(newerRejected, olderActive));
+
+        Booking result = legBookingService.getBooking("leg-1", "user-1", false);
+
+        assertThat(result).isSameAs(olderActive);
+    }
+
+    @Test
     void getBooking_returnsForOwner() {
         Booking booking = Booking.builder().id("b1").legId("leg-1").status("PENDING").ownerUserId("user-1").build();
         when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(booking));

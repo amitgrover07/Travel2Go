@@ -3,6 +3,7 @@ package com.travel2go.backend.controller;
 import com.travel2go.backend.dto.LegBookingRequest;
 import com.travel2go.backend.dto.LegBookingResponse;
 import com.travel2go.backend.model.Booking;
+import com.travel2go.backend.service.LegBookingConflictException;
 import com.travel2go.backend.service.LegBookingRejectedException;
 import com.travel2go.backend.service.LegBookingService;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,6 +64,19 @@ class LegBookingControllerTest {
         ResponseEntity<LegBookingResponse> response = controller.createLegBooking(request);
 
         assertThat(response.getStatusCode().value()).isEqualTo(402);
+    }
+
+    @Test
+    void createLegBooking_conflictingOwnerReturns409() {
+        LegBookingRequest request = LegBookingRequest.builder()
+                .tripId("trip-1").legId("leg-1").quoteToken("quote-abc").amountPaise(150000L).build();
+
+        when(legBookingService.createLegBooking(eq("trip-1"), eq("leg-1"), eq("quote-abc"), anyLong(), eq("user-1")))
+                .thenThrow(new LegBookingConflictException("owned by another user"));
+
+        ResponseEntity<LegBookingResponse> response = controller.createLegBooking(request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
     }
 
     @Test
