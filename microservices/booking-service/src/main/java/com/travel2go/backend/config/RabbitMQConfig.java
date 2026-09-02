@@ -43,7 +43,17 @@ public class RabbitMQConfig {
         Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
         org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper typeMapper =
                 new org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper();
-        typeMapper.setTrustedPackages("*");
+        // Security: never trust an arbitrary class name from a message's __TypeId__ header
+        // (that header is producer-controlled and, with setTrustedPackages("*"), would let any
+        // class on this classpath be instantiated via Jackson polymorphic deserialization - a
+        // known gadget-chain vector). INFERRED makes the @RabbitListener method's own parameter
+        // type authoritative regardless of what the header says; trustedPackages is scoped to
+        // just this service's own consumer package as a second layer, and idClassMapping stays
+        // only as an explicit, auditable record of the one cross-service type this consumer
+        // deliberately accepts (payment-service's PaymentCapturedEvent, mapped to our local copy).
+        typeMapper.setTrustedPackages("com.travel2go.backend.consumer");
+        typeMapper.setTypePrecedence(
+                org.springframework.amqp.support.converter.Jackson2JavaTypeMapper.TypePrecedence.INFERRED);
         typeMapper.setIdClassMapping(java.util.Map.of(
                 "com.travel2go.backend.service.PaymentCapturedEvent",
                 com.travel2go.backend.consumer.PaymentCapturedEvent.class));
