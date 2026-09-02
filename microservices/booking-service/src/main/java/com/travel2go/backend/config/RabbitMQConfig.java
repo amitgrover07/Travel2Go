@@ -40,7 +40,15 @@ public class RabbitMQConfig {
 
     @Bean
     public MessageConverter jsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+        org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper typeMapper =
+                new org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper();
+        typeMapper.setTrustedPackages("*");
+        typeMapper.setIdClassMapping(java.util.Map.of(
+                "com.travel2go.backend.service.PaymentCapturedEvent",
+                com.travel2go.backend.consumer.PaymentCapturedEvent.class));
+        converter.setJavaTypeMapper(typeMapper);
+        return converter;
     }
 
     @Bean
