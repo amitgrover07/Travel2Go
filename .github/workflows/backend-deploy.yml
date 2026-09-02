@@ -146,9 +146,9 @@ jobs:
                 echo "JWT_SECRET=${FINAL_JWT_SECRET}" ;;
             esac
 
-            # QUOTE_TOKEN_SECRET -> only the two services that sign/verify quote tokens.
+            # QUOTE_TOKEN_SECRET -> the three services that sign/verify quote tokens.
             case "$SVC" in
-              trip-service|payment-service)
+              trip-service|payment-service|booking-service)
                 echo "QUOTE_TOKEN_SECRET=${FINAL_QUOTE_TOKEN_SECRET}" ;;
             esac
 

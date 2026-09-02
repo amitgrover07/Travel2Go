@@ -4,6 +4,7 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -55,6 +56,23 @@ public class RabbitMQConfig {
     @Bean
     public Binding bookingBinding() {
         return BindingBuilder.bind(bookingQueue()).to(bookingExchange()).with(routingKey);
+    }
+
+    // --- P1.2: consumer side of payment-service's trip.exchange fan-out ---
+
+    @Bean
+    public TopicExchange tripExchange() {
+        return new TopicExchange("trip.exchange");
+    }
+
+    @Bean
+    public Queue bookingPaymentCapturedQueue() {
+        return new Queue("booking.payment-captured", true);
+    }
+
+    @Bean
+    public Binding bookingPaymentCapturedBinding() {
+        return BindingBuilder.bind(bookingPaymentCapturedQueue()).to(tripExchange()).with("payment.captured");
     }
 }
 
