@@ -3,87 +3,75 @@ package com.travel2go.backend.controller;
 import com.travel2go.backend.dto.LegBookingRequest;
 import com.travel2go.backend.dto.LegBookingResponse;
 import com.travel2go.backend.model.Booking;
-import com.travel2go.backend.repository.BookingRepository;
+import com.travel2go.backend.service.LegBookingRejectedException;
+import com.travel2go.backend.service.LegBookingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-import reactor.core.publisher.Mono;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LegBookingControllerTest {
 
-    @Mock private BookingRepository bookingRepository;
+    @Mock private LegBookingService legBookingService;
 
     private LegBookingController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new LegBookingController(bookingRepository);
+        controller = new LegBookingController(legBookingService);
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(new UsernamePasswordAuthenticationToken("user-1", null, java.util.List.of()));
+        SecurityContextHolder.setContext(context);
     }
 
     @Test
-    void createLegBooking_alwaysSetsZeroFee() {
+    void createLegBooking_returnsPendingWithLegIdReference() {
         LegBookingRequest request = LegBookingRequest.builder()
-                .tripId("trip-1")
-                .legId("leg-1")
-                .quoteToken("quote-token-abc")
-                .amountPaise(150000L)
-                .build();
+                .tripId("trip-1").legId("leg-1").quoteToken("quote-abc").amountPaise(150000L).build();
 
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
-            Booking b = inv.getArgument(0);
-            b.setId("booking-1");
-            return Mono.just(b);
-        });
+        Booking pending = Booking.builder().legId("leg-1").status("PENDING").ownerUserId("user-1").build();
+        when(legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1"))
+                .thenReturn(pending);
 
         ResponseEntity<LegBookingResponse> response = controller.createLegBooking(request);
 
-        ArgumentCaptor<Booking> bookingCaptor = ArgumentCaptor.forClass(Booking.class);
-        verify(bookingRepository).save(bookingCaptor.capture());
-        Booking savedBooking = bookingCaptor.getValue();
-
-        assertThat(savedBooking.getFeePaise()).isEqualTo(0L);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getBookingId()).isEqualTo("booking-1");
+        assertThat(response.getBody().getLegId()).isEqualTo("leg-1");
+        assertThat(response.getBody().getStatus()).isEqualTo("PENDING");
     }
 
     @Test
-    void createLegBooking_setsStatusConfirmedAndPersistsRequestFields() {
+    void createLegBooking_rejectedTokenReturns402() {
         LegBookingRequest request = LegBookingRequest.builder()
-                .tripId("trip-2")
-                .legId("leg-2")
-                .quoteToken("quote-xyz")
-                .amountPaise(200000L)
-                .build();
+                .tripId("trip-1").legId("leg-1").quoteToken("bad").amountPaise(150000L).build();
 
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
-            Booking b = inv.getArgument(0);
-            b.setId("booking-2");
-            return Mono.just(b);
-        });
+        when(legBookingService.createLegBooking(eq("trip-1"), eq("leg-1"), eq("bad"), anyLong(), eq("user-1")))
+                .thenThrow(new LegBookingRejectedException("invalid"));
 
         ResponseEntity<LegBookingResponse> response = controller.createLegBooking(request);
 
-        ArgumentCaptor<Booking> bookingCaptor = ArgumentCaptor.forClass(Booking.class);
-        verify(bookingRepository).save(bookingCaptor.capture());
-        Booking savedBooking = bookingCaptor.getValue();
+        assertThat(response.getStatusCode().value()).isEqualTo(402);
+    }
 
-        assertThat(savedBooking.getTripId()).isEqualTo("trip-2");
-        assertThat(savedBooking.getLegId()).isEqualTo("leg-2");
-        assertThat(savedBooking.getQuoteToken()).isEqualTo("quote-xyz");
-        assertThat(savedBooking.getAmountPaise()).isEqualTo(200000L);
-        assertThat(savedBooking.getStatus()).isEqualTo("CONFIRMED");
+    @Test
+    void getBooking_returns404WhenServiceRejects() {
+        when(legBookingService.getBooking("leg-1", "user-1", false))
+                .thenThrow(new IllegalArgumentException("No booking found for legId leg-1"));
 
-        assertThat(response.getBody().getStatus()).isEqualTo("CONFIRMED");
+        ResponseEntity<Booking> response = controller.getBooking("leg-1");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
     }
 }

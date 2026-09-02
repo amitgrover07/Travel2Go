@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class LegBookingResponse {
-    private String bookingId;
+    private String legId;
     private String status;
 }

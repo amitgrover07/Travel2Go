@@ -3,34 +3,48 @@ package com.travel2go.backend.controller;
 import com.travel2go.backend.dto.LegBookingRequest;
 import com.travel2go.backend.dto.LegBookingResponse;
 import com.travel2go.backend.model.Booking;
-import com.travel2go.backend.repository.BookingRepository;
+import com.travel2go.backend.service.LegBookingRejectedException;
+import com.travel2go.backend.service.LegBookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Date;
 
 @RestController
 @RequestMapping("/api/leg-bookings")
 @RequiredArgsConstructor
 public class LegBookingController {
 
-    private final BookingRepository bookingRepository;
+    private final LegBookingService legBookingService;
+
+    private String currentUserId() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    private boolean currentUserIsAdmin() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
 
     @PostMapping
     public ResponseEntity<LegBookingResponse> createLegBooking(@RequestBody LegBookingRequest request) {
-        Booking booking = Booking.builder()
-                .tripId(request.getTripId())
-                .legId(request.getLegId())
-                .quoteToken(request.getQuoteToken())
-                .amountPaise(request.getAmountPaise())
-                .feePaise(0L)
-                .status("CONFIRMED")
-                .bookingDate(new Date())
-                .build();
+        try {
+            Booking booking = legBookingService.createLegBooking(
+                    request.getTripId(), request.getLegId(), request.getQuoteToken(),
+                    request.getAmountPaise(), currentUserId());
+            return ResponseEntity.ok(new LegBookingResponse(booking.getLegId(), booking.getStatus()));
+        } catch (LegBookingRejectedException e) {
+            return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).build();
+        }
+    }
 
-        Booking saved = bookingRepository.save(booking).block();
-
-        return ResponseEntity.ok(new LegBookingResponse(saved.getId(), saved.getStatus()));
+    @GetMapping("/{legId}")
+    public ResponseEntity<Booking> getBooking(@PathVariable String legId) {
+        try {
+            return ResponseEntity.ok(legBookingService.getBooking(legId, currentUserId(), currentUserIsAdmin()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
