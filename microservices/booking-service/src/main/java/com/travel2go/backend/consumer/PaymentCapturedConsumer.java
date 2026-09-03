@@ -1,6 +1,5 @@
 package com.travel2go.backend.consumer;
 
-import com.travel2go.backend.client.NotificationClient;
 import com.travel2go.backend.model.Booking;
 import com.travel2go.backend.repository.BookingRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +22,14 @@ import java.util.List;
  * must not crash) is logged at ERROR (loud, alertable) and acked rather than
  * requeued: without a real delay/backoff mechanism (P1.4/saga territory),
  * blind requeue would just spin on a message that can never resolve itself.
+ *
+ * The whole body runs under a top-level try/catch: neither this queue nor
+ * trip-service's equivalent has a dead-letter exchange or bounded retry
+ * policy configured (out of scope - no such infrastructure exists anywhere
+ * in this codebase yet), so an uncaught exception would otherwise be
+ * requeued by Spring AMQP's default behavior and loop forever on a single
+ * poison message. Logging loudly and acking matches the same philosophy
+ * already used above for the unknown-legId case.
  */
 @Slf4j
 @Component
@@ -30,41 +37,41 @@ import java.util.List;
 public class PaymentCapturedConsumer {
 
     private final BookingRepository bookingRepository;
-    private final NotificationClient notificationClient;
 
     @RabbitListener(queues = "booking.payment-captured")
     public void onPaymentCaptured(PaymentCapturedEvent event) {
-        Booking booking = findRelevantBooking(event.bookingRef());
-
-        if (booking == null) {
-            log.error("payment.captured for unknown legId {} (providerPaymentId {}) - no matching Booking found",
-                    event.bookingRef(), event.providerPaymentId());
-            return;
-        }
-
-        if (!"PENDING".equals(booking.getStatus())) {
-            log.info("Ignoring payment.captured for legId {} - booking already in status {}",
-                    event.bookingRef(), booking.getStatus());
-            return;
-        }
-
-        if (booking.getAmountPaise() != event.amountPaise()) {
-            log.error("Amount mismatch for legId {}: expected {} got {} - not confirming",
-                    event.bookingRef(), booking.getAmountPaise(), event.amountPaise());
-            return;
-        }
-
-        booking.setStatus("CONFIRMED");
-        booking.setProviderPaymentId(event.providerPaymentId());
-        booking.setConfirmedAt(new Date());
-        bookingRepository.save(booking).block();
-
         try {
-            notificationClient.sendBookingConfirmation(
-                    new NotificationClient.NotificationRequest(null, null, null, booking));
+            Booking booking = findRelevantBooking(event.bookingRef());
+
+            if (booking == null) {
+                log.error("payment.captured for unknown legId {} (providerPaymentId {}) - no matching Booking found",
+                        event.bookingRef(), event.providerPaymentId());
+                return;
+            }
+
+            if (!"PENDING".equals(booking.getStatus())) {
+                log.info("Ignoring payment.captured for legId {} - booking already in status {}",
+                        event.bookingRef(), booking.getStatus());
+                return;
+            }
+
+            if (booking.getAmountPaise() != event.amountPaise()) {
+                log.error("Amount mismatch for legId {}: expected {} got {} - not confirming",
+                        event.bookingRef(), booking.getAmountPaise(), event.amountPaise());
+                return;
+            }
+
+            booking.setStatus("CONFIRMED");
+            booking.setProviderPaymentId(event.providerPaymentId());
+            booking.setConfirmedAt(new Date());
+            bookingRepository.save(booking).block();
+
+            log.info("Booking {} confirmed (legId {}) - leg-booking confirmation notifications not yet implemented "
+                            + "(needs a notification payload shape for leg bookings, tracked separately)",
+                    booking.getId(), booking.getLegId());
         } catch (Exception e) {
-            log.warn("Failed to send booking confirmation notification for legId {}: {}",
-                    event.bookingRef(), e.getMessage());
+            log.error("Unexpected error processing payment.captured for bookingRef {} (providerPaymentId {}): {}",
+                    event.bookingRef(), event.providerPaymentId(), e.getMessage(), e);
         }
     }
 

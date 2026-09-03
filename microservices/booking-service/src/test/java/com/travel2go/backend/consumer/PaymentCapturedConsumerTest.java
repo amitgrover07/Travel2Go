@@ -1,6 +1,5 @@
 package com.travel2go.backend.consumer;
 
-import com.travel2go.backend.client.NotificationClient;
 import com.travel2go.backend.model.Booking;
 import com.travel2go.backend.repository.BookingRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,19 +18,18 @@ import static org.mockito.Mockito.*;
 class PaymentCapturedConsumerTest {
 
     @Mock private BookingRepository bookingRepository;
-    @Mock private NotificationClient notificationClient;
 
     private PaymentCapturedConsumer consumer;
 
     @BeforeEach
     void setUp() {
-        consumer = new PaymentCapturedConsumer(bookingRepository, notificationClient);
+        consumer = new PaymentCapturedConsumer(bookingRepository);
         lenient().when(bookingRepository.save(any(Booking.class)))
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
     }
 
     @Test
-    void onPaymentCaptured_confirmsPendingBookingAndNotifiesOnce() {
+    void onPaymentCaptured_confirmsPendingBooking() {
         Booking pending = Booking.builder().id("b1").legId("leg-1").status("PENDING").amountPaise(150000L).build();
         when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(pending));
 
@@ -39,7 +37,6 @@ class PaymentCapturedConsumerTest {
 
         verify(bookingRepository).save(argThat(b ->
                 "CONFIRMED".equals(b.getStatus()) && "pay_1".equals(b.getProviderPaymentId()) && b.getConfirmedAt() != null));
-        verify(notificationClient, times(1)).sendBookingConfirmation(any());
     }
 
     @Test
@@ -51,7 +48,7 @@ class PaymentCapturedConsumerTest {
         pending.setStatus("CONFIRMED");
         consumer.onPaymentCaptured(new PaymentCapturedEvent("leg-1", "pay_1", 150000L));
 
-        verify(notificationClient, times(1)).sendBookingConfirmation(any());
+        verify(bookingRepository, times(1)).save(any());
     }
 
     @Test
@@ -62,7 +59,6 @@ class PaymentCapturedConsumerTest {
         consumer.onPaymentCaptured(new PaymentCapturedEvent("leg-1", "pay_1", 999L));
 
         verify(bookingRepository, never()).save(any());
-        verify(notificationClient, never()).sendBookingConfirmation(any());
     }
 
     @Test
@@ -84,6 +80,14 @@ class PaymentCapturedConsumerTest {
 
         verify(bookingRepository).save(argThat(b ->
                 "b1".equals(b.getId()) && "CONFIRMED".equals(b.getStatus())));
-        verify(notificationClient, times(1)).sendBookingConfirmation(any());
+    }
+
+    @Test
+    void onPaymentCaptured_unexpectedExceptionIsCaughtAndDoesNotPropagate() {
+        when(bookingRepository.findByLegId("leg-1")).thenThrow(new RuntimeException("transient Firestore error"));
+
+        consumer.onPaymentCaptured(new PaymentCapturedEvent("leg-1", "pay_1", 150000L));
+
+        verify(bookingRepository, never()).save(any());
     }
 }
