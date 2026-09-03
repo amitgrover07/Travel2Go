@@ -29,7 +29,7 @@ public class PaymentService {
     private final QuoteTokenService quoteTokenService;
     private final PaymentEventPublisher eventPublisher;
 
-    public Payment createOrder(String bookingRef, long amountPaise, String method, String quoteToken) {
+    public Payment createOrder(String bookingRef, long amountPaise, String method, String quoteToken, String ownerUserId) {
         Payment existing = findRelevantPayment(bookingRef);
         if (existing != null && ("CREATED".equals(existing.getStatus()) || "CAPTURED".equals(existing.getStatus()))) {
             log.info("Order already exists for bookingRef {} in status {} - returning existing payment",
@@ -46,6 +46,7 @@ public class PaymentService {
                     .status("REJECTED")
                     .amountPaise(amountPaise)
                     .feePaise(0L)
+                    .ownerUserId(ownerUserId)
                     .quoteTokenValidated(false)
                     .createdAt(new Date())
                     .build();
@@ -61,6 +62,7 @@ public class PaymentService {
                 .amountPaise(amountPaise)
                 .feePaise(0L)
                 .providerRef(order.getProviderOrderId())
+                .ownerUserId(ownerUserId)
                 .quoteTokenValidated(true)
                 .createdAt(new Date())
                 .build();
@@ -129,16 +131,19 @@ public class PaymentService {
         }
     }
 
-    public Payment getStatus(String bookingRef) {
+    public Payment getStatus(String bookingRef, String requestingUserId, boolean isAdmin) {
         Payment payment = findRelevantPayment(bookingRef);
         if (payment == null) {
+            throw new IllegalArgumentException("No payment found for bookingRef " + bookingRef);
+        }
+        if (!isAdmin && !requestingUserId.equals(payment.getOwnerUserId())) {
             throw new IllegalArgumentException("No payment found for bookingRef " + bookingRef);
         }
         return payment;
     }
 
     public Payment refund(String bookingRef) {
-        Payment payment = getStatus(bookingRef);
+        Payment payment = getStatus(bookingRef, bookingRef, true);
 
         if ("REFUNDED".equals(payment.getStatus())) {
             return payment;

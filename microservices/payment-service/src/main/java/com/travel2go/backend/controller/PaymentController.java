@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.UncheckedIOException;
@@ -22,13 +23,23 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    private String currentUserId() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    private boolean currentUserIsAdmin() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
     @PostMapping("/order")
     public ResponseEntity<Payment> createOrder(@RequestBody CreateOrderRequest request) {
         if (request.getAmountPaise() == null) {
             return ResponseEntity.badRequest().build();
         }
         Payment payment = paymentService.createOrder(
-                request.getBookingRef(), request.getAmountPaise(), request.getMethod(), request.getQuoteToken());
+                request.getBookingRef(), request.getAmountPaise(), request.getMethod(), request.getQuoteToken(),
+                currentUserId());
 
         if ("REJECTED".equals(payment.getStatus())) {
             return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(payment);
@@ -54,7 +65,11 @@ public class PaymentController {
 
     @GetMapping("/{bookingRef}")
     public ResponseEntity<Payment> getStatus(@PathVariable String bookingRef) {
-        return ResponseEntity.ok(paymentService.getStatus(bookingRef));
+        try {
+            return ResponseEntity.ok(paymentService.getStatus(bookingRef, currentUserId(), currentUserIsAdmin()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/{bookingRef}/refund")

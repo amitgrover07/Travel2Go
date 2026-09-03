@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -67,7 +68,7 @@ class PaymentServiceTest {
         when(paymentProvider.createOrder("leg-1", 150000L, "UPI"))
                 .thenReturn(new CreatedOrder("order_1", "key_1", 150000L, "INR"));
 
-        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "valid-token");
+        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "valid-token", "user-1");
 
         assertThat(result.getStatus()).isEqualTo("CREATED");
         assertThat(result.getFeePaise()).isEqualTo(0L);
@@ -78,7 +79,7 @@ class PaymentServiceTest {
     void createOrder_rejectsWhenQuoteTokenInvalid_withoutCallingProvider() {
         when(quoteTokenService.isValid("bad-token", "leg-1", 150000L)).thenReturn(false);
 
-        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "bad-token");
+        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "bad-token", "user-1");
 
         assertThat(result.getStatus()).isEqualTo("REJECTED");
         assertThat(result.getFeePaise()).isEqualTo(0L);
@@ -90,7 +91,7 @@ class PaymentServiceTest {
         Payment existing = createdPayment();
         when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(existing));
 
-        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "any-token");
+        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "any-token", "user-1");
 
         assertThat(result).isSameAs(existing);
         assertThat(result.getStatus()).isEqualTo("CREATED");
@@ -105,7 +106,7 @@ class PaymentServiceTest {
         captured.setProviderPaymentId("pay_1");
         when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(captured));
 
-        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "any-token");
+        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "any-token", "user-1");
 
         assertThat(result).isSameAs(captured);
         assertThat(result.getStatus()).isEqualTo("CAPTURED");
@@ -122,7 +123,7 @@ class PaymentServiceTest {
         when(paymentProvider.createOrder("leg-1", 150000L, "UPI"))
                 .thenReturn(new CreatedOrder("order_2", "key_1", 150000L, "INR"));
 
-        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "valid-token");
+        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "valid-token", "user-1");
 
         assertThat(result.getStatus()).isEqualTo("CREATED");
         assertThat(result.getProviderRef()).isEqualTo("order_2");
@@ -254,10 +255,53 @@ class PaymentServiceTest {
         // Newer payment listed first, to prove "newest" isn't blindly picked.
         when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(newerRejected, captured));
 
-        Payment result = paymentService.getStatus("leg-1");
+        Payment result = paymentService.getStatus("leg-1", "leg-1", true);
 
         assertThat(result.getStatus()).isEqualTo("CAPTURED");
         assertThat(result.getId()).isEqualTo("p1");
+    }
+
+    @Test
+    void createOrder_capturesOwnerUserId() {
+        when(quoteTokenService.isValid("valid-token", "leg-1", 150000L)).thenReturn(true);
+        when(paymentProvider.createOrder("leg-1", 150000L, "UPI"))
+                .thenReturn(new CreatedOrder("order_1", "key_1", 150000L, "INR"));
+
+        Payment result = paymentService.createOrder("leg-1", 150000L, "UPI", "valid-token", "user-1");
+
+        assertThat(result.getOwnerUserId()).isEqualTo("user-1");
+    }
+
+    @Test
+    void getStatus_returnsForOwner() {
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(
+                Flux.just(Payment.builder().bookingRef("leg-1").status("CREATED").ownerUserId("user-1")
+                        .amountPaise(150000L).createdAt(new Date()).build()));
+
+        Payment result = paymentService.getStatus("leg-1", "user-1", false);
+
+        assertThat(result.getOwnerUserId()).isEqualTo("user-1");
+    }
+
+    @Test
+    void getStatus_throwsForNonOwnerNonAdmin() {
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(
+                Flux.just(Payment.builder().bookingRef("leg-1").status("CREATED").ownerUserId("user-1")
+                        .amountPaise(150000L).createdAt(new Date()).build()));
+
+        assertThatThrownBy(() -> paymentService.getStatus("leg-1", "user-2", false))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void getStatus_allowsAdminForAnyOwner() {
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(
+                Flux.just(Payment.builder().bookingRef("leg-1").status("CREATED").ownerUserId("user-1")
+                        .amountPaise(150000L).createdAt(new Date()).build()));
+
+        Payment result = paymentService.getStatus("leg-1", "admin-user", true);
+
+        assertThat(result.getOwnerUserId()).isEqualTo("user-1");
     }
 
     @Test
