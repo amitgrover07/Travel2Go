@@ -57,6 +57,7 @@ class PaymentServiceTest {
                 .amountPaise(150000L)
                 .feePaise(0L)
                 .providerRef("order_1")
+                .ownerUserId("user-1")
                 .quoteTokenValidated(true)
                 .createdAt(new Date())
                 .build();
@@ -112,6 +113,38 @@ class PaymentServiceTest {
         assertThat(result.getStatus()).isEqualTo("CAPTURED");
         verify(paymentProvider, never()).createOrder(any(), anyLong(), any());
         verify(quoteTokenService, never()).isValid(any(), any(), anyLong());
+    }
+
+    @Test
+    void createOrder_differentOwnerCreatedThrowsConflictAndDoesNotPersist() {
+        Payment existing = createdPayment();
+        existing.setOwnerUserId("user-1");
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(existing));
+
+        assertThatThrownBy(() ->
+                paymentService.createOrder("leg-1", 150000L, "UPI", "any-token", "user-2"))
+                .isInstanceOf(PaymentConflictException.class);
+
+        verify(paymentProvider, never()).createOrder(any(), anyLong(), any());
+        verify(quoteTokenService, never()).isValid(any(), any(), anyLong());
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void createOrder_differentOwnerCapturedThrowsConflictAndDoesNotPersist() {
+        Payment captured = createdPayment();
+        captured.setStatus("CAPTURED");
+        captured.setProviderPaymentId("pay_1");
+        captured.setOwnerUserId("user-1");
+        when(paymentRepository.findByBookingRef("leg-1")).thenReturn(Flux.just(captured));
+
+        assertThatThrownBy(() ->
+                paymentService.createOrder("leg-1", 150000L, "UPI", "any-token", "user-2"))
+                .isInstanceOf(PaymentConflictException.class);
+
+        verify(paymentProvider, never()).createOrder(any(), anyLong(), any());
+        verify(quoteTokenService, never()).isValid(any(), any(), anyLong());
+        verify(paymentRepository, never()).save(any());
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.travel2go.backend.controller;
 
 import com.travel2go.backend.provider.InvalidWebhookSignatureException;
 import com.travel2go.backend.security.JwtUtil;
+import com.travel2go.backend.service.PaymentConflictException;
 import com.travel2go.backend.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,5 +83,19 @@ class PaymentControllerWebhookTest {
                 .andExpect(status().isBadRequest());
 
         verify(paymentService, never()).createOrder(any(), anyLong(), any(), any(), any());
+    }
+
+    @Test
+    void createOrder_conflictingOwnerReturns409() throws Exception {
+        when(jwtUtil.extractUsername(any())).thenReturn("test-user");
+        when(jwtUtil.extractRoles(any())).thenReturn(List.of());
+        when(paymentService.createOrder(any(), anyLong(), any(), any(), any()))
+                .thenThrow(new PaymentConflictException("Payment for bookingRef leg-1 is already claimed by another user"));
+
+        mockMvc.perform(post("/api/payments/order")
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"bookingRef\":\"leg-1\",\"amountPaise\":150000,\"method\":\"UPI\",\"quoteToken\":\"tok\"}"))
+                .andExpect(status().isConflict());
     }
 }

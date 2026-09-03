@@ -3,6 +3,7 @@ package com.travel2go.backend.controller;
 import com.travel2go.backend.dto.CreateOrderRequest;
 import com.travel2go.backend.model.Payment;
 import com.travel2go.backend.provider.InvalidWebhookSignatureException;
+import com.travel2go.backend.service.PaymentConflictException;
 import com.travel2go.backend.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -37,14 +38,18 @@ public class PaymentController {
         if (request.getAmountPaise() == null) {
             return ResponseEntity.badRequest().build();
         }
-        Payment payment = paymentService.createOrder(
-                request.getBookingRef(), request.getAmountPaise(), request.getMethod(), request.getQuoteToken(),
-                currentUserId());
+        try {
+            Payment payment = paymentService.createOrder(
+                    request.getBookingRef(), request.getAmountPaise(), request.getMethod(), request.getQuoteToken(),
+                    currentUserId());
 
-        if ("REJECTED".equals(payment.getStatus())) {
-            return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(payment);
+            if ("REJECTED".equals(payment.getStatus())) {
+                return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(payment);
+            }
+            return ResponseEntity.ok(payment);
+        } catch (PaymentConflictException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
-        return ResponseEntity.ok(payment);
     }
 
     @PostMapping("/webhook")

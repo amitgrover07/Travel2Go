@@ -32,9 +32,12 @@ public class PaymentService {
     public Payment createOrder(String bookingRef, long amountPaise, String method, String quoteToken, String ownerUserId) {
         Payment existing = findRelevantPayment(bookingRef);
         if (existing != null && ("CREATED".equals(existing.getStatus()) || "CAPTURED".equals(existing.getStatus()))) {
-            log.info("Order already exists for bookingRef {} in status {} - returning existing payment",
-                    bookingRef, existing.getStatus());
-            return existing;
+            if (ownerUserId.equals(existing.getOwnerUserId())) {
+                log.info("Order already exists for bookingRef {} in status {} - returning existing payment",
+                        bookingRef, existing.getStatus());
+                return existing;
+            }
+            throw new PaymentConflictException("Payment for bookingRef " + bookingRef + " is already claimed by another user");
         }
 
         boolean quoteValid = quoteTokenService.isValid(quoteToken, bookingRef, amountPaise);
