@@ -19,7 +19,7 @@ public class LegBookingService {
     public Booking createLegBooking(String tripId, String legId, String quoteToken, Long amountPaise, String ownerUserId) {
         Booking existing = findRelevantBooking(legId);
         if (existing != null && isActive(existing)) {
-            if (existing.getOwnerUserId().equals(ownerUserId)) {
+            if (ownerUserId.equals(existing.getOwnerUserId())) {
                 return existing;
             }
             throw new LegBookingConflictException("Booking for legId " + legId + " is already claimed by another user");

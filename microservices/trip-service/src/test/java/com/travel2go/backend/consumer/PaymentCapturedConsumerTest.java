@@ -28,12 +28,22 @@ class PaymentCapturedConsumerTest {
 
     @Test
     void onPaymentCaptured_confirmsPendingLeg() {
-        Leg leg = Leg.builder().id("leg-1").status("PENDING").build();
+        Leg leg = Leg.builder().id("leg-1").status("PENDING").pricePaise(150000L).build();
         when(legRepository.findById("leg-1")).thenReturn(Mono.just(leg));
 
         consumer.onPaymentCaptured(new PaymentCapturedEvent("leg-1", "pay_1", 150000L));
 
         verify(legRepository).save(argThat(l -> "CONFIRMED".equals(l.getStatus())));
+    }
+
+    @Test
+    void onPaymentCaptured_amountMismatchDoesNotConfirm() {
+        Leg leg = Leg.builder().id("leg-1").status("PENDING").pricePaise(150000L).build();
+        when(legRepository.findById("leg-1")).thenReturn(Mono.just(leg));
+
+        consumer.onPaymentCaptured(new PaymentCapturedEvent("leg-1", "pay_1", 999L));
+
+        verify(legRepository, never()).save(any());
     }
 
     @Test
@@ -53,6 +63,15 @@ class PaymentCapturedConsumerTest {
         when(legRepository.findById("leg-unknown")).thenReturn(Mono.empty());
 
         consumer.onPaymentCaptured(new PaymentCapturedEvent("leg-unknown", "pay_1", 150000L));
+
+        verify(legRepository, never()).save(any());
+    }
+
+    @Test
+    void onPaymentCaptured_unexpectedExceptionIsCaughtAndDoesNotPropagate() {
+        when(legRepository.findById("leg-1")).thenThrow(new RuntimeException("transient Firestore error"));
+
+        consumer.onPaymentCaptured(new PaymentCapturedEvent("leg-1", "pay_1", 150000L));
 
         verify(legRepository, never()).save(any());
     }

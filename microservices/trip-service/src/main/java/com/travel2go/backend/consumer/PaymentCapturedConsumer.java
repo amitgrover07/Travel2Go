@@ -18,6 +18,12 @@ import org.springframework.stereotype.Component;
  * An event for a legId with no matching Leg (shouldn't happen) is logged at
  * ERROR and acked, not requeued - see booking-service's PaymentCapturedConsumer
  * for the same reasoning.
+ *
+ * The whole body runs under a top-level try/catch, same as booking-service's
+ * consumer: this queue has no dead-letter exchange or bounded retry policy
+ * configured (out of scope), so an uncaught exception would otherwise be
+ * requeued by Spring AMQP's default behavior and loop forever on a single
+ * poison message.
  */
 @Slf4j
 @Component
@@ -28,21 +34,33 @@ public class PaymentCapturedConsumer {
 
     @RabbitListener(queues = "trip.payment-captured")
     public void onPaymentCaptured(PaymentCapturedEvent event) {
-        Leg leg = legRepository.findById(event.bookingRef()).block();
+        try {
+            Leg leg = legRepository.findById(event.bookingRef()).block();
 
-        if (leg == null) {
-            log.error("payment.captured for unknown legId {} (providerPaymentId {}) - no matching Leg found",
-                    event.bookingRef(), event.providerPaymentId());
-            return;
+            if (leg == null) {
+                log.error("payment.captured for unknown legId {} (providerPaymentId {}) - no matching Leg found",
+                        event.bookingRef(), event.providerPaymentId());
+                return;
+            }
+
+            if (!"PENDING".equals(leg.getStatus())) {
+                log.info("Ignoring payment.captured for legId {} - leg already in status {}",
+                        event.bookingRef(), leg.getStatus());
+                return;
+            }
+
+            Long pricePaise = leg.getPricePaise();
+            if (pricePaise != null && pricePaise != event.amountPaise()) {
+                log.error("Amount mismatch for legId {}: expected {} got {} - not confirming",
+                        event.bookingRef(), pricePaise, event.amountPaise());
+                return;
+            }
+
+            leg.setStatus("CONFIRMED");
+            legRepository.save(leg).block();
+        } catch (Exception e) {
+            log.error("Unexpected error processing payment.captured for bookingRef {} (providerPaymentId {}): {}",
+                    event.bookingRef(), event.providerPaymentId(), e.getMessage(), e);
         }
-
-        if (!"PENDING".equals(leg.getStatus())) {
-            log.info("Ignoring payment.captured for legId {} - leg already in status {}",
-                    event.bookingRef(), leg.getStatus());
-            return;
-        }
-
-        leg.setStatus("CONFIRMED");
-        legRepository.save(leg).block();
     }
 }

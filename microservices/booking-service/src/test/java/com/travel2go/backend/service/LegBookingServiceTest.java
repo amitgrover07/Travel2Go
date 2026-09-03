@@ -96,6 +96,19 @@ class LegBookingServiceTest {
     }
 
     @Test
+    void createLegBooking_legacyActiveBookingWithNullOwnerDoesNotThrowNpe() {
+        Booking existing = Booking.builder().id("b1").legId("leg-1").status("PENDING").ownerUserId(null).build();
+        when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(existing));
+
+        assertThatThrownBy(() ->
+                legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1"))
+                .isInstanceOf(LegBookingConflictException.class);
+
+        verify(quoteTokenService, never()).isValid(any(), any(), org.mockito.ArgumentMatchers.anyLong());
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
     void createLegBooking_rejectedExistingAllowsFreshRetry() {
         Booking rejected = Booking.builder().id("b1").legId("leg-1").status("REJECTED").ownerUserId("user-1").build();
         when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(rejected));
