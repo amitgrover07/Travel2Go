@@ -11,9 +11,11 @@ import org.springframework.stereotype.Component;
  * Consumes payment-service's payment.captured event (P1.1) and flips the
  * matching Leg from PENDING to CONFIRMED. Independent of booking-service's
  * own consumer (both subscribe to the same fan-out event separately) - this
- * one does not send a notification, since booking-service's consumer already
- * does. Idempotent via a status-guard, same pattern as booking-service's
- * consumer and payment-service's own (P1.1).
+ * one does not send a notification (booking-service's consumer used to;
+ * leg-booking confirmation notifications aren't implemented for either
+ * consumer yet - see booking-service's PaymentCapturedConsumer). Idempotent
+ * via a status-guard, same pattern as booking-service's consumer and
+ * payment-service's own (P1.1).
  *
  * An event for a legId with no matching Leg (shouldn't happen) is logged at
  * ERROR and acked, not requeued - see booking-service's PaymentCapturedConsumer
