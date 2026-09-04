@@ -1,0 +1,61 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - 'microservices/**'
+  push:
+    branches: [main]
+    paths:
+      - 'microservices/**'
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - identity-service
+          - package-service
+          - booking-service
+          - media-service
+          - notification-service
+          - trip-service
+          - payment-service
+          - api-gateway
+          - reactive-booking-function
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build shared modules (common-models, platform-security)
+        run: |
+          if [ -f "microservices/${{ matrix.service }}/pom.xml" ]; then
+            cd microservices/common-models && ./mvnw -q clean install
+            cd ../platform-security && ./mvnw -q clean install
+          fi
+
+      - name: Test ${{ matrix.service }}
+        env:
+          JWT_SECRET: "test-jwt-secret-0123456789abcdef0123456789abcdef"
+          QUOTE_TOKEN_SECRET: "test-quote-token-secret-0123456789abcdef0123456789abcdef"
+          RAZORPAY_KEY_ID: "rzp_test_dummy_key_id"
+          RAZORPAY_KEY_SECRET: "test-razorpay-key-secret-0123456789abcdef01"
+          RAZORPAY_WEBHOOK_SECRET: "test-razorpay-webhook-secret-0123456789abcd"
+          IDENTITY_SERVICE_URL: "http://test-identity"
+          PACKAGE_SERVICE_URL: "http://test-package"
+          BOOKING_SERVICE_URL: "http://test-booking"
+          MEDIA_SERVICE_URL: "http://test-media"
+          TRIP_SERVICE_URL: "http://test-trip"
+          PAYMENT_SERVICE_URL: "http://test-payment"
+          NOTIFICATION_SERVICE_URL: "http://test-notification"
+        run: |
+          cd microservices/${{ matrix.service }}
+          ./mvnw -q clean verify
