@@ -165,30 +165,32 @@ class PaymentServiceTest {
     @Test
     void applyWebhook_capturedTransitionsPaymentAndPublishesEvent() {
         Payment payment = createdPayment();
+        payment.setId(java.util.UUID.randomUUID());
         when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(payment));
-        when(processedWebhookEventRepository.findById("pay_1")).thenReturn(Optional.empty());
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 150000L));
-        when(processedWebhookEventRepository.save(any(ProcessedWebhookEvent.class)))
+        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
+        when(paymentRepository.markCaptured(payment.getId(), "pay_1")).thenReturn(1);
 
         paymentService.applyWebhook("{}".getBytes(), Map.of());
 
-        verify(paymentRepository).save(argThat(p -> "CAPTURED".equals(p.getStatus()) && "pay_1".equals(p.getProviderPaymentId())));
+        verify(paymentRepository).markCaptured(payment.getId(), "pay_1");
         verify(eventPublisher).publish(eq("payment.captured"),
                 eq(new PaymentCapturedEvent("leg-1", "pay_1", 150000L)));
     }
 
     @Test
     void applyWebhook_duplicateCapturedIsIdempotent_publishesEventOnlyOnce() {
-        when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(createdPayment()));
+        Payment payment = createdPayment();
+        payment.setId(java.util.UUID.randomUUID());
+        when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(payment));
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 150000L));
-        when(processedWebhookEventRepository.findById("pay_1"))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(ProcessedWebhookEvent.builder().id("pay_1").processedAt(new Date()).build()));
-        when(processedWebhookEventRepository.save(any(ProcessedWebhookEvent.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
+                .thenAnswer(inv -> inv.getArgument(0))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate key"));
+        when(paymentRepository.markCaptured(payment.getId(), "pay_1")).thenReturn(1);
 
         paymentService.applyWebhook("{}".getBytes(), Map.of());
         paymentService.applyWebhook("{}".getBytes(), Map.of());
@@ -199,13 +201,47 @@ class PaymentServiceTest {
     @Test
     void applyWebhook_amountMismatchDoesNotCapture() {
         when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(createdPayment()));
-        when(processedWebhookEventRepository.findById("pay_1")).thenReturn(Optional.empty());
+        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 999L));
 
         paymentService.applyWebhook("{}".getBytes(), Map.of());
 
-        verify(paymentRepository, never()).save(any());
+        verify(paymentRepository, never()).markCaptured(any(), any());
+        verify(eventPublisher, never()).publish(any(), any());
+    }
+
+    @Test
+    void applyWebhook_duplicateEventIdIsNoOpEvenIfPaymentStillCreated() {
+        // Simulates two different webhook deliveries racing: the second one's
+        // dedupe-insert hits the unique constraint before it ever reaches the
+        // conditional UPDATE.
+        when(paymentProvider.verifyAndParse(any(), any()))
+                .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 150000L));
+        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate key"));
+
+        paymentService.applyWebhook("{}".getBytes(), Map.of());
+
+        verify(paymentRepository, never()).findByProviderRef(any());
+        verify(paymentRepository, never()).markCaptured(any(), any());
+        verify(eventPublisher, never()).publish(any(), any());
+    }
+
+    @Test
+    void applyWebhook_captureRaceLoserIsNoOp_whenMarkCapturedAffectsZeroRows() {
+        Payment payment = createdPayment();
+        payment.setId(java.util.UUID.randomUUID());
+        when(paymentProvider.verifyAndParse(any(), any()))
+                .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 150000L));
+        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(payment));
+        when(paymentRepository.markCaptured(payment.getId(), "pay_1")).thenReturn(0);
+
+        paymentService.applyWebhook("{}".getBytes(), Map.of());
+
         verify(eventPublisher, never()).publish(any(), any());
     }
 
