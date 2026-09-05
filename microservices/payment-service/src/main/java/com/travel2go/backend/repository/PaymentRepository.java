@@ -1,13 +1,16 @@
 package com.travel2go.backend.repository;
 
-import com.google.cloud.spring.data.firestore.FirestoreReactiveRepository;
 import com.travel2go.backend.model.Payment;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Flux;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface PaymentRepository extends FirestoreReactiveRepository<Payment> {
-    Flux<Payment> findByBookingRef(String bookingRef);
+public interface PaymentRepository extends JpaRepository<Payment, UUID> {
+    List<Payment> findByBookingRef(String bookingRef);
 
-    Flux<Payment> findByProviderRef(String providerRef);
+    Optional<Payment> findByProviderRef(String providerRef);
 }

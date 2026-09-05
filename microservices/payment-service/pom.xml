@@ -17,6 +17,10 @@
 		<java.version>17</java.version>
 		<lombok.version>1.18.38</lombok.version>
 		<spring-cloud.version>2023.0.1</spring-cloud.version>
+		<!-- Spring Boot 3.2.4 manages flyway-core at 9.22.3, which predates the
+		     flyway-database-postgresql split (introduced in Flyway 10). Override
+		     to a paired 10.x version so both artifacts resolve consistently. -->
+		<flyway.version>10.15.2</flyway.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -38,8 +42,27 @@
 	</dependencyManagement>
 	<dependencies>
 		<dependency>
-			<groupId>com.google.cloud</groupId>
-			<artifactId>spring-cloud-gcp-starter-data-firestore</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+			<version>${flyway.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.cloud.sql</groupId>
+			<artifactId>postgres-socket-factory</artifactId>
+			<version>1.19.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -102,6 +125,18 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>1.19.7</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>1.19.7</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

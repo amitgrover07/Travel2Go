@@ -53,7 +53,7 @@ public class PaymentService {
                     .quoteTokenValidated(false)
                     .createdAt(new Date())
                     .build();
-            return paymentRepository.save(rejected).block();
+            return paymentRepository.save(rejected);
         }
 
         CreatedOrder order = paymentProvider.createOrder(bookingRef, amountPaise, method);
@@ -70,7 +70,7 @@ public class PaymentService {
                 .createdAt(new Date())
                 .build();
 
-        return paymentRepository.save(payment).block();
+        return paymentRepository.save(payment);
     }
 
     public void applyWebhook(byte[] rawBody, Map<String, String> headers) {
@@ -86,14 +86,12 @@ public class PaymentService {
         }
 
         String dedupeKey = event.getProviderPaymentId();
-        if (dedupeKey != null && processedWebhookEventRepository.findById(dedupeKey).block() != null) {
+        if (dedupeKey != null && processedWebhookEventRepository.findById(dedupeKey).isPresent()) {
             log.info("Webhook for payment {} already processed, skipping", dedupeKey);
             return;
         }
 
-        Payment payment = paymentRepository.findByProviderRef(event.getProviderOrderId())
-                .next()
-                .block();
+        Payment payment = paymentRepository.findByProviderRef(event.getProviderOrderId()).orElse(null);
 
         if (payment == null) {
             log.warn("Webhook for unknown provider order {}", event.getProviderOrderId());
@@ -114,11 +112,11 @@ public class PaymentService {
             }
             payment.setStatus("CAPTURED");
             payment.setProviderPaymentId(event.getProviderPaymentId());
-            paymentRepository.save(payment).block();
+            paymentRepository.save(payment);
 
             if (dedupeKey != null) {
                 processedWebhookEventRepository.save(
-                        ProcessedWebhookEvent.builder().id(dedupeKey).processedAt(new Date()).build()).block();
+                        ProcessedWebhookEvent.builder().id(dedupeKey).processedAt(new Date()).build());
             }
 
             try {
@@ -130,7 +128,7 @@ public class PaymentService {
             }
         } else {
             payment.setStatus("FAILED");
-            paymentRepository.save(payment).block();
+            paymentRepository.save(payment);
         }
     }
 
@@ -161,7 +159,7 @@ public class PaymentService {
         }
 
         payment.setStatus("REFUNDED");
-        Payment saved = paymentRepository.save(payment).block();
+        Payment saved = paymentRepository.save(payment);
 
         try {
             eventPublisher.publish("payment.refunded",
@@ -184,8 +182,8 @@ public class PaymentService {
      * if there is no payment at all for this bookingRef.
      */
     private Payment findRelevantPayment(String bookingRef) {
-        List<Payment> payments = paymentRepository.findByBookingRef(bookingRef).collectList().block();
-        if (payments == null || payments.isEmpty()) {
+        List<Payment> payments = paymentRepository.findByBookingRef(bookingRef);
+        if (payments.isEmpty()) {
             return null;
         }
         return payments.stream()
