@@ -150,6 +150,9 @@ public class PaymentService {
                 }
             });
         } else {
+            log.warn("applyCaptured running without an active transaction synchronization - "
+                    + "payment.captured will be published immediately instead of deferred to commit; "
+                    + "this should only happen in tests, not production");
             publishCaptured.run();
         }
     }
