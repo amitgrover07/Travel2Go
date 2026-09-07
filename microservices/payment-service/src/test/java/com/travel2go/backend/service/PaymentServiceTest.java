@@ -32,6 +32,7 @@ class PaymentServiceTest {
 
     @Mock private PaymentRepository paymentRepository;
     @Mock private ProcessedWebhookEventRepository processedWebhookEventRepository;
+    @Mock private com.travel2go.backend.repository.RefundRepository refundRepository;
     @Mock private PaymentProvider paymentProvider;
     @Mock private QuoteTokenService quoteTokenService;
     @Mock private PaymentEventPublisher eventPublisher;
@@ -41,8 +42,11 @@ class PaymentServiceTest {
     @BeforeEach
     void setUp() {
         paymentService = new PaymentService(
-                paymentRepository, processedWebhookEventRepository, paymentProvider, quoteTokenService, eventPublisher);
+                paymentRepository, processedWebhookEventRepository, refundRepository,
+                paymentProvider, quoteTokenService, eventPublisher);
         lenient().when(paymentRepository.save(any(Payment.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(refundRepository.save(any(com.travel2go.backend.model.Refund.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         lenient().when(processedWebhookEventRepository.findById(any(String.class))).thenReturn(Optional.empty());
         lenient().when(paymentRepository.findByBookingRef(any())).thenReturn(List.of());

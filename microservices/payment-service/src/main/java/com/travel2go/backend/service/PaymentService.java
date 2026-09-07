@@ -1,12 +1,14 @@
 package com.travel2go.backend.service;
 
 import com.travel2go.backend.model.Payment;
+import com.travel2go.backend.model.Refund;
 import com.travel2go.backend.provider.CreatedOrder;
 import com.travel2go.backend.provider.PaymentProvider;
 import com.travel2go.backend.provider.RefundResult;
 import com.travel2go.backend.provider.WebhookEvent;
 import com.travel2go.backend.provider.WebhookEventType;
 import com.travel2go.backend.repository.PaymentRepository;
+import com.travel2go.backend.repository.RefundRepository;
 import com.travel2go.backend.webhook.ProcessedWebhookEvent;
 import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final ProcessedWebhookEventRepository processedWebhookEventRepository;
+    private final RefundRepository refundRepository;
     private final PaymentProvider paymentProvider;
     private final QuoteTokenService quoteTokenService;
     private final PaymentEventPublisher eventPublisher;
@@ -190,6 +193,7 @@ public class PaymentService {
         return payment;
     }
 
+    @Transactional
     public Payment refund(String bookingRef) {
         Payment payment = getStatus(bookingRef, bookingRef, true);
 
@@ -208,12 +212,40 @@ public class PaymentService {
         payment.setStatus("REFUNDED");
         Payment saved = paymentRepository.save(payment);
 
-        try {
-            eventPublisher.publish("payment.refunded",
-                    new PaymentRefundedEvent(bookingRef, result.getProviderRefundId(), payment.getAmountPaise()));
-        } catch (Exception e) {
-            log.error("Failed to publish payment.refunded event for bookingRef {} providerRefundId {}: {}",
-                    bookingRef, result.getProviderRefundId(), e.getMessage(), e);
+        refundRepository.save(Refund.builder()
+                .paymentId(saved.getId())
+                .providerRefundId(result.getProviderRefundId())
+                .amountPaise(saved.getAmountPaise())
+                .status("SUCCESS")
+                .createdAt(new Date())
+                .build());
+
+        Runnable publishRefunded = () -> {
+            try {
+                eventPublisher.publish("payment.refunded",
+                        new PaymentRefundedEvent(bookingRef, result.getProviderRefundId(), saved.getAmountPaise()));
+            } catch (Exception e) {
+                log.error("Failed to publish payment.refunded event for bookingRef {} providerRefundId {}: {}",
+                        bookingRef, result.getProviderRefundId(), e.getMessage(), e);
+            }
+        };
+        // Guard against running outside an active transaction (e.g. plain unit
+        // tests instantiating this service directly, bypassing the
+        // @Transactional proxy): registerSynchronization() throws
+        // IllegalStateException when no synchronization is active, so fall
+        // back to publishing immediately in that case.
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    publishRefunded.run();
+                }
+            });
+        } else {
+            log.warn("refund running without an active transaction synchronization - "
+                    + "payment.refunded will be published immediately instead of deferred to commit; "
+                    + "this should only happen in tests, not production");
+            publishRefunded.run();
         }
 
         return saved;
