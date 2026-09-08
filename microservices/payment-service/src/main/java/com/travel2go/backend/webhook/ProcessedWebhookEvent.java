@@ -17,7 +17,9 @@ import java.util.Date;
  * Idempotency record: one row per provider payment id already captured, so a
  * re-delivered "payment.captured" webhook is a no-op instead of a
  * double-capture / double-publish. The primary key IS the atomic dedupe -
- * inserting a duplicate id throws a constraint violation.
+ * {@link ProcessedWebhookEventRepository#recordIfNew} inserts via
+ * {@code ON CONFLICT (event_id) DO NOTHING} and reports whether a row was
+ * actually inserted, rather than throwing on a duplicate.
  */
 @Data
 @NoArgsConstructor
