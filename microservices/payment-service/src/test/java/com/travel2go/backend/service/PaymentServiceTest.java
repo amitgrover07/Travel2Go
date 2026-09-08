@@ -7,7 +7,6 @@ import com.travel2go.backend.provider.RefundResult;
 import com.travel2go.backend.provider.WebhookEvent;
 import com.travel2go.backend.provider.WebhookEventType;
 import com.travel2go.backend.repository.PaymentRepository;
-import com.travel2go.backend.webhook.ProcessedWebhookEvent;
 import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -173,8 +172,7 @@ class PaymentServiceTest {
         when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(payment));
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 150000L));
-        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        when(processedWebhookEventRepository.recordIfNew("pay_1")).thenReturn(1);
         when(paymentRepository.markCaptured(payment.getId(), "pay_1")).thenReturn(1);
 
         paymentService.applyWebhook("{}".getBytes(), Map.of());
@@ -191,9 +189,7 @@ class PaymentServiceTest {
         when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(payment));
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 150000L));
-        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
-                .thenAnswer(inv -> inv.getArgument(0))
-                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate key"));
+        when(processedWebhookEventRepository.recordIfNew("pay_1")).thenReturn(1, 0);
         when(paymentRepository.markCaptured(payment.getId(), "pay_1")).thenReturn(1);
 
         paymentService.applyWebhook("{}".getBytes(), Map.of());
@@ -205,8 +201,7 @@ class PaymentServiceTest {
     @Test
     void applyWebhook_amountMismatchDoesNotCapture() {
         when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(createdPayment()));
-        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        when(processedWebhookEventRepository.recordIfNew("pay_1")).thenReturn(1);
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 999L));
 
@@ -223,8 +218,7 @@ class PaymentServiceTest {
         // conditional UPDATE.
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 150000L));
-        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
-                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate key"));
+        when(processedWebhookEventRepository.recordIfNew("pay_1")).thenReturn(0);
 
         paymentService.applyWebhook("{}".getBytes(), Map.of());
 
@@ -239,8 +233,7 @@ class PaymentServiceTest {
         payment.setId(java.util.UUID.randomUUID());
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 150000L));
-        when(processedWebhookEventRepository.saveAndFlush(any(ProcessedWebhookEvent.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        when(processedWebhookEventRepository.recordIfNew("pay_1")).thenReturn(1);
         when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(payment));
         when(paymentRepository.markCaptured(payment.getId(), "pay_1")).thenReturn(0);
 
@@ -276,6 +269,7 @@ class PaymentServiceTest {
     @Test
     void applyWebhook_unknownOrderIsIgnored() {
         when(paymentRepository.findByProviderRef("order_unknown")).thenReturn(Optional.empty());
+        when(processedWebhookEventRepository.recordIfNew("pay_1")).thenReturn(1);
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_unknown", "pay_1", 150000L));
 

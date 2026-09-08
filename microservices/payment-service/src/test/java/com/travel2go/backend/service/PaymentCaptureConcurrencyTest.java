@@ -16,14 +16,19 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -88,9 +93,10 @@ class PaymentCaptureConcurrencyTest {
         CountDownLatch ready = new CountDownLatch(threadCount);
         CountDownLatch go = new CountDownLatch(1);
         CountDownLatch done = new CountDownLatch(threadCount);
+        List<Future<?>> futures = new ArrayList<>();
 
         for (int i = 0; i < threadCount; i++) {
-            pool.submit(() -> {
+            futures.add(pool.submit(() -> {
                 ready.countDown();
                 try {
                     go.await();
@@ -100,7 +106,7 @@ class PaymentCaptureConcurrencyTest {
                 } finally {
                     done.countDown();
                 }
-            });
+            }));
         }
 
         ready.await();
@@ -108,9 +114,39 @@ class PaymentCaptureConcurrencyTest {
         assertThat(done.await(30, TimeUnit.SECONDS)).isTrue();
         pool.shutdown();
 
+        for (Future<?> future : futures) {
+            try {
+                future.get();
+            } catch (ExecutionException e) {
+                fail("A concurrent applyWebhook call threw an exception - it must return normally "
+                        + "for every losing thread", e.getCause());
+            }
+        }
+
         Payment result = paymentRepository.findByProviderRef("order_race_1").orElseThrow();
         assertThat(result.getStatus()).isEqualTo("CAPTURED");
         assertThat(processedWebhookEventRepository.findById("pay_race_1")).isPresent();
+        verify(eventPublisher, times(1)).publish(eq("payment.captured"), any());
+    }
+
+    @Test
+    void sequentialRedeliveryOfSameEventDoesNotSmearTimestampOrThrow() {
+        persistCreatedPayment("leg-race-3", "order_race_3");
+        when(paymentProvider.verifyAndParse(any(), any()))
+                .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_race_3", "pay_race_3", 150000L));
+
+        paymentService.applyWebhook("{}".getBytes(), Map.of());
+        Date firstProcessedAt = processedWebhookEventRepository.findById("pay_race_3").orElseThrow().getProcessedAt();
+
+        // Second, sequential delivery of the same event id: must not throw,
+        // and - since it's a real INSERT ... ON CONFLICT DO NOTHING rather
+        // than a save()-as-merge - must not silently overwrite processedAt.
+        paymentService.applyWebhook("{}".getBytes(), Map.of());
+        Date secondProcessedAt = processedWebhookEventRepository.findById("pay_race_3").orElseThrow().getProcessedAt();
+
+        Payment result = paymentRepository.findByProviderRef("order_race_3").orElseThrow();
+        assertThat(result.getStatus()).isEqualTo("CAPTURED");
+        assertThat(secondProcessedAt).isEqualTo(firstProcessedAt);
         verify(eventPublisher, times(1)).publish(eq("payment.captured"), any());
     }
 

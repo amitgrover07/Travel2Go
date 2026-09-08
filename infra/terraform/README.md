@@ -16,15 +16,28 @@ their real callers. Replaces the shared default compute SA.
 - `run.invoker` bindings: `trip <- gateway`, `booking <- gateway, trip`,
   `payment <- gateway`.
 - Optionally, `iam.serviceAccountUser` for the CI deployer on each SA.
+- (P1.3) The `t2g-payments` Cloud SQL Postgres instance, its `t2g_payments`
+  database, and the `t2g_payment_app` user, for payment-service's money
+  ledger — plus a `roles/cloudsql.client` binding for `t2g-payment` so the
+  service can reach it via the socket-factory connector.
 
 ## Prerequisites
 
 - The principal running Terraform needs, at minimum:
   `roles/iam.serviceAccountAdmin`, `roles/resourcemanager.projectIamAdmin`,
   `roles/run.admin`, and `roles/storage.admin` on the buckets.
+- Creating the Cloud SQL instance (P1.3) requires the applying principal to
+  also hold Cloud SQL admin permissions in the project (e.g. `roles/cloudsql.admin`).
 - The CI deployer (identity behind `GCP_CREDENTIALS` in `backend-deploy.yml`)
   must hold `roles/iam.serviceAccountUser` on each runtime SA, or deploys with
   `--service-account` fail. Set `deployer_member` to have Terraform grant this.
+
+## Required variables
+
+- `payment_db_password` — password for the `t2g_payment_app` Postgres user
+  (P1.3). No default, so `terraform apply`/`plan` will prompt for it or fail
+  non-interactively without it. Supply it via `TF_VAR_payment_db_password` or
+  an uncommitted tfvars file — never commit it.
 
 ## Apply order (there is a deliberate two-phase dependency)
 

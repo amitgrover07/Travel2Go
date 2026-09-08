@@ -9,11 +9,9 @@ import com.travel2go.backend.provider.WebhookEvent;
 import com.travel2go.backend.provider.WebhookEventType;
 import com.travel2go.backend.repository.PaymentRepository;
 import com.travel2go.backend.repository.RefundRepository;
-import com.travel2go.backend.webhook.ProcessedWebhookEvent;
 import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -103,10 +101,8 @@ public class PaymentService {
     private void applyCaptured(WebhookEvent event) {
         String dedupeKey = event.getProviderPaymentId();
         if (dedupeKey != null) {
-            try {
-                processedWebhookEventRepository.saveAndFlush(
-                        ProcessedWebhookEvent.builder().id(dedupeKey).processedAt(new Date()).build());
-            } catch (DataIntegrityViolationException e) {
+            int inserted = processedWebhookEventRepository.recordIfNew(dedupeKey);
+            if (inserted == 0) {
                 log.info("Webhook for payment {} already processed, skipping", dedupeKey);
                 return;
             }

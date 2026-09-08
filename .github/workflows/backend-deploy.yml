@@ -112,6 +112,7 @@ jobs:
           set_env "FINAL_DB_URL" "${{ secrets.PAYMENT_DB_URL }}" "placeholder_db_url"
           set_env "FINAL_DB_USERNAME" "${{ secrets.PAYMENT_DB_USERNAME }}" "placeholder_db_username"
           set_env "FINAL_DB_PASSWORD" "${{ secrets.PAYMENT_DB_PASSWORD }}" "placeholder_db_password"
+          set_env "FINAL_DB_INSTANCE_CONNECTION_NAME" "${{ secrets.DB_INSTANCE_CONNECTION_NAME }}" "placeholder_instance_connection_name"
           set_env "FINAL_REDIS_HOST" "${{ secrets.SPRING_REDIS_HOST }}" "localhost"
           set_env "FINAL_REDIS_PORT" "${{ secrets.SPRING_REDIS_PORT }}" "6379"
           set_env "FINAL_REDIS_PASSWORD" "${{ secrets.SPRING_REDIS_PASSWORD }}" "none"
@@ -284,7 +285,7 @@ jobs:
             # Same internal-only posture as trip/booking, plus the Cloud SQL
             # socket-factory connector (P1.3) so this service can reach its
             # Postgres money ledger without a VPC connector.
-            echo "CR_FLAGS=--port=8080 --no-allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost --add-cloudsql-instances=${{ secrets.DB_INSTANCE_CONNECTION_NAME }} ${RUN_SA} ${STARTUP_PROBE}" >> $GITHUB_ENV
+            echo "CR_FLAGS=--port=8080 --no-allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost --add-cloudsql-instances=${FINAL_DB_INSTANCE_CONNECTION_NAME} ${RUN_SA} ${STARTUP_PROBE}" >> $GITHUB_ENV
           elif [ "$SVC" = "trip-service" ] || [ "$SVC" = "booking-service" ]; then
             # Internal-only (--no-allow-unauthenticated). Combined with the
             # per-caller run.invoker bindings in infra/terraform/run-invoker.tf,
