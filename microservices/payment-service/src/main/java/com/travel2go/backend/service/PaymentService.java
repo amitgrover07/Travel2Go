@@ -1,17 +1,21 @@
 package com.travel2go.backend.service;
 
 import com.travel2go.backend.model.Payment;
+import com.travel2go.backend.model.Refund;
 import com.travel2go.backend.provider.CreatedOrder;
 import com.travel2go.backend.provider.PaymentProvider;
 import com.travel2go.backend.provider.RefundResult;
 import com.travel2go.backend.provider.WebhookEvent;
 import com.travel2go.backend.provider.WebhookEventType;
 import com.travel2go.backend.repository.PaymentRepository;
-import com.travel2go.backend.webhook.ProcessedWebhookEvent;
+import com.travel2go.backend.repository.RefundRepository;
 import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -25,6 +29,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final ProcessedWebhookEventRepository processedWebhookEventRepository;
+    private final RefundRepository refundRepository;
     private final PaymentProvider paymentProvider;
     private final QuoteTokenService quoteTokenService;
     private final PaymentEventPublisher eventPublisher;
@@ -53,7 +58,7 @@ public class PaymentService {
                     .quoteTokenValidated(false)
                     .createdAt(new Date())
                     .build();
-            return paymentRepository.save(rejected).block();
+            return paymentRepository.save(rejected);
         }
 
         CreatedOrder order = paymentProvider.createOrder(bookingRef, amountPaise, method);
@@ -70,9 +75,10 @@ public class PaymentService {
                 .createdAt(new Date())
                 .build();
 
-        return paymentRepository.save(payment).block();
+        return paymentRepository.save(payment);
     }
 
+    @Transactional
     public void applyWebhook(byte[] rawBody, Map<String, String> headers) {
         WebhookEvent event = paymentProvider.verifyAndParse(rawBody, headers);
 
@@ -85,53 +91,91 @@ public class PaymentService {
             return;
         }
 
+        if (event.getType() == WebhookEventType.CAPTURED) {
+            applyCaptured(event);
+        } else {
+            applyFailed(event);
+        }
+    }
+
+    private void applyCaptured(WebhookEvent event) {
         String dedupeKey = event.getProviderPaymentId();
-        if (dedupeKey != null && processedWebhookEventRepository.findById(dedupeKey).block() != null) {
-            log.info("Webhook for payment {} already processed, skipping", dedupeKey);
-            return;
+        if (dedupeKey != null) {
+            int inserted = processedWebhookEventRepository.recordIfNew(dedupeKey);
+            if (inserted == 0) {
+                log.info("Webhook for payment {} already processed, skipping", dedupeKey);
+                return;
+            }
         }
 
-        Payment payment = paymentRepository.findByProviderRef(event.getProviderOrderId())
-                .next()
-                .block();
-
+        Payment payment = findPaymentOrLogUnknown(event.getProviderOrderId());
         if (payment == null) {
-            log.warn("Webhook for unknown provider order {}", event.getProviderOrderId());
             return;
         }
 
+        if (payment.getAmountPaise() != event.getAmountPaise()) {
+            log.error("Amount mismatch for order {}: expected {} got {} - not capturing",
+                    event.getProviderOrderId(), payment.getAmountPaise(), event.getAmountPaise());
+            return;
+        }
+
+        int updated = paymentRepository.markCaptured(payment.getId(), event.getProviderPaymentId());
+        if (updated == 0) {
+            log.info("Ignoring webhook for order {} - payment already left CREATED status",
+                    event.getProviderOrderId());
+            return;
+        }
+
+        PaymentCapturedEvent toPublish = new PaymentCapturedEvent(
+                payment.getBookingRef(), event.getProviderPaymentId(), payment.getAmountPaise());
+        Runnable publishCaptured = () -> {
+            try {
+                eventPublisher.publish("payment.captured", toPublish);
+            } catch (Exception e) {
+                log.error("Failed to publish payment.captured event for bookingRef {} providerPaymentId {}: {}",
+                        toPublish.bookingRef(), toPublish.providerPaymentId(), e.getMessage(), e);
+            }
+        };
+        // Guard against running outside an active transaction (e.g. plain unit
+        // tests instantiating this service directly, bypassing the
+        // @Transactional proxy): registerSynchronization() throws
+        // IllegalStateException when no synchronization is active, so fall
+        // back to publishing immediately in that case.
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    publishCaptured.run();
+                }
+            });
+        } else {
+            log.warn("applyCaptured running without an active transaction synchronization - "
+                    + "payment.captured will be published immediately instead of deferred to commit; "
+                    + "this should only happen in tests, not production");
+            publishCaptured.run();
+        }
+    }
+
+    private void applyFailed(WebhookEvent event) {
+        Payment payment = findPaymentOrLogUnknown(event.getProviderOrderId());
+        if (payment == null) {
+            return;
+        }
         if (!"CREATED".equals(payment.getStatus())) {
             log.info("Ignoring webhook for order {} - payment already in terminal status {}",
                     event.getProviderOrderId(), payment.getStatus());
             return;
         }
+        payment.setStatus("FAILED");
+        paymentRepository.save(payment);
+    }
 
-        if (event.getType() == WebhookEventType.CAPTURED) {
-            if (payment.getAmountPaise() != event.getAmountPaise()) {
-                log.error("Amount mismatch for order {}: expected {} got {} - not capturing",
-                        event.getProviderOrderId(), payment.getAmountPaise(), event.getAmountPaise());
-                return;
-            }
-            payment.setStatus("CAPTURED");
-            payment.setProviderPaymentId(event.getProviderPaymentId());
-            paymentRepository.save(payment).block();
-
-            if (dedupeKey != null) {
-                processedWebhookEventRepository.save(
-                        ProcessedWebhookEvent.builder().id(dedupeKey).processedAt(new Date()).build()).block();
-            }
-
-            try {
-                eventPublisher.publish("payment.captured",
-                        new PaymentCapturedEvent(payment.getBookingRef(), payment.getProviderPaymentId(), payment.getAmountPaise()));
-            } catch (Exception e) {
-                log.error("Failed to publish payment.captured event for bookingRef {} providerPaymentId {}: {}",
-                        payment.getBookingRef(), payment.getProviderPaymentId(), e.getMessage(), e);
-            }
-        } else {
-            payment.setStatus("FAILED");
-            paymentRepository.save(payment).block();
+    private Payment findPaymentOrLogUnknown(String providerOrderId) {
+        Payment payment = paymentRepository.findByProviderRef(providerOrderId).orElse(null);
+        if (payment == null) {
+            log.warn("Webhook for unknown provider order {}", providerOrderId);
         }
+        return payment;
     }
 
     public Payment getStatus(String bookingRef, String requestingUserId, boolean isAdmin) {
@@ -145,6 +189,7 @@ public class PaymentService {
         return payment;
     }
 
+    @Transactional
     public Payment refund(String bookingRef) {
         Payment payment = getStatus(bookingRef, bookingRef, true);
 
@@ -161,14 +206,42 @@ public class PaymentService {
         }
 
         payment.setStatus("REFUNDED");
-        Payment saved = paymentRepository.save(payment).block();
+        Payment saved = paymentRepository.save(payment);
 
-        try {
-            eventPublisher.publish("payment.refunded",
-                    new PaymentRefundedEvent(bookingRef, result.getProviderRefundId(), payment.getAmountPaise()));
-        } catch (Exception e) {
-            log.error("Failed to publish payment.refunded event for bookingRef {} providerRefundId {}: {}",
-                    bookingRef, result.getProviderRefundId(), e.getMessage(), e);
+        refundRepository.save(Refund.builder()
+                .paymentId(saved.getId())
+                .providerRefundId(result.getProviderRefundId())
+                .amountPaise(saved.getAmountPaise())
+                .status("SUCCESS")
+                .createdAt(new Date())
+                .build());
+
+        Runnable publishRefunded = () -> {
+            try {
+                eventPublisher.publish("payment.refunded",
+                        new PaymentRefundedEvent(bookingRef, result.getProviderRefundId(), saved.getAmountPaise()));
+            } catch (Exception e) {
+                log.error("Failed to publish payment.refunded event for bookingRef {} providerRefundId {}: {}",
+                        bookingRef, result.getProviderRefundId(), e.getMessage(), e);
+            }
+        };
+        // Guard against running outside an active transaction (e.g. plain unit
+        // tests instantiating this service directly, bypassing the
+        // @Transactional proxy): registerSynchronization() throws
+        // IllegalStateException when no synchronization is active, so fall
+        // back to publishing immediately in that case.
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    publishRefunded.run();
+                }
+            });
+        } else {
+            log.warn("refund running without an active transaction synchronization - "
+                    + "payment.refunded will be published immediately instead of deferred to commit; "
+                    + "this should only happen in tests, not production");
+            publishRefunded.run();
         }
 
         return saved;
@@ -184,8 +257,8 @@ public class PaymentService {
      * if there is no payment at all for this bookingRef.
      */
     private Payment findRelevantPayment(String bookingRef) {
-        List<Payment> payments = paymentRepository.findByBookingRef(bookingRef).collectList().block();
-        if (payments == null || payments.isEmpty()) {
+        List<Payment> payments = paymentRepository.findByBookingRef(bookingRef);
+        if (payments.isEmpty()) {
             return null;
         }
         return payments.stream()

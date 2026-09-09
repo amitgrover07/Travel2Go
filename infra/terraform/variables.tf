@@ -31,3 +31,9 @@ variable "deployer_member" {
   EOT
   default     = ""
 }
+
+variable "payment_db_password" {
+  type        = string
+  description = "Password for the t2g_payments Postgres app user. Provide via TF_VAR_payment_db_password or a tfvars file that is NOT committed."
+  sensitive   = true
+}
