@@ -285,7 +285,7 @@ jobs:
             # Same internal-only posture as trip/booking, plus the Cloud SQL
             # socket-factory connector (P1.3) so this service can reach its
             # Postgres money ledger without a VPC connector.
-            echo "CR_FLAGS=--port=8080 --no-allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost --add-cloudsql-instances=${FINAL_DB_INSTANCE_CONNECTION_NAME} ${RUN_SA} ${STARTUP_PROBE}" >> $GITHUB_ENV
+            echo "CR_FLAGS=--port=8080 --no-allow-unauthenticated --min-instances=0 --max-instances=3 --concurrency=80 --timeout=300 --cpu-boost --no-cpu-throttling --add-cloudsql-instances=${FINAL_DB_INSTANCE_CONNECTION_NAME} ${RUN_SA} ${STARTUP_PROBE}" >> $GITHUB_ENV
           elif [ "$SVC" = "trip-service" ] || [ "$SVC" = "booking-service" ]; then
             # Internal-only (--no-allow-unauthenticated). Combined with the
             # per-caller run.invoker bindings in infra/terraform/run-invoker.tf,

@@ -1,6 +1,5 @@
 package com.travel2go.backend.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.travel2go.backend.repository.BookingRepository;
 import com.travel2go.backend.repository.LeadRepository;
 import org.junit.jupiter.api.Test;
@@ -16,10 +15,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.awaitility.Awaitility.await;
 
@@ -53,9 +50,6 @@ class LegConfirmedDlqIntegrationTest {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockBean
     private BookingRepository bookingRepository;
 
@@ -65,7 +59,7 @@ class LegConfirmedDlqIntegrationTest {
     private LeadRepository leadRepository;
 
     @Test
-    void unrecoverableMessage_isDeadLetteredAfterExhaustedRetries() throws Exception {
+    void unrecoverableMessage_isDeadLetteredAfterExhaustedRetries() {
         when(bookingRepository.findByLegId("leg-dlq-1")).thenReturn(Flux.error(new RuntimeException("always fails")));
 
         LegConfirmedEvent event = new LegConfirmedEvent("leg-dlq-1", "pay_dlq_1", 150000L);

@@ -18,7 +18,6 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.awaitility.Awaitility.await;
 
@@ -70,7 +69,7 @@ class PaymentCapturedDlqIntegrationTest {
         rabbitTemplate.convertAndSend("trip.exchange", "payment.captured", event);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
-            Object dlqMessage = rabbitTemplate.receiveAndConvert("trip.payment-captured.dlq", 1000);
+            Object dlqMessage = rabbitTemplate.receiveAndConvert("trip.payment-captured.v2.dlq", 1000);
             assertThat(dlqMessage).isNotNull();
             assertThat(dlqMessage).isInstanceOf(PaymentCapturedEvent.class);
             assertThat(((PaymentCapturedEvent) dlqMessage).bookingRef()).isEqualTo("leg-dlq-1");

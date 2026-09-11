@@ -40,6 +40,8 @@ public class RabbitMQConfig {
         // just this service's own consumer package as a second layer, and idClassMapping stays
         // only as an explicit, auditable record of the one cross-service type this consumer
         // deliberately accepts (payment-service's PaymentCapturedEvent, mapped to our local copy).
+        // Also used for outbound serialization now (P1.4): TripEventPublisher reuses this same
+        // converter bean to serialize outgoing LegConfirmedEvents, not just incoming ones.
         typeMapper.setTrustedPackages("com.travel2go.backend.consumer");
         typeMapper.setTypePrecedence(
                 org.springframework.amqp.support.converter.Jackson2JavaTypeMapper.TypePrecedence.INFERRED);
@@ -62,7 +64,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue tripPaymentCapturedDlq() {
-        return new Queue("trip.payment-captured.dlq", true);
+        return new Queue("trip.payment-captured.v2.dlq", true);
     }
 
     @Bean
@@ -70,9 +72,12 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(tripPaymentCapturedDlq()).to(tripDlx());
     }
 
+    // Renamed from trip.payment-captured (P1.4): adding the x-dead-letter-exchange argument to
+    // the pre-existing queue would fail RabbitMQ's redeclare-with-different-arguments check
+    // against the real broker; a fresh name avoids that collision.
     @Bean
     public Queue tripPaymentCapturedQueue() {
-        return QueueBuilder.durable("trip.payment-captured")
+        return QueueBuilder.durable("trip.payment-captured.v2")
                 .withArgument("x-dead-letter-exchange", "trip.dlx")
                 .build();
     }

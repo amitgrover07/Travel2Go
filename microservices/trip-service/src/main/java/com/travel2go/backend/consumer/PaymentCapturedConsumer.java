@@ -37,7 +37,7 @@ public class PaymentCapturedConsumer {
     private final LegRepository legRepository;
     private final TripEventPublisher tripEventPublisher;
 
-    @RabbitListener(queues = "trip.payment-captured")
+    @RabbitListener(queues = "trip.payment-captured.v2")
     public void onPaymentCaptured(PaymentCapturedEvent event) {
         Leg leg = legRepository.findById(event.bookingRef()).block();
 
@@ -67,8 +67,12 @@ public class PaymentCapturedConsumer {
             tripEventPublisher.publish("leg.confirmed",
                     new LegConfirmedEvent(event.bookingRef(), event.providerPaymentId(), event.amountPaise()));
         } catch (Exception e) {
-            log.error("Failed to publish leg.confirmed for legId {} (providerPaymentId {}): {}",
-                    event.bookingRef(), event.providerPaymentId(), e.getMessage(), e);
+            log.error("Failed to publish leg.confirmed for legId {} (providerPaymentId {}, amountPaise {}): {}. "
+                    + "The Leg IS correctly CONFIRMED - this failure only affects downstream Booking confirmation. "
+                    + "RECOVERY: manually republish a leg.confirmed message to trip.exchange with these exact "
+                    + "legId/providerPaymentId/amountPaise values (do NOT issue a refund - the payment and Leg "
+                    + "confirmation are both valid; refunding would incorrectly reverse a legitimate charge).",
+                    event.bookingRef(), event.providerPaymentId(), event.amountPaise(), e.getMessage(), e);
         }
     }
 }
