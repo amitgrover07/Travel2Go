@@ -2,7 +2,9 @@ package com.travel2go.backend.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -54,8 +56,25 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public FanoutExchange tripDlx() {
+        return new FanoutExchange("trip.dlx");
+    }
+
+    @Bean
+    public Queue tripPaymentCapturedDlq() {
+        return new Queue("trip.payment-captured.dlq", true);
+    }
+
+    @Bean
+    public Binding tripPaymentCapturedDlqBinding() {
+        return BindingBuilder.bind(tripPaymentCapturedDlq()).to(tripDlx());
+    }
+
+    @Bean
     public Queue tripPaymentCapturedQueue() {
-        return new Queue("trip.payment-captured", true);
+        return QueueBuilder.durable("trip.payment-captured")
+                .withArgument("x-dead-letter-exchange", "trip.dlx")
+                .build();
     }
 
     @Bean
