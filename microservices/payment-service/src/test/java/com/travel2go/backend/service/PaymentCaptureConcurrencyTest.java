@@ -4,6 +4,7 @@ import com.travel2go.backend.model.Payment;
 import com.travel2go.backend.provider.PaymentProvider;
 import com.travel2go.backend.provider.WebhookEvent;
 import com.travel2go.backend.provider.WebhookEventType;
+import com.travel2go.backend.repository.OutboxRepository;
 import com.travel2go.backend.repository.PaymentRepository;
 import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
 import org.junit.jupiter.api.Test;
@@ -30,9 +31,6 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Testcontainers
@@ -61,11 +59,11 @@ class PaymentCaptureConcurrencyTest {
     @Autowired
     private ProcessedWebhookEventRepository processedWebhookEventRepository;
 
-    @MockBean
-    private PaymentProvider paymentProvider;
+    @Autowired
+    private OutboxRepository outboxRepository;
 
     @MockBean
-    private PaymentEventPublisher eventPublisher;
+    private PaymentProvider paymentProvider;
 
     private Payment persistCreatedPayment(String bookingRef, String providerOrderId) {
         Payment payment = Payment.builder()
@@ -83,7 +81,7 @@ class PaymentCaptureConcurrencyTest {
     }
 
     @Test
-    void concurrentDeliveryOfSameEventCapturesExactlyOnce() throws InterruptedException {
+    void concurrentDeliveryOfSameEventWritesExactlyOneOutboxEntry() throws InterruptedException {
         persistCreatedPayment("leg-race-1", "order_race_1");
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_race_1", "pay_race_1", 150000L));
@@ -126,7 +124,8 @@ class PaymentCaptureConcurrencyTest {
         Payment result = paymentRepository.findByProviderRef("order_race_1").orElseThrow();
         assertThat(result.getStatus()).isEqualTo("CAPTURED");
         assertThat(processedWebhookEventRepository.findById("pay_race_1")).isPresent();
-        verify(eventPublisher, times(1)).publish(eq("payment.captured"), any());
+        assertThat(outboxRepository.findAll().stream()
+                .filter(e -> "leg-race-1".equals(e.getAggregateId())).count()).isEqualTo(1);
     }
 
     @Test
@@ -147,11 +146,12 @@ class PaymentCaptureConcurrencyTest {
         Payment result = paymentRepository.findByProviderRef("order_race_3").orElseThrow();
         assertThat(result.getStatus()).isEqualTo("CAPTURED");
         assertThat(secondProcessedAt).isEqualTo(firstProcessedAt);
-        verify(eventPublisher, times(1)).publish(eq("payment.captured"), any());
+        assertThat(outboxRepository.findAll().stream()
+                .filter(e -> "leg-race-3".equals(e.getAggregateId())).count()).isEqualTo(1);
     }
 
     @Test
-    void secondEventIdTargetingAlreadyCapturedPaymentIsNoOp() throws InterruptedException {
+    void secondEventIdTargetingAlreadyCapturedPaymentIsNoOp() {
         Payment payment = persistCreatedPayment("leg-race-2", "order_race_2");
         int firstCapture = paymentRepository.markCaptured(payment.getId(), "pay_first");
         assertThat(firstCapture).isEqualTo(1);
@@ -161,7 +161,8 @@ class PaymentCaptureConcurrencyTest {
 
         paymentService.applyWebhook("{}".getBytes(), Map.of());
 
-        verify(eventPublisher, times(0)).publish(any(), any());
+        assertThat(outboxRepository.findAll().stream()
+                .filter(e -> "leg-race-2".equals(e.getAggregateId())).count()).isEqualTo(0);
         Payment result = paymentRepository.findByProviderRef("order_race_2").orElseThrow();
         assertThat(result.getProviderPaymentId()).isEqualTo("pay_first");
     }

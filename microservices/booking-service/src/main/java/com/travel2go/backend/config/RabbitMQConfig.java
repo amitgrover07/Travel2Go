@@ -3,7 +3,9 @@ package com.travel2go.backend.config;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -50,13 +52,13 @@ public class RabbitMQConfig {
         // type authoritative regardless of what the header says; trustedPackages is scoped to
         // just this service's own consumer package as a second layer, and idClassMapping stays
         // only as an explicit, auditable record of the one cross-service type this consumer
-        // deliberately accepts (payment-service's PaymentCapturedEvent, mapped to our local copy).
+        // deliberately accepts (trip-service's LegConfirmedEvent, mapped to our local copy).
         typeMapper.setTrustedPackages("com.travel2go.backend.consumer");
         typeMapper.setTypePrecedence(
                 org.springframework.amqp.support.converter.Jackson2JavaTypeMapper.TypePrecedence.INFERRED);
         typeMapper.setIdClassMapping(java.util.Map.of(
-                "com.travel2go.backend.service.PaymentCapturedEvent",
-                com.travel2go.backend.consumer.PaymentCapturedEvent.class));
+                "com.travel2go.backend.service.LegConfirmedEvent",
+                com.travel2go.backend.consumer.LegConfirmedEvent.class));
         converter.setJavaTypeMapper(typeMapper);
         return converter;
     }
@@ -76,7 +78,7 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(bookingQueue()).to(bookingExchange()).with(routingKey);
     }
 
-    // --- P1.2: consumer side of payment-service's trip.exchange fan-out ---
+    // --- P1.4: consumer side of trip-service's leg.confirmed choreography event ---
 
     @Bean
     public TopicExchange tripExchange() {
@@ -84,13 +86,30 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue bookingPaymentCapturedQueue() {
-        return new Queue("booking.payment-captured", true);
+    public FanoutExchange bookingDlx() {
+        return new FanoutExchange("booking.dlx");
     }
 
     @Bean
-    public Binding bookingPaymentCapturedBinding() {
-        return BindingBuilder.bind(bookingPaymentCapturedQueue()).to(tripExchange()).with("payment.captured");
+    public Queue bookingLegConfirmedDlq() {
+        return new Queue("booking.leg-confirmed.dlq", true);
+    }
+
+    @Bean
+    public Binding bookingLegConfirmedDlqBinding() {
+        return BindingBuilder.bind(bookingLegConfirmedDlq()).to(bookingDlx());
+    }
+
+    @Bean
+    public Queue bookingLegConfirmedQueue() {
+        return QueueBuilder.durable("booking.leg-confirmed")
+                .withArgument("x-dead-letter-exchange", "booking.dlx")
+                .build();
+    }
+
+    @Bean
+    public Binding bookingLegConfirmedBinding() {
+        return BindingBuilder.bind(bookingLegConfirmedQueue()).to(tripExchange()).with("leg.confirmed");
     }
 }
 

@@ -1,12 +1,16 @@
 package com.travel2go.backend.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.travel2go.backend.model.OutboxEntry;
 import com.travel2go.backend.model.Payment;
 import com.travel2go.backend.provider.CreatedOrder;
 import com.travel2go.backend.provider.PaymentProvider;
 import com.travel2go.backend.provider.RefundResult;
 import com.travel2go.backend.provider.WebhookEvent;
 import com.travel2go.backend.provider.WebhookEventType;
+import com.travel2go.backend.repository.OutboxRepository;
 import com.travel2go.backend.repository.PaymentRepository;
+import com.travel2go.backend.repository.RefundRepository;
 import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,21 +34,24 @@ class PaymentServiceTest {
 
     @Mock private PaymentRepository paymentRepository;
     @Mock private ProcessedWebhookEventRepository processedWebhookEventRepository;
-    @Mock private com.travel2go.backend.repository.RefundRepository refundRepository;
+    @Mock private RefundRepository refundRepository;
+    @Mock private OutboxRepository outboxRepository;
     @Mock private PaymentProvider paymentProvider;
     @Mock private QuoteTokenService quoteTokenService;
-    @Mock private PaymentEventPublisher eventPublisher;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private PaymentService paymentService;
 
     @BeforeEach
     void setUp() {
         paymentService = new PaymentService(
-                paymentRepository, processedWebhookEventRepository, refundRepository,
-                paymentProvider, quoteTokenService, eventPublisher);
+                paymentRepository, processedWebhookEventRepository, refundRepository, outboxRepository,
+                paymentProvider, quoteTokenService, objectMapper);
         lenient().when(paymentRepository.save(any(Payment.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         lenient().when(refundRepository.save(any(com.travel2go.backend.model.Refund.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(outboxRepository.save(any(OutboxEntry.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         lenient().when(processedWebhookEventRepository.findById(any(String.class))).thenReturn(Optional.empty());
         lenient().when(paymentRepository.findByBookingRef(any())).thenReturn(List.of());
@@ -63,6 +69,18 @@ class PaymentServiceTest {
                 .quoteTokenValidated(true)
                 .createdAt(new Date())
                 .build();
+    }
+
+    private boolean outboxEntryMatches(OutboxEntry entry, String expectedType, Object expectedEvent) {
+        if (!expectedType.equals(entry.getType())) {
+            return false;
+        }
+        try {
+            Object actual = objectMapper.readValue(entry.getPayload(), expectedEvent.getClass());
+            return expectedEvent.equals(actual);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Test
@@ -166,7 +184,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    void applyWebhook_capturedTransitionsPaymentAndPublishesEvent() {
+    void applyWebhook_capturedTransitionsPaymentAndWritesOutboxEntry() {
         Payment payment = createdPayment();
         payment.setId(java.util.UUID.randomUUID());
         when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(payment));
@@ -178,12 +196,14 @@ class PaymentServiceTest {
         paymentService.applyWebhook("{}".getBytes(), Map.of());
 
         verify(paymentRepository).markCaptured(payment.getId(), "pay_1");
-        verify(eventPublisher).publish(eq("payment.captured"),
-                eq(new PaymentCapturedEvent("leg-1", "pay_1", 150000L)));
+        PaymentCapturedEvent expected = new PaymentCapturedEvent("leg-1", "pay_1", 150000L);
+        verify(outboxRepository).save(argThat(entry ->
+                outboxEntryMatches(entry, "payment.captured", expected)
+                        && "leg-1".equals(entry.getAggregateId())));
     }
 
     @Test
-    void applyWebhook_duplicateCapturedIsIdempotent_publishesEventOnlyOnce() {
+    void applyWebhook_duplicateCapturedIsIdempotent_writesOutboxEntryOnlyOnce() {
         Payment payment = createdPayment();
         payment.setId(java.util.UUID.randomUUID());
         when(paymentRepository.findByProviderRef("order_1")).thenReturn(Optional.of(payment));
@@ -195,7 +215,7 @@ class PaymentServiceTest {
         paymentService.applyWebhook("{}".getBytes(), Map.of());
         paymentService.applyWebhook("{}".getBytes(), Map.of());
 
-        verify(eventPublisher, times(1)).publish(eq("payment.captured"), any());
+        verify(outboxRepository, times(1)).save(any(OutboxEntry.class));
     }
 
     @Test
@@ -208,14 +228,11 @@ class PaymentServiceTest {
         paymentService.applyWebhook("{}".getBytes(), Map.of());
 
         verify(paymentRepository, never()).markCaptured(any(), any());
-        verify(eventPublisher, never()).publish(any(), any());
+        verify(outboxRepository, never()).save(any());
     }
 
     @Test
     void applyWebhook_duplicateEventIdIsNoOpEvenIfPaymentStillCreated() {
-        // Simulates two different webhook deliveries racing: the second one's
-        // dedupe-insert hits the unique constraint before it ever reaches the
-        // conditional UPDATE.
         when(paymentProvider.verifyAndParse(any(), any()))
                 .thenReturn(new WebhookEvent(WebhookEventType.CAPTURED, "order_1", "pay_1", 150000L));
         when(processedWebhookEventRepository.recordIfNew("pay_1")).thenReturn(0);
@@ -224,7 +241,7 @@ class PaymentServiceTest {
 
         verify(paymentRepository, never()).findByProviderRef(any());
         verify(paymentRepository, never()).markCaptured(any(), any());
-        verify(eventPublisher, never()).publish(any(), any());
+        verify(outboxRepository, never()).save(any());
     }
 
     @Test
@@ -239,7 +256,7 @@ class PaymentServiceTest {
 
         paymentService.applyWebhook("{}".getBytes(), Map.of());
 
-        verify(eventPublisher, never()).publish(any(), any());
+        verify(outboxRepository, never()).save(any());
     }
 
     @Test
@@ -289,8 +306,8 @@ class PaymentServiceTest {
         Payment result = paymentService.refund("leg-1");
 
         assertThat(result.getStatus()).isEqualTo("REFUNDED");
-        verify(eventPublisher).publish(eq("payment.refunded"),
-                eq(new PaymentRefundedEvent("leg-1", "rfnd_1", 150000L)));
+        PaymentRefundedEvent expected = new PaymentRefundedEvent("leg-1", "rfnd_1", 150000L);
+        verify(outboxRepository).save(argThat(entry -> outboxEntryMatches(entry, "payment.refunded", expected)));
     }
 
     @Test
@@ -303,7 +320,7 @@ class PaymentServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("REFUNDED");
         verify(paymentProvider, never()).refund(any(), anyLong());
-        verify(eventPublisher, never()).publish(eq("payment.refunded"), any());
+        verify(outboxRepository, never()).save(any());
     }
 
     @Test
@@ -317,7 +334,6 @@ class PaymentServiceTest {
         newerRejected.setStatus("REJECTED");
         newerRejected.setCreatedAt(new Date(2000L));
 
-        // Newer payment listed first, to prove "newest" isn't blindly picked.
         when(paymentRepository.findByBookingRef("leg-1")).thenReturn(List.of(newerRejected, captured));
 
         Payment result = paymentService.getStatus("leg-1", "leg-1", true);

@@ -1,5 +1,8 @@
 package com.travel2go.backend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.travel2go.backend.model.OutboxEntry;
 import com.travel2go.backend.model.Payment;
 import com.travel2go.backend.model.Refund;
 import com.travel2go.backend.provider.CreatedOrder;
@@ -7,6 +10,7 @@ import com.travel2go.backend.provider.PaymentProvider;
 import com.travel2go.backend.provider.RefundResult;
 import com.travel2go.backend.provider.WebhookEvent;
 import com.travel2go.backend.provider.WebhookEventType;
+import com.travel2go.backend.repository.OutboxRepository;
 import com.travel2go.backend.repository.PaymentRepository;
 import com.travel2go.backend.repository.RefundRepository;
 import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
@@ -14,8 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -30,9 +32,10 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final ProcessedWebhookEventRepository processedWebhookEventRepository;
     private final RefundRepository refundRepository;
+    private final OutboxRepository outboxRepository;
     private final PaymentProvider paymentProvider;
     private final QuoteTokenService quoteTokenService;
-    private final PaymentEventPublisher eventPublisher;
+    private final ObjectMapper objectMapper;
 
     public Payment createOrder(String bookingRef, long amountPaise, String method, String quoteToken, String ownerUserId) {
         Payment existing = findRelevantPayment(bookingRef);
@@ -128,32 +131,7 @@ public class PaymentService {
 
         PaymentCapturedEvent toPublish = new PaymentCapturedEvent(
                 payment.getBookingRef(), event.getProviderPaymentId(), payment.getAmountPaise());
-        Runnable publishCaptured = () -> {
-            try {
-                eventPublisher.publish("payment.captured", toPublish);
-            } catch (Exception e) {
-                log.error("Failed to publish payment.captured event for bookingRef {} providerPaymentId {}: {}",
-                        toPublish.bookingRef(), toPublish.providerPaymentId(), e.getMessage(), e);
-            }
-        };
-        // Guard against running outside an active transaction (e.g. plain unit
-        // tests instantiating this service directly, bypassing the
-        // @Transactional proxy): registerSynchronization() throws
-        // IllegalStateException when no synchronization is active, so fall
-        // back to publishing immediately in that case.
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    publishCaptured.run();
-                }
-            });
-        } else {
-            log.warn("applyCaptured running without an active transaction synchronization - "
-                    + "payment.captured will be published immediately instead of deferred to commit; "
-                    + "this should only happen in tests, not production");
-            publishCaptured.run();
-        }
+        writeOutboxEntry(payment.getBookingRef(), "payment.captured", toPublish);
     }
 
     private void applyFailed(WebhookEvent event) {
@@ -216,35 +194,28 @@ public class PaymentService {
                 .createdAt(new Date())
                 .build());
 
-        Runnable publishRefunded = () -> {
-            try {
-                eventPublisher.publish("payment.refunded",
-                        new PaymentRefundedEvent(bookingRef, result.getProviderRefundId(), saved.getAmountPaise()));
-            } catch (Exception e) {
-                log.error("Failed to publish payment.refunded event for bookingRef {} providerRefundId {}: {}",
-                        bookingRef, result.getProviderRefundId(), e.getMessage(), e);
-            }
-        };
-        // Guard against running outside an active transaction (e.g. plain unit
-        // tests instantiating this service directly, bypassing the
-        // @Transactional proxy): registerSynchronization() throws
-        // IllegalStateException when no synchronization is active, so fall
-        // back to publishing immediately in that case.
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    publishRefunded.run();
-                }
-            });
-        } else {
-            log.warn("refund running without an active transaction synchronization - "
-                    + "payment.refunded will be published immediately instead of deferred to commit; "
-                    + "this should only happen in tests, not production");
-            publishRefunded.run();
-        }
+        PaymentRefundedEvent toPublish = new PaymentRefundedEvent(bookingRef, result.getProviderRefundId(), saved.getAmountPaise());
+        writeOutboxEntry(bookingRef, "payment.refunded", toPublish);
 
         return saved;
+    }
+
+    private void writeOutboxEntry(String aggregateId, String type, Object payload) {
+        outboxRepository.save(OutboxEntry.builder()
+                .aggregateId(aggregateId)
+                .type(type)
+                .payload(toJson(payload))
+                .createdAt(new Date())
+                .attempts(0)
+                .build());
+    }
+
+    private String toJson(Object payload) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize outbox payload", e);
+        }
     }
 
     /**

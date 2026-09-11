@@ -1,5 +1,6 @@
 package com.travel2go.backend;
 
+import com.travel2go.backend.repository.OutboxRepository;
 import com.travel2go.backend.repository.PaymentRepository;
 import com.travel2go.backend.repository.RefundRepository;
 import com.travel2go.backend.repository.SettlementRepository;
@@ -18,7 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
     "payment.provider=sandbox",
     "razorpay.webhook-secret=test-context-load-webhook-secret-0123456789"
 })
-@MockBean({PaymentRepository.class, ProcessedWebhookEventRepository.class, RefundRepository.class, SettlementRepository.class})
+@MockBean({PaymentRepository.class, ProcessedWebhookEventRepository.class, RefundRepository.class, SettlementRepository.class, OutboxRepository.class})
 class PaymentServiceApplicationTests {
 
 	@Test
