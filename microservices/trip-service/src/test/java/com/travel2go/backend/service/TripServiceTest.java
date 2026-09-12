@@ -176,7 +176,7 @@ class TripServiceTest {
         when(legRepository.save(any(com.travel2go.backend.model.Leg.class)))
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
 
-        com.travel2go.backend.model.Leg result = tripService.bookLeg("trip-1", "leg-1", "user-1");
+        com.travel2go.backend.model.Leg result = tripService.bookLeg("trip-1", "leg-1", "user-1", null, null);
 
         assertThat(result.getStatus()).isEqualTo("PENDING");
         assertThat(result.getSupplierRef()).isEqualTo("leg-1");
@@ -190,6 +190,31 @@ class TripServiceTest {
     }
 
     @Test
+    void bookLeg_threadsEmailAndPhoneIntoLegBookingRequest() {
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
+        com.travel2go.backend.model.Leg leg = com.travel2go.backend.model.Leg.builder()
+                .id("leg-1").tripId("trip-1").status("SELECTED")
+                .pricePaise(150000L).quoteToken("quote-token-abc").build();
+
+        when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
+        when(legRepository.findById("leg-1")).thenReturn(Mono.just(leg));
+        when(quoteTokenService.isValid("quote-token-abc", "leg-1", 150000L)).thenReturn(true);
+        when(bookingClient.createLegBooking(any())).thenReturn(
+                com.travel2go.backend.dto.LegBookingResponse.builder()
+                        .legId("leg-1").status("PENDING").build());
+        when(legRepository.save(any(com.travel2go.backend.model.Leg.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        tripService.bookLeg("trip-1", "leg-1", "user-1", "traveller@example.com", "+911234567890");
+
+        org.mockito.ArgumentCaptor<com.travel2go.backend.dto.LegBookingRequest> captor =
+                org.mockito.ArgumentCaptor.forClass(com.travel2go.backend.dto.LegBookingRequest.class);
+        verify(bookingClient).createLegBooking(captor.capture());
+        assertThat(captor.getValue().getEmail()).isEqualTo("traveller@example.com");
+        assertThat(captor.getValue().getPhone()).isEqualTo("+911234567890");
+    }
+
+    @Test
     void bookLeg_rejectsLegFromDifferentTrip() {
         Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
         com.travel2go.backend.model.Leg leg = com.travel2go.backend.model.Leg.builder()
@@ -199,7 +224,7 @@ class TripServiceTest {
         when(legRepository.findById("leg-1")).thenReturn(Mono.just(leg));
 
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
-                () -> tripService.bookLeg("trip-1", "leg-1", "user-1"));
+                () -> tripService.bookLeg("trip-1", "leg-1", "user-1", null, null));
 
         verify(bookingClient, never()).createLegBooking(any());
     }
@@ -212,7 +237,7 @@ class TripServiceTest {
 
         org.junit.jupiter.api.Assertions.assertThrows(
                 org.springframework.security.access.AccessDeniedException.class,
-                () -> tripService.bookLeg("trip-1", "leg-1", "user-2"));
+                () -> tripService.bookLeg("trip-1", "leg-1", "user-2", null, null));
 
         verify(bookingClient, never()).createLegBooking(any());
         verify(quoteTokenService, never()).isValid(any(), any(), org.mockito.ArgumentMatchers.anyLong());
@@ -230,7 +255,7 @@ class TripServiceTest {
         when(quoteTokenService.isValid("tampered-token", "leg-1", 150000L)).thenReturn(false);
 
         org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
-                () -> tripService.bookLeg("trip-1", "leg-1", "user-1"));
+                () -> tripService.bookLeg("trip-1", "leg-1", "user-1", null, null));
 
         verify(bookingClient, never()).createLegBooking(any());
     }

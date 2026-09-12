@@ -90,7 +90,7 @@ public class TripService {
         return savedLeg;
     }
 
-    public Leg bookLeg(String tripId, String legId, String requestingUserId) {
+    public Leg bookLeg(String tripId, String legId, String requestingUserId, String email, String phone) {
         Trip trip = tripRepository.findById(tripId).block();
         if (trip == null) {
             throw new IllegalArgumentException("Trip not found: " + tripId);
@@ -114,6 +114,8 @@ public class TripService {
                         .legId(legId)
                         .quoteToken(quoteToken)
                         .amountPaise(pricePaise)
+                        .email(email)
+                        .phone(phone)
                         .build());
 
         leg.setStatus("PENDING");

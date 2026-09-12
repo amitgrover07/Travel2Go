@@ -1,6 +1,7 @@
 package com.travel2go.backend.controller;
 
 import com.travel2go.backend.dto.AddLegRequest;
+import com.travel2go.backend.dto.BookLegRequest;
 import com.travel2go.backend.dto.CreateTripRequest;
 import com.travel2go.backend.dto.TripDetailResponse;
 import com.travel2go.backend.model.Leg;
@@ -38,7 +39,10 @@ public class TripController {
     }
 
     @PostMapping("/{id}/legs/{legId}/book")
-    public ResponseEntity<Leg> bookLeg(@PathVariable String id, @PathVariable String legId) {
-        return ResponseEntity.ok(tripService.bookLeg(id, legId, currentUserId()));
+    public ResponseEntity<Leg> bookLeg(@PathVariable String id, @PathVariable String legId,
+            @RequestBody(required = false) BookLegRequest request) {
+        String email = request != null ? request.getEmail() : null;
+        String phone = request != null ? request.getPhone() : null;
+        return ResponseEntity.ok(tripService.bookLeg(id, legId, currentUserId(), email, phone));
     }
 }
