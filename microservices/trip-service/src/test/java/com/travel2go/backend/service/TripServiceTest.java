@@ -112,6 +112,7 @@ class TripServiceTest {
             l.setId("leg-1");
             return Mono.just(l);
         });
+        when(quoteTokenService.issue("leg-1", 150000L)).thenReturn("server-signed-token");
         when(tripRepository.save(any(Trip.class))).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
 
         Leg result = tripService.addLeg("trip-1", request, "user-1");
@@ -119,6 +120,30 @@ class TripServiceTest {
         assertThat(result.getId()).isEqualTo("leg-1");
         assertThat(result.getStatus()).isEqualTo("SELECTED");
         assertThat(trip.getLegIds()).containsExactly("leg-1");
+    }
+
+    @Test
+    void addLeg_signsQuoteTokenServerSide_ignoringClientSuppliedToken() {
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").legIds(new java.util.ArrayList<>()).build();
+        AddLegRequest request = AddLegRequest.builder()
+                .type("RAIL")
+                .pricePaise(150000L)
+                .quoteToken("client-supplied-should-be-ignored")
+                .build();
+
+        when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
+        when(legRepository.save(any(Leg.class))).thenAnswer(inv -> {
+            Leg l = inv.getArgument(0);
+            l.setId("leg-1");
+            return Mono.just(l);
+        });
+        when(quoteTokenService.issue("leg-1", 150000L)).thenReturn("server-signed-token");
+        when(tripRepository.save(any(Trip.class))).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        Leg result = tripService.addLeg("trip-1", request, "user-1");
+
+        assertThat(result.getQuoteToken()).isEqualTo("server-signed-token");
+        verify(quoteTokenService).issue("leg-1", 150000L);
     }
 
     @Test

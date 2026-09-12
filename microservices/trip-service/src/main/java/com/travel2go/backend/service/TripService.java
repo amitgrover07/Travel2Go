@@ -72,13 +72,16 @@ public class TripService {
                 .type(request.getType())
                 .status("SELECTED")
                 .pricePaise(request.getPricePaise())
-                .quoteToken(request.getQuoteToken())
                 .startAt(request.getStartAt())
                 .endAt(request.getEndAt())
                 .metadata(request.getMetadata())
                 .build();
 
         Leg savedLeg = legRepository.save(leg).block();
+
+        String signedToken = quoteTokenService.issue(savedLeg.getId(), savedLeg.getPricePaise());
+        savedLeg.setQuoteToken(signedToken);
+        savedLeg = legRepository.save(savedLeg).block();
 
         trip.getLegIds().add(savedLeg.getId());
         trip.setUpdatedAt(new Date());
