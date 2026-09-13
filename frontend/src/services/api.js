@@ -65,3 +65,17 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export const createTrip = (payload) => api.post('/trips', payload).then((res) => res.data);
+
+export const addLeg = (tripId, payload) =>
+  api.post(`/trips/${tripId}/legs`, payload).then((res) => res.data);
+
+export const bookLeg = (tripId, legId, payload) =>
+  api.post(`/trips/${tripId}/legs/${legId}/book`, payload).then((res) => res.data);
+
+export const createPaymentOrder = (payload) =>
+  api.post('/payments/order', payload).then((res) => res.data);
+
+export const getPaymentStatus = (legId) =>
+  api.get(`/payments/${legId}`).then((res) => res.data);
