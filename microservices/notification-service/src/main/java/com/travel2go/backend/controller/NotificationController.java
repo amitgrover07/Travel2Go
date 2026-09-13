@@ -58,6 +58,25 @@ public class NotificationController {
         }
     }
 
+    @PostMapping("/send-leg-booking-confirmation")
+    public ResponseEntity<Void> sendLegBookingConfirmation(@RequestBody LegBookingConfirmationRequest request) {
+        try {
+            emailService.sendLegBookingConfirmation(
+                    request.email, request.legType, request.amountPaise, request.bookingReference);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    public static class LegBookingConfirmationRequest {
+        public String email;
+        public String legType;
+        public long amountPaise;
+        public String bookingReference;
+    }
+
     public static class NotificationRequest {
         public BookingRequest bookingRequest;
         public HolidayPackage holidayPackage;

@@ -94,4 +94,21 @@ public class EmailService {
             e.printStackTrace();
         }
     }
+
+    public void sendLegBookingConfirmation(String email, String legType, long amountPaise, String bookingReference) {
+        if (email == null || email.isBlank()) {
+            return;
+        }
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("Your Travel2Go booking is confirmed");
+        message.setText(String.format(
+                "Great news - your booking is confirmed!\n\n" +
+                "Reference: %s\n" +
+                "Type: %s\n" +
+                "Amount paid: Rs. %.2f\n\n" +
+                "Thank you for booking with Travel2Go.",
+                bookingReference, legType, amountPaise / 100.0));
+        mailSender.send(message);
+    }
 }

@@ -1,5 +1,6 @@
 package com.travel2go.backend.consumer;
 
+import com.travel2go.backend.client.NotificationClient;
 import com.travel2go.backend.model.Booking;
 import com.travel2go.backend.repository.BookingRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,12 +19,13 @@ import static org.mockito.Mockito.*;
 class LegConfirmedConsumerTest {
 
     @Mock private BookingRepository bookingRepository;
+    @Mock private NotificationClient notificationClient;
 
     private LegConfirmedConsumer consumer;
 
     @BeforeEach
     void setUp() {
-        consumer = new LegConfirmedConsumer(bookingRepository);
+        consumer = new LegConfirmedConsumer(bookingRepository, notificationClient);
         lenient().when(bookingRepository.save(any(Booking.class)))
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
     }
@@ -94,5 +96,30 @@ class LegConfirmedConsumerTest {
                 .hasMessage("transient Firestore error");
 
         verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void onLegConfirmed_confirmingBookingSendsNotification() {
+        Booking pending = Booking.builder().id("b1").legId("leg-1").status("PENDING").amountPaise(150000L)
+                .email("traveller@example.com").build();
+        when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(pending));
+
+        consumer.onLegConfirmed(new LegConfirmedEvent("leg-1", "pay_1", 150000L));
+
+        verify(notificationClient).sendLegBookingConfirmation(org.mockito.ArgumentMatchers.argThat(req ->
+                "traveller@example.com".equals(req.email) && req.amountPaise == 150000L));
+    }
+
+    @Test
+    void onLegConfirmed_duplicateDeliverySendsNotificationOnlyOnce() {
+        Booking pending = Booking.builder().id("b1").legId("leg-1").status("PENDING").amountPaise(150000L)
+                .email("traveller@example.com").build();
+        when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(pending));
+
+        consumer.onLegConfirmed(new LegConfirmedEvent("leg-1", "pay_1", 150000L));
+        pending.setStatus("CONFIRMED");
+        consumer.onLegConfirmed(new LegConfirmedEvent("leg-1", "pay_1", 150000L));
+
+        verify(notificationClient, times(1)).sendLegBookingConfirmation(any());
     }
 }

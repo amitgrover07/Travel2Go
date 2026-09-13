@@ -1,5 +1,6 @@
 package com.travel2go.backend.consumer;
 
+import com.travel2go.backend.client.NotificationClient;
 import com.travel2go.backend.model.Booking;
 import com.travel2go.backend.repository.BookingRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,17 +14,20 @@ import java.util.List;
 
 /**
  * Consumes trip-service's leg.confirmed event (P1.4) and confirms the
- * matching Booking. Replaces the old direct payment.captured consumer -
- * single-owner choreography means a Booking can now only be CONFIRMED once
- * its Leg already is, closing the "two independent confirmations of the
- * same fact can diverge" gap. Idempotent via a status-guard, same pattern
- * as before.
+ * matching Booking, then sends a real confirmation notification (MVP 1C -
+ * replaces the earlier "not yet implemented" log line). Idempotent via the
+ * same status-guard as before: a redelivered leg.confirmed finds the
+ * Booking already CONFIRMED and returns before ever reaching either the
+ * save or the notification call, so no new dedupe state is needed.
+ *
+ * A notification-service outage does not affect the Booking - B5's circuit
+ * breaker + fallback factory already absorbs that failure by logging and
+ * swallowing, matching the money-path guarantee that a notification never
+ * rolls back a confirmation.
  *
  * An event for a legId with no matching Booking, or any other unexpected
- * exception, now propagates (P1.4) instead of being swallowed - this
- * queue's RabbitMQConfig gives it a dead-letter exchange + bounded retry,
- * so an unrecoverable message becomes an alertable DLQ entry instead of a
- * silent drop.
+ * exception, propagates (P1.4) - this queue's RabbitMQConfig gives it a
+ * dead-letter exchange + bounded retry.
  */
 @Slf4j
 @Component
@@ -31,6 +35,7 @@ import java.util.List;
 public class LegConfirmedConsumer {
 
     private final BookingRepository bookingRepository;
+    private final NotificationClient notificationClient;
 
     @RabbitListener(queues = "booking.leg-confirmed")
     public void onLegConfirmed(LegConfirmedEvent event) {
@@ -59,8 +64,10 @@ public class LegConfirmedConsumer {
         booking.setConfirmedAt(new Date());
         bookingRepository.save(booking).block();
 
-        log.info("Booking {} confirmed (legId {}) - leg-booking confirmation notifications not yet implemented "
-                        + "(needs a notification payload shape for leg bookings, tracked separately)",
+        notificationClient.sendLegBookingConfirmation(new NotificationClient.LegBookingConfirmationRequest(
+                booking.getEmail(), booking.getLegId(), booking.getAmountPaise(), booking.getId()));
+
+        log.info("Booking {} confirmed (legId {}) and confirmation notification sent",
                 booking.getId(), booking.getLegId());
     }
 

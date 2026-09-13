@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * breaker it fast-fails instead of hanging the booking thread while notification
  * is down.
  *
- * Only this notification call gets a swallowing fallback. The money path
+ * Only these notification calls get a swallowing fallback. The money path
  * (trip -> booking) and the reads (package/settings) intentionally have none, so
  * they fail loudly and leave their callers to recover.
  */
@@ -23,8 +23,18 @@ public class NotificationClientFallbackFactory implements FallbackFactory<Notifi
 
     @Override
     public NotificationClient create(Throwable cause) {
-        return request -> log.warn(
-                "notification-service unavailable; booking confirmation not sent (booking is unaffected). Reason: {}",
-                cause.toString());
+        return new NotificationClient() {
+            @Override
+            public void sendBookingConfirmation(NotificationRequest request) {
+                log.warn("notification-service unavailable; booking confirmation not sent (booking is unaffected). Reason: {}",
+                        cause.toString());
+            }
+
+            @Override
+            public void sendLegBookingConfirmation(LegBookingConfirmationRequest request) {
+                log.warn("notification-service unavailable; leg-booking confirmation not sent (booking is unaffected). Reason: {}",
+                        cause.toString());
+            }
+        };
     }
 }
