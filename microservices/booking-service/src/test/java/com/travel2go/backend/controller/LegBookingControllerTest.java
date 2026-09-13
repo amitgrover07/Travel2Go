@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,7 +43,7 @@ class LegBookingControllerTest {
                 .tripId("trip-1").legId("leg-1").quoteToken("quote-abc").amountPaise(150000L).build();
 
         Booking pending = Booking.builder().legId("leg-1").status("PENDING").ownerUserId("user-1").build();
-        when(legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1"))
+        when(legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1", null, null))
                 .thenReturn(pending);
 
         ResponseEntity<LegBookingResponse> response = controller.createLegBooking(request);
@@ -58,7 +59,7 @@ class LegBookingControllerTest {
         LegBookingRequest request = LegBookingRequest.builder()
                 .tripId("trip-1").legId("leg-1").quoteToken("bad").amountPaise(150000L).build();
 
-        when(legBookingService.createLegBooking(eq("trip-1"), eq("leg-1"), eq("bad"), anyLong(), eq("user-1")))
+        when(legBookingService.createLegBooking(eq("trip-1"), eq("leg-1"), eq("bad"), anyLong(), eq("user-1"), isNull(), isNull()))
                 .thenThrow(new LegBookingRejectedException("invalid"));
 
         ResponseEntity<LegBookingResponse> response = controller.createLegBooking(request);
@@ -71,7 +72,7 @@ class LegBookingControllerTest {
         LegBookingRequest request = LegBookingRequest.builder()
                 .tripId("trip-1").legId("leg-1").quoteToken("quote-abc").amountPaise(150000L).build();
 
-        when(legBookingService.createLegBooking(eq("trip-1"), eq("leg-1"), eq("quote-abc"), anyLong(), eq("user-1")))
+        when(legBookingService.createLegBooking(eq("trip-1"), eq("leg-1"), eq("quote-abc"), anyLong(), eq("user-1"), isNull(), isNull()))
                 .thenThrow(new LegBookingConflictException("owned by another user"));
 
         ResponseEntity<LegBookingResponse> response = controller.createLegBooking(request);

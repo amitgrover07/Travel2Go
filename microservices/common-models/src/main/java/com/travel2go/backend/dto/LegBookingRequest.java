@@ -14,4 +14,6 @@ public class LegBookingRequest {
     private String legId;
     private String quoteToken;
     private Long amountPaise;
+    private String email;
+    private String phone;
 }

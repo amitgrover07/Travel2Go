@@ -33,7 +33,7 @@ public class LegBookingController {
         try {
             Booking booking = legBookingService.createLegBooking(
                     request.getTripId(), request.getLegId(), request.getQuoteToken(),
-                    request.getAmountPaise(), currentUserId());
+                    request.getAmountPaise(), currentUserId(), request.getEmail(), request.getPhone());
             return ResponseEntity.ok(new LegBookingResponse(booking.getLegId(), booking.getStatus()));
         } catch (LegBookingRejectedException e) {
             return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).build();

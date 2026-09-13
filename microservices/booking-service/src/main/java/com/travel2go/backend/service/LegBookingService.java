@@ -16,7 +16,8 @@ public class LegBookingService {
     private final BookingRepository bookingRepository;
     private final QuoteTokenService quoteTokenService;
 
-    public Booking createLegBooking(String tripId, String legId, String quoteToken, Long amountPaise, String ownerUserId) {
+    public Booking createLegBooking(String tripId, String legId, String quoteToken, Long amountPaise,
+            String ownerUserId, String email, String phone) {
         Booking existing = findRelevantBooking(legId);
         if (existing != null && isActive(existing)) {
             if (ownerUserId.equals(existing.getOwnerUserId())) {
@@ -35,6 +36,8 @@ public class LegBookingService {
                     .amountPaise(amountPaise)
                     .feePaise(0L)
                     .ownerUserId(ownerUserId)
+                    .email(email)
+                    .phone(phone)
                     .status("REJECTED")
                     .bookingDate(new Date())
                     .build();
@@ -49,6 +52,8 @@ public class LegBookingService {
                 .amountPaise(amountPaise)
                 .feePaise(0L)
                 .ownerUserId(ownerUserId)
+                .email(email)
+                .phone(phone)
                 .status("PENDING")
                 .bookingDate(new Date())
                 .build();

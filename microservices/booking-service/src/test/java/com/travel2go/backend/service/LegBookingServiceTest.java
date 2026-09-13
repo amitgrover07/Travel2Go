@@ -38,7 +38,7 @@ class LegBookingServiceTest {
         when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.empty());
         when(quoteTokenService.isValid("quote-abc", "leg-1", 150000L)).thenReturn(true);
 
-        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1");
+        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1", null, null);
 
         assertThat(result.getStatus()).isEqualTo("PENDING");
         assertThat(result.getFeePaise()).isEqualTo(0L);
@@ -52,10 +52,37 @@ class LegBookingServiceTest {
         when(quoteTokenService.isValid("bad-token", "leg-1", 150000L)).thenReturn(false);
 
         assertThatThrownBy(() ->
-                legBookingService.createLegBooking("trip-1", "leg-1", "bad-token", 150000L, "user-1"))
+                legBookingService.createLegBooking("trip-1", "leg-1", "bad-token", 150000L, "user-1", null, null))
                 .isInstanceOf(LegBookingRejectedException.class);
 
         verify(bookingRepository).save(argThatStatusIs("REJECTED"));
+    }
+
+    @Test
+    void createLegBooking_persistsEmailAndPhoneOnPendingBooking() {
+        when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.empty());
+        when(quoteTokenService.isValid("quote-abc", "leg-1", 150000L)).thenReturn(true);
+
+        Booking result = legBookingService.createLegBooking(
+                "trip-1", "leg-1", "quote-abc", 150000L, "user-1", "traveller@example.com", "+911234567890");
+
+        assertThat(result.getEmail()).isEqualTo("traveller@example.com");
+        assertThat(result.getPhone()).isEqualTo("+911234567890");
+    }
+
+    @Test
+    void createLegBooking_persistsEmailAndPhoneOnRejectedBooking() {
+        when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.empty());
+        when(quoteTokenService.isValid("bad-token", "leg-1", 150000L)).thenReturn(false);
+
+        assertThatThrownBy(() -> legBookingService.createLegBooking(
+                "trip-1", "leg-1", "bad-token", 150000L, "user-1", "traveller@example.com", "+911234567890"))
+                .isInstanceOf(LegBookingRejectedException.class);
+
+        verify(bookingRepository).save(org.mockito.ArgumentMatchers.argThat(b ->
+                "REJECTED".equals(b.getStatus())
+                        && "traveller@example.com".equals(b.getEmail())
+                        && "+911234567890".equals(b.getPhone())));
     }
 
     @Test
@@ -63,7 +90,7 @@ class LegBookingServiceTest {
         Booking existing = Booking.builder().id("b1").legId("leg-1").status("PENDING").ownerUserId("user-1").build();
         when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(existing));
 
-        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1");
+        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1", null, null);
 
         assertThat(result).isSameAs(existing);
         verify(quoteTokenService, never()).isValid(any(), any(), org.mockito.ArgumentMatchers.anyLong());
@@ -75,7 +102,7 @@ class LegBookingServiceTest {
         Booking existing = Booking.builder().id("b1").legId("leg-1").status("PENDING").ownerUserId("user-1").build();
         when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(existing));
 
-        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1");
+        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1", null, null);
 
         assertThat(result).isSameAs(existing);
         verify(quoteTokenService, never()).isValid(any(), any(), org.mockito.ArgumentMatchers.anyLong());
@@ -88,7 +115,7 @@ class LegBookingServiceTest {
         when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(existing));
 
         assertThatThrownBy(() ->
-                legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-2"))
+                legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-2", null, null))
                 .isInstanceOf(LegBookingConflictException.class);
 
         verify(quoteTokenService, never()).isValid(any(), any(), org.mockito.ArgumentMatchers.anyLong());
@@ -101,7 +128,7 @@ class LegBookingServiceTest {
         when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(existing));
 
         assertThatThrownBy(() ->
-                legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1"))
+                legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1", null, null))
                 .isInstanceOf(LegBookingConflictException.class);
 
         verify(quoteTokenService, never()).isValid(any(), any(), org.mockito.ArgumentMatchers.anyLong());
@@ -114,7 +141,7 @@ class LegBookingServiceTest {
         when(bookingRepository.findByLegId("leg-1")).thenReturn(Flux.just(rejected));
         when(quoteTokenService.isValid("quote-abc", "leg-1", 150000L)).thenReturn(true);
 
-        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1");
+        Booking result = legBookingService.createLegBooking("trip-1", "leg-1", "quote-abc", 150000L, "user-1", null, null);
 
         verify(quoteTokenService).isValid("quote-abc", "leg-1", 150000L);
         assertThat(result.getStatus()).isEqualTo("PENDING");
