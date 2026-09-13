@@ -11,6 +11,7 @@ import Admin from './pages/Admin';
 import ImageGallery from './pages/ImageGallery';
 import PackageDetails from './pages/PackageDetails';
 import TrustPortal from './pages/TrustPortal';
+import Checkout from './pages/Checkout';
 
 import MainLayout from './components/MainLayout';
 
@@ -47,6 +48,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ImageGallery />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <Checkout />
             </ProtectedRoute>
           }
         />
