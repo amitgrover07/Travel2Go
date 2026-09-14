@@ -103,6 +103,7 @@ public class EmailService {
         message.setTo(email);
         message.setSubject("Your Travel2Go booking is confirmed");
         message.setText(String.format(
+                java.util.Locale.ROOT,
                 "Great news - your booking is confirmed!\n\n" +
                 "Reference: %s\n" +
                 "Type: %s\n" +

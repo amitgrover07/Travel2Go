@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import MainLayout from '../components/MainLayout';
 import { createTrip, addLeg, bookLeg, createPaymentOrder, getPaymentStatus } from '../services/api';
 
@@ -119,12 +118,6 @@ const Checkout = () => {
         quoteToken: booked.quoteToken,
       });
 
-      if (payment.status === 'REJECTED') {
-        setStep(STEP.FAILED);
-        setError('Your quote expired. Please start again.');
-        return;
-      }
-
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
         setStep(STEP.FAILED);
@@ -156,7 +149,9 @@ const Checkout = () => {
       pollPaymentStatus(booked.id, 30);
     } catch (err) {
       setStep(STEP.FAILED);
-      if (err.response && err.response.status === 409) {
+      if (err.response && err.response.status === 402) {
+        setError('Your quote expired. Please start again.');
+      } else if (err.response && err.response.status === 409) {
         setError('This leg is already claimed by another user.');
       } else {
         setError('Something went wrong while booking. Please try again.');

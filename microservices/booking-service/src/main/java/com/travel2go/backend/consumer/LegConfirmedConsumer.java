@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Consumes trip-service's leg.confirmed event (P1.4) and confirms the
  * matching Booking, then sends a real confirmation notification (MVP 1C -
- * replaces the earlier "not yet implemented" log line). Idempotent via the
+ * replaces the earlier placeholder log line). Idempotent via the
  * same status-guard as before: a redelivered leg.confirmed finds the
  * Booking already CONFIRMED and returns before ever reaching either the
  * save or the notification call, so no new dedupe state is needed.
@@ -65,7 +65,7 @@ public class LegConfirmedConsumer {
         bookingRepository.save(booking).block();
 
         notificationClient.sendLegBookingConfirmation(new NotificationClient.LegBookingConfirmationRequest(
-                booking.getEmail(), booking.getLegId(), booking.getAmountPaise(), booking.getId()));
+                booking.getEmail(), "Travel leg", booking.getAmountPaise(), booking.getLegId()));
 
         log.info("Booking {} confirmed (legId {}) and confirmation notification sent",
                 booking.getId(), booking.getLegId());
