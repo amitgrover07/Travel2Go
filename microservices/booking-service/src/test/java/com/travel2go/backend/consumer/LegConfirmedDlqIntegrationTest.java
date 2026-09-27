@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.RabbitMQContainer;
@@ -50,12 +50,12 @@ class LegConfirmedDlqIntegrationTest {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
-    @MockBean
+    @MockitoBean
     private BookingRepository bookingRepository;
 
     // Needed for the full ApplicationContext to load (BookingController depends on it) -
     // same pattern BackendApplicationTests already uses with firestore disabled.
-    @MockBean
+    @MockitoBean
     private LeadRepository leadRepository;
 
     @Test

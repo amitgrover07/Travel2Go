@@ -3,44 +3,23 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.4</version>
-		<relativePath/>
+		<groupId>com.travel2go</groupId>
+		<artifactId>travel2go-microservices</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
-	<groupId>com.travel2go</groupId>
 	<artifactId>payment-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>payment-service</name>
 	<description>UPI-first payments with quote-token validation</description>
-	<properties>
-		<java.version>17</java.version>
-		<lombok.version>1.18.38</lombok.version>
-		<spring-cloud.version>2023.0.1</spring-cloud.version>
-		<!-- Spring Boot 3.2.4 manages flyway-core at 9.22.3, which predates the
-		     flyway-database-postgresql split (introduced in Flyway 10). Override
-		     to a paired 10.x version so both artifacts resolve consistently. -->
-		<flyway.version>10.15.2</flyway.version>
-	</properties>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>com.google.cloud</groupId>
-				<artifactId>spring-cloud-gcp-dependencies</artifactId>
-				<version>5.1.0</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 	<dependencies>
+		<!-- Spring Boot 4's default JSON stack is Jackson 3 (tools.jackson.*); spring-boot-starter-web
+		     no longer pulls classic Jackson 2 at compile scope. This service codes directly against
+		     com.fasterxml.jackson.databind.ObjectMapper (PaymentService, WebhookPayloadParser,
+		     OutboxRelay), so it's declared explicitly here rather than migrated to Jackson 3. -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -50,19 +29,21 @@
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- Boot 4 moved Flyway autoconfiguration out of the monolithic autoconfigure jar into
+		     its own module; flyway-core alone (as under Boot 3) no longer triggers migrations
+		     on startup without this starter. -->
 		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-core</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-flyway</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
-			<version>${flyway.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.cloud.sql</groupId>
 			<artifactId>postgres-socket-factory</artifactId>
-			<version>1.19.1</version>
+			<version>1.30.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -103,18 +84,18 @@
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -122,16 +103,21 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Spring Boot 4 split @WebMvcTest out of spring-boot-starter-test into its own
+		     web-stack-specific test starter (PaymentControllerWebhookTest, ReconciliationControllerTest). -->
 		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>1.19.7</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>junit-jupiter</artifactId>
-			<version>1.19.7</version>
+			<artifactId>testcontainers-postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.RabbitMQContainer;
@@ -49,16 +49,16 @@ class PaymentCapturedDlqIntegrationTest {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
-    @MockBean
+    @MockitoBean
     private LegRepository legRepository;
 
     // Needed for the full ApplicationContext to load (TripService/TripController
     // depend on it) - same pattern TripServiceApplicationTests already uses with
     // firestore disabled (it mocks both TripRepository and LegRepository).
-    @MockBean
+    @MockitoBean
     private TripRepository tripRepository;
 
-    @MockBean
+    @MockitoBean
     private TripEventPublisher tripEventPublisher;
 
     @Test

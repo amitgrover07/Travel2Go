@@ -11,14 +11,14 @@ import com.travel2go.backend.repository.UserRepository;
 import com.travel2go.backend.repository.VerificationCodeRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(properties = {
     "spring.cloud.gcp.firestore.enabled=false",
     "spring.cloud.gcp.storage.enabled=false",
     "spring.cloud.gcp.core.enabled=false"
 })
-@MockBean({AllocationRuleRepository.class, BookingRepository.class, ConfiguratorCategoryRepository.class,
+@MockitoBean(types = {AllocationRuleRepository.class, BookingRepository.class, ConfiguratorCategoryRepository.class,
         CustomPackageRepository.class, GlobalSettingsRepository.class, HolidayPackageRepository.class,
         TravelConfigurationRepository.class, UserRepository.class, VerificationCodeRepository.class})
 class BackendApplicationTests {

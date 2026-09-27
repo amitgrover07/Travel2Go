@@ -10,7 +10,7 @@ import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -62,7 +62,7 @@ class PaymentCaptureConcurrencyTest {
     @Autowired
     private OutboxRepository outboxRepository;
 
-    @MockBean
+    @MockitoBean
     private PaymentProvider paymentProvider;
 
     private Payment persistCreatedPayment(String bookingRef, String providerOrderId) {

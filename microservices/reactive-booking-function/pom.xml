@@ -3,36 +3,23 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.4</version>
-		<relativePath/>
+		<groupId>com.travel2go</groupId>
+		<artifactId>travel2go-microservices</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
-	<groupId>com.travel2go</groupId>
 	<artifactId>reactive-booking-function</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>reactive-booking-function</name>
 	<description>Reactive Cloud Run Function using WebFlux, RabbitMQ, and Redis</description>
 
-	<properties>
-		<java.version>17</java.version>
-		<lombok.version>1.18.38</lombok.version>
-		<spring-cloud.version>2023.0.1</spring-cloud.version>
-	</properties>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-
 	<dependencies>
+		<!-- Spring Boot 4's default JSON stack is Jackson 3 (tools.jackson.*); this module codes
+		     directly against com.fasterxml.jackson.databind.ObjectMapper (BookingEventProcessor),
+		     so it's declared explicitly here rather than migrated to Jackson 3. -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 		<!-- Reactive Web (Spring WebFlux) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

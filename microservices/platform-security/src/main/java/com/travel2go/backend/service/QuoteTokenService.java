@@ -3,7 +3,6 @@ package com.travel2go.backend.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,21 +60,21 @@ public class QuoteTokenService {
     public String issue(String legId, long pricePaise) {
         Date now = new Date();
         return Jwts.builder()
-                .setSubject(legId)
+                .subject(legId)
                 .claim("pricePaise", pricePaise)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + ttlMs))
-                .signWith(signingKey(), SignatureAlgorithm.HS256)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + ttlMs))
+                .signWith(signingKey())
                 .compact();
     }
 
     public boolean isValid(String token, String legId, long pricePaise) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(signingKey())
+            Claims claims = Jwts.parser()
+                    .verifyWith(signingKey())
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
 
             boolean legMatches = legId.equals(claims.getSubject());
             Number priceClaim = claims.get("pricePaise", Number.class);

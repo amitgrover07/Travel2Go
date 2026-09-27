@@ -7,19 +7,19 @@ import com.travel2go.backend.repository.SettlementRepository;
 import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(properties = {
     "spring.autoconfigure.exclude="
-        + "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
-        + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
-        + "org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,"
-        + "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,"
-        + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+        + "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration,"
+        + "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
+        + "org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration,"
+        + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration,"
+        + "org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration",
     "payment.provider=sandbox",
     "razorpay.webhook-secret=test-context-load-webhook-secret-0123456789"
 })
-@MockBean({PaymentRepository.class, ProcessedWebhookEventRepository.class, RefundRepository.class, SettlementRepository.class, OutboxRepository.class})
+@MockitoBean(types = {PaymentRepository.class, ProcessedWebhookEventRepository.class, RefundRepository.class, SettlementRepository.class, OutboxRepository.class})
 class PaymentServiceApplicationTests {
 
 	@Test

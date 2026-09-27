@@ -7,7 +7,7 @@ import com.travel2go.backend.repository.UserRepository;
 import com.travel2go.backend.repository.VerificationCodeRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(properties = {
     "spring.cloud.gcp.firestore.enabled=false",
@@ -15,7 +15,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
     "spring.cloud.gcp.core.enabled=false",
     "NOTIFICATION_SERVICE_URL=http://test-notification"
 })
-@MockBean({BookingRepository.class, GlobalSettingsRepository.class, HolidayPackageRepository.class,
+@MockitoBean(types = {BookingRepository.class, GlobalSettingsRepository.class, HolidayPackageRepository.class,
         UserRepository.class, VerificationCodeRepository.class})
 class BackendApplicationTests {
 
