@@ -1,7 +1,13 @@
 package com.travel2go.backend;
 
+import com.travel2go.backend.repository.ApprovalRepository;
 import com.travel2go.backend.repository.CouponRepository;
+import com.travel2go.backend.repository.CreditAccountRepository;
+import com.travel2go.backend.repository.OrgBookingRepository;
+import com.travel2go.backend.repository.OrgMemberRepository;
+import com.travel2go.backend.repository.OrgRepository;
 import com.travel2go.backend.repository.PlanRepository;
+import com.travel2go.backend.repository.SpendPolicyRepository;
 import com.travel2go.backend.repository.SubscriptionChargeRepository;
 import com.travel2go.backend.repository.SubscriptionRepository;
 import org.junit.jupiter.api.Test;
@@ -18,7 +24,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
     "jwt.secret=test-jwt-secret-0123456789abcdef0123456789abcdef"
 })
 @MockitoBean(types = {PlanRepository.class, CouponRepository.class,
-        SubscriptionRepository.class, SubscriptionChargeRepository.class})
+        SubscriptionRepository.class, SubscriptionChargeRepository.class,
+        OrgRepository.class, OrgMemberRepository.class, SpendPolicyRepository.class,
+        CreditAccountRepository.class, ApprovalRepository.class, OrgBookingRepository.class})
 class SubscriptionServiceApplicationTests {
 
 	@Test
