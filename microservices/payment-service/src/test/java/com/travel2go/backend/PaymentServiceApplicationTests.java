@@ -2,6 +2,7 @@ package com.travel2go.backend;
 
 import com.travel2go.backend.repository.OutboxRepository;
 import com.travel2go.backend.repository.PaymentRepository;
+import com.travel2go.backend.repository.RefundFloatLedgerRepository;
 import com.travel2go.backend.repository.RefundRepository;
 import com.travel2go.backend.repository.SettlementRepository;
 import com.travel2go.backend.webhook.ProcessedWebhookEventRepository;
@@ -19,7 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
     "payment.provider=sandbox",
     "razorpay.webhook-secret=test-context-load-webhook-secret-0123456789"
 })
-@MockitoBean(types = {PaymentRepository.class, ProcessedWebhookEventRepository.class, RefundRepository.class, SettlementRepository.class, OutboxRepository.class})
+@MockitoBean(types = {PaymentRepository.class, ProcessedWebhookEventRepository.class, RefundRepository.class, SettlementRepository.class, OutboxRepository.class, RefundFloatLedgerRepository.class})
 class PaymentServiceApplicationTests {
 
 	@Test

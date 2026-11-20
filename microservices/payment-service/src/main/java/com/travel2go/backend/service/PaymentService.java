@@ -23,11 +23,15 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
+
+    /** Headline trust promise: refunds target settlement within 72 hours. */
+    private static final long SLA_HOURS = 72;
 
     private final PaymentRepository paymentRepository;
     private final ProcessedWebhookEventRepository processedWebhookEventRepository;
@@ -36,6 +40,7 @@ public class PaymentService {
     private final PaymentProvider paymentProvider;
     private final QuoteTokenService quoteTokenService;
     private final ObjectMapper objectMapper;
+    private final RefundFloatService refundFloatService;
 
     public Payment createOrder(String bookingRef, long amountPaise, String method, String quoteToken, String ownerUserId) {
         Payment existing = findRelevantPayment(bookingRef);
@@ -167,8 +172,24 @@ public class PaymentService {
         return payment;
     }
 
-    @Transactional
+    /** Back-compatible manual refund (admin-triggered). */
     public Payment refund(String bookingRef) {
+        return refund(bookingRef, "MANUAL");
+    }
+
+    /**
+     * Guaranteed, tracked, SLA-bound refund (F3). Exactly-once per payment under
+     * concurrency: the refund slot is claimed with an atomic
+     * INSERT ... ON CONFLICT (payment_id) DO NOTHING, so only one caller ever runs
+     * the provider refund, decrements the float, flips the payment to REFUNDED and
+     * emits payment.refunded. The SLA countdown (now + 72h) starts at initiation and
+     * is tracked on the refund row until it settles or breaches.
+     *
+     * <p>The refund amount is always re-derived from the ledger (the captured
+     * payment amount), never from client input, and no fee is ever added (G1).
+     */
+    @Transactional
+    public Payment refund(String bookingRef, String trigger) {
         Payment payment = getStatus(bookingRef, bookingRef, true);
 
         if ("REFUNDED".equals(payment.getStatus())) {
@@ -178,26 +199,77 @@ public class PaymentService {
             throw new IllegalStateException("Cannot refund payment in status " + payment.getStatus());
         }
 
+        UUID refundId = UUID.randomUUID();
+        Date slaDueAt = new Date(System.currentTimeMillis() + SLA_HOURS * 3600_000L);
+        int claimed = refundRepository.insertInitiatedIfNew(
+                refundId, payment.getId(), payment.getAmountPaise(), slaDueAt, normaliseTrigger(trigger));
+        if (claimed == 0) {
+            // Another concurrent or earlier request already owns this payment's refund.
+            log.info("Refund for bookingRef {} already claimed - skipping duplicate", bookingRef);
+            return findRelevantPayment(bookingRef);
+        }
+
         RefundResult result = paymentProvider.refund(payment.getProviderPaymentId(), payment.getAmountPaise());
         if (!"SUCCESS".equals(result.getStatus())) {
+            // Roll back the whole transaction (including the claim) so a failed refund is safe to retry.
             throw new IllegalStateException("Refund failed for bookingRef " + bookingRef);
         }
 
+        // Debit the ring-fenced float and complete the refund row (SLA stays INITIATED until settled).
+        UUID floatTxnId = refundFloatService.debit(payment.getAmountPaise(), refundId);
+        refundRepository.completeInitiated(refundId, result.getProviderRefundId(), floatTxnId);
+
         payment.setStatus("REFUNDED");
         Payment saved = paymentRepository.save(payment);
-
-        refundRepository.save(Refund.builder()
-                .paymentId(saved.getId())
-                .providerRefundId(result.getProviderRefundId())
-                .amountPaise(saved.getAmountPaise())
-                .status("SUCCESS")
-                .createdAt(new Date())
-                .build());
 
         PaymentRefundedEvent toPublish = new PaymentRefundedEvent(bookingRef, result.getProviderRefundId(), saved.getAmountPaise());
         writeOutboxEntry(bookingRef, "payment.refunded", toPublish);
 
         return saved;
+    }
+
+    /** Owner-checked lookup of the refund for a booking (for the status endpoint). */
+    public java.util.Optional<Refund> getRefund(String bookingRef, String requestingUserId, boolean isAdmin) {
+        Payment payment = getStatus(bookingRef, requestingUserId, isAdmin);
+        return refundRepository.findFirstByPaymentId(payment.getId());
+    }
+
+    /** Marks a refund settled (INITIATED -> SETTLED), stopping its SLA countdown. Idempotent. */
+    @Transactional
+    public void markRefundSettled(String bookingRef) {
+        Payment payment = getStatus(bookingRef, bookingRef, true);
+        refundRepository.markSettledIfInitiated(payment.getId());
+    }
+
+    /**
+     * Flags any refund that has blown its 72h SLA: INITIATED -> BREACHED (guarded, so
+     * each breach transitions once) and emits payment.refund_sla_breached via the outbox.
+     * Driven by {@link RefundSlaMonitor}.
+     */
+    @Transactional
+    public void flagSlaBreaches() {
+        List<Refund> overdue = refundRepository.findBySlaStatusAndSlaDueAtBefore("INITIATED", new Date());
+        for (Refund refund : overdue) {
+            if (refundRepository.markBreachedIfInitiated(refund.getId()) == 0) {
+                continue; // someone else flagged it first
+            }
+            Payment payment = paymentRepository.findById(refund.getPaymentId()).orElse(null);
+            String bookingRef = payment != null ? payment.getBookingRef() : null;
+            writeOutboxEntry(bookingRef == null ? refund.getId().toString() : bookingRef,
+                    "payment.refund_sla_breached",
+                    new RefundSlaBreachedEvent(bookingRef, refund.getId(), refund.getSlaDueAt()));
+        }
+    }
+
+    private String normaliseTrigger(String trigger) {
+        if (trigger == null) {
+            return "MANUAL";
+        }
+        String t = trigger.trim().toUpperCase(java.util.Locale.ROOT);
+        return switch (t) {
+            case "USER_CANCEL", "DISRUPTION", "MANUAL" -> t;
+            default -> "MANUAL";
+        };
     }
 
     private void writeOutboxEntry(String aggregateId, String type, Object payload) {

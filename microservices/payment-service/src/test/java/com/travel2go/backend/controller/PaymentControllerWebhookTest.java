@@ -35,6 +35,9 @@ class PaymentControllerWebhookTest {
     private PaymentService paymentService;
 
     @MockitoBean
+    private com.travel2go.backend.service.RefundFloatService refundFloatService;
+
+    @MockitoBean
     private JwtUtil jwtUtil;
 
     @Test

@@ -38,6 +38,7 @@ class PaymentServiceTest {
     @Mock private OutboxRepository outboxRepository;
     @Mock private PaymentProvider paymentProvider;
     @Mock private QuoteTokenService quoteTokenService;
+    @Mock private RefundFloatService refundFloatService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private PaymentService paymentService;
@@ -46,7 +47,7 @@ class PaymentServiceTest {
     void setUp() {
         paymentService = new PaymentService(
                 paymentRepository, processedWebhookEventRepository, refundRepository, outboxRepository,
-                paymentProvider, quoteTokenService, objectMapper);
+                paymentProvider, quoteTokenService, objectMapper, refundFloatService);
         lenient().when(paymentRepository.save(any(Payment.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         lenient().when(refundRepository.save(any(com.travel2go.backend.model.Refund.class)))
@@ -55,6 +56,10 @@ class PaymentServiceTest {
                 .thenAnswer(inv -> inv.getArgument(0));
         lenient().when(processedWebhookEventRepository.findById(any(String.class))).thenReturn(Optional.empty());
         lenient().when(paymentRepository.findByBookingRef(any())).thenReturn(List.of());
+        // F3 refund engine: the refund claim succeeds and the float debit returns a txn id.
+        lenient().when(refundRepository.insertInitiatedIfNew(any(), any(), anyLong(), any(), any())).thenReturn(1);
+        lenient().when(refundRepository.completeInitiated(any(), any(), any())).thenReturn(1);
+        lenient().when(refundFloatService.debit(anyLong(), any())).thenReturn(java.util.UUID.randomUUID());
     }
 
     private Payment createdPayment() {
@@ -306,8 +311,12 @@ class PaymentServiceTest {
         Payment result = paymentService.refund("leg-1");
 
         assertThat(result.getStatus()).isEqualTo("REFUNDED");
+        assertThat(result.getFeePaise()).isZero(); // G1: a refund returns money, never adds a fee
         PaymentRefundedEvent expected = new PaymentRefundedEvent("leg-1", "rfnd_1", 150000L);
         verify(outboxRepository).save(argThat(entry -> outboxEntryMatches(entry, "payment.refunded", expected)));
+        // F3: the refund claim + float debit happened exactly once on the success path.
+        verify(refundRepository).insertInitiatedIfNew(any(), any(), anyLong(), any(), any());
+        verify(refundFloatService).debit(eq(150000L), any());
     }
 
     @Test

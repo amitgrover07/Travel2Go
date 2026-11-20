@@ -1,10 +1,15 @@
 package com.travel2go.backend.controller;
 
 import com.travel2go.backend.dto.CreateOrderRequest;
+import com.travel2go.backend.dto.FloatBalanceResponse;
+import com.travel2go.backend.dto.FloatTopUpRequest;
+import com.travel2go.backend.dto.RefundStatusResponse;
 import com.travel2go.backend.model.Payment;
+import com.travel2go.backend.model.Refund;
 import com.travel2go.backend.provider.InvalidWebhookSignatureException;
 import com.travel2go.backend.service.PaymentConflictException;
 import com.travel2go.backend.service.PaymentService;
+import com.travel2go.backend.service.RefundFloatService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.UncheckedIOException;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 @RestController
@@ -23,6 +29,7 @@ import java.util.TreeMap;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final RefundFloatService refundFloatService;
 
     private String currentUserId() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
@@ -78,7 +85,60 @@ public class PaymentController {
     }
 
     @PostMapping("/{bookingRef}/refund")
-    public ResponseEntity<Payment> refund(@PathVariable String bookingRef) {
-        return ResponseEntity.ok(paymentService.refund(bookingRef));
+    public ResponseEntity<Payment> refund(@PathVariable String bookingRef,
+                                          @RequestParam(required = false) String trigger) {
+        return ResponseEntity.ok(paymentService.refund(bookingRef, trigger));
+    }
+
+    @GetMapping("/{bookingRef}/refund/status")
+    public ResponseEntity<RefundStatusResponse> refundStatus(@PathVariable String bookingRef) {
+        try {
+            Optional<Refund> refund = paymentService.getRefund(bookingRef, currentUserId(), currentUserIsAdmin());
+            if (refund.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            Refund r = refund.get();
+            return ResponseEntity.ok(RefundStatusResponse.builder()
+                    .slaStatus(r.getSlaStatus())
+                    .slaDueAt(r.getSlaDueAt())
+                    .breached("BREACHED".equals(r.getSlaStatus()))
+                    .trigger(r.getTrigger())
+                    .amountPaise(r.getAmountPaise())
+                    .providerStatus(r.getStatus())
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /** Admin/ops: mark a refund settled, stopping its SLA countdown. */
+    @PostMapping("/{bookingRef}/refund/settle")
+    public ResponseEntity<Void> settleRefund(@PathVariable String bookingRef) {
+        paymentService.markRefundSettled(bookingRef);
+        return ResponseEntity.ok().build();
+    }
+
+    /** Admin/internal: ring-fenced refund float balance + low-float flag. */
+    @GetMapping("/refund-float/balance")
+    public ResponseEntity<FloatBalanceResponse> floatBalance() {
+        return ResponseEntity.ok(FloatBalanceResponse.builder()
+                .balancePaise(refundFloatService.balancePaise())
+                .low(refundFloatService.isLow())
+                .lowThresholdPaise(refundFloatService.lowThresholdPaise())
+                .build());
+    }
+
+    /** Admin/internal: credit the ring-fenced refund float. */
+    @PostMapping("/refund-float/topup")
+    public ResponseEntity<FloatBalanceResponse> floatTopUp(@RequestBody FloatTopUpRequest request) {
+        if (request.getAmountPaise() == null || request.getAmountPaise() <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        refundFloatService.credit(request.getAmountPaise());
+        return ResponseEntity.ok(FloatBalanceResponse.builder()
+                .balancePaise(refundFloatService.balancePaise())
+                .low(refundFloatService.isLow())
+                .lowThresholdPaise(refundFloatService.lowThresholdPaise())
+                .build());
     }
 }

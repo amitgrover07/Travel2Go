@@ -55,6 +55,7 @@ public class OutboxRelay {
         return switch (entry.getType()) {
             case "payment.captured" -> objectMapper.readValue(entry.getPayload(), PaymentCapturedEvent.class);
             case "payment.refunded" -> objectMapper.readValue(entry.getPayload(), PaymentRefundedEvent.class);
+            case "payment.refund_sla_breached" -> objectMapper.readValue(entry.getPayload(), RefundSlaBreachedEvent.class);
             default -> throw new IllegalStateException("Unknown outbox entry type: " + entry.getType());
         };
     }
