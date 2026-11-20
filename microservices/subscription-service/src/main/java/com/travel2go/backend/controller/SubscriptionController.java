@@ -26,6 +26,11 @@ public class SubscriptionController {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
+    private boolean currentUserIsAdmin() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
     @PostMapping
     public ResponseEntity<Subscription> subscribe(@RequestBody(required = false) SubscribeRequest request) {
         String planCode = (request != null && request.getPlanCode() != null) ? request.getPlanCode() : "FAMILY_PLUS";
@@ -71,6 +76,9 @@ public class SubscriptionController {
     @PostMapping("/{id}/renew")
     public ResponseEntity<Subscription> renew(@PathVariable UUID id,
                                               @RequestParam(required = false) Integer period) {
+        if (!currentUserIsAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         try {
             return ResponseEntity.ok(subscriptionService.renew(id, period));
         } catch (IllegalArgumentException e) {

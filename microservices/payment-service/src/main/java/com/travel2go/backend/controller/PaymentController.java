@@ -114,6 +114,9 @@ public class PaymentController {
     /** Admin/ops: mark a refund settled, stopping its SLA countdown. */
     @PostMapping("/{bookingRef}/refund/settle")
     public ResponseEntity<Void> settleRefund(@PathVariable String bookingRef) {
+        if (!currentUserIsAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         paymentService.markRefundSettled(bookingRef);
         return ResponseEntity.ok().build();
     }
@@ -121,6 +124,9 @@ public class PaymentController {
     /** Admin/internal: ring-fenced refund float balance + low-float flag. */
     @GetMapping("/refund-float/balance")
     public ResponseEntity<FloatBalanceResponse> floatBalance() {
+        if (!currentUserIsAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(FloatBalanceResponse.builder()
                 .balancePaise(refundFloatService.balancePaise())
                 .low(refundFloatService.isLow())
@@ -131,6 +137,9 @@ public class PaymentController {
     /** Admin/internal: credit the ring-fenced refund float. */
     @PostMapping("/refund-float/topup")
     public ResponseEntity<FloatBalanceResponse> floatTopUp(@RequestBody FloatTopUpRequest request) {
+        if (!currentUserIsAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (request.getAmountPaise() == null || request.getAmountPaise() <= 0) {
             return ResponseEntity.badRequest().build();
         }

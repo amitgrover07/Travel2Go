@@ -31,6 +31,9 @@ public class InvoiceController {
     /** Internal/admin: generate the invoice for a booking (called by the booking/payment flow). */
     @PostMapping("/invoices")
     public ResponseEntity<Invoice> generate(@RequestBody GenerateInvoiceRequest request) {
+        if (!currentUserIsAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         try {
             return ResponseEntity.ok(invoiceService.generateBookingInvoice(request));
         } catch (IllegalArgumentException e) {
@@ -51,6 +54,9 @@ public class InvoiceController {
     @PostMapping("/org/{id}/gst-invoice/{period}")
     public ResponseEntity<Invoice> generateOrg(@PathVariable UUID id, @PathVariable String period,
                                                @RequestBody OrgInvoiceRequest request) {
+        if (!currentUserIsAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(invoiceService.generateOrgGstInvoice(
                 id, period, request.consolidatedChargedPaise, request.buyerGstin, request.placeOfSupply));
     }
@@ -64,6 +70,13 @@ public class InvoiceController {
      */
     @GetMapping("/org/{id}/gst-invoice/{period}")
     public ResponseEntity<Invoice> getOrg(@PathVariable UUID id, @PathVariable String period) {
+        // Admin/internal only (SecurityConfig also gates this). An admin may read any
+        // org's invoice; the per-org, non-admin path (caller org from a signed JWT
+        // claim) is PRD-OPEN. The id-as-authorized-org call below is intentional under
+        // this admin-only gate and is not a user-controlled authorization decision.
+        if (!currentUserIsAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         try {
             return ResponseEntity.ok(invoiceService.getOrgGstInvoice(id, period, id));
         } catch (AccessDeniedException e) {
