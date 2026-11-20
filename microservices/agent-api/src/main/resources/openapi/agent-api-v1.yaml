@@ -21,11 +21,13 @@ components:
   schemas:
     QuoteRequest:
       type: object
-      required: [legId, pricePaise]
+      required: [legId]
       properties:
-        legId: { type: string }
-        pricePaise: { type: integer, format: int64, description: Amount in paise (long). }
-        currency: { type: string, default: INR }
+        legId:
+          type: string
+          description: >
+            The leg to quote. The price is NOT supplied by the caller - trip-service
+            resolves and signs the authoritative leg price (G2).
     QuoteResponse:
       type: object
       properties:
@@ -85,6 +87,7 @@ paths:
         "400": { description: Invalid request. }
         "401": { description: Missing or invalid agent key. }
         "403": { description: Key lacks the read scope. }
+        "503": { description: Pricing service unavailable. }
   /api/agent/v1/journeys/{bookingRef}/status:
     get:
       summary: Check a journey/booking status.

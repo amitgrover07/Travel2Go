@@ -13,6 +13,6 @@ public class BookingStatusClientFallback implements FallbackFactory<BookingStatu
 
     @Override
     public BookingStatusClient create(Throwable cause) {
-        return legId -> (Booking) null;
+        return (legId, agentId) -> (Booking) null;
     }
 }

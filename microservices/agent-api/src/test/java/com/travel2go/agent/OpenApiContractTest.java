@@ -1,6 +1,7 @@
 package com.travel2go.agent;
 
 import com.travel2go.agent.client.BookingStatusClient;
+import com.travel2go.agent.client.TripQuoteClient;
 import com.travel2go.agent.client.WaitlistClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ class OpenApiContractTest {
 
     @MockitoBean private WaitlistClient waitlistClient;
     @MockitoBean private BookingStatusClient bookingStatusClient;
+    @MockitoBean private TripQuoteClient tripQuoteClient;
 
     @Autowired
     @Qualifier("requestMappingHandlerMapping")

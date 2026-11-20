@@ -131,6 +131,29 @@ public class TripService {
         return saved;
     }
 
+    /**
+     * Issues a fresh, server-signed price lock for an existing leg (F2 agent quoting).
+     * The price is the leg's authoritative price - never a caller-supplied number - so
+     * the quote-token can only ever seal the real price (G2). Fee is always 0 (G1).
+     */
+    public com.travel2go.backend.dto.LegQuoteResponse quoteLeg(String legId) {
+        Leg leg = legRepository.findById(legId).block();
+        if (leg == null) {
+            throw new IllegalArgumentException("Leg not found: " + legId);
+        }
+        if (leg.getPricePaise() == null) {
+            throw new IllegalStateException("Leg has no price to quote: " + legId);
+        }
+        String token = quoteTokenService.issue(legId, leg.getPricePaise());
+        return com.travel2go.backend.dto.LegQuoteResponse.builder()
+                .legId(legId)
+                .pricePaise(leg.getPricePaise())
+                .currency("INR")
+                .quoteToken(token)
+                .feePaise(0L)
+                .build();
+    }
+
     private void assertOwner(Trip trip, String requestingUserId) {
         if (!trip.getOwnerUserId().equals(requestingUserId)) {
             throw new AccessDeniedException("Not authorized to access trip: " + trip.getId());

@@ -1,7 +1,10 @@
 package com.travel2go.agent.security;
 
 import com.travel2go.agent.client.BookingStatusClient;
+import com.travel2go.agent.client.TripQuoteClient;
 import com.travel2go.agent.client.WaitlistClient;
+import com.travel2go.backend.dto.LegQuoteResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,6 +14,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -26,6 +31,7 @@ class ApiKeyAuthTest {
 
     @MockitoBean private WaitlistClient waitlistClient;
     @MockitoBean private BookingStatusClient bookingStatusClient;
+    @MockitoBean private TripQuoteClient tripQuoteClient;
 
     private MockMvc mockMvc;
 
@@ -34,7 +40,14 @@ class ApiKeyAuthTest {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
     }
 
-    private static final String QUOTE_BODY = "{\"legId\":\"leg-1\",\"pricePaise\":150000}";
+    @BeforeEach
+    void stubQuote() {
+        when(tripQuoteClient.quoteLeg(anyString())).thenReturn(LegQuoteResponse.builder()
+                .legId("leg-1").pricePaise(150000L).currency("INR")
+                .quoteToken("trip-signed-token").feePaise(0L).build());
+    }
+
+    private static final String QUOTE_BODY = "{\"legId\":\"leg-1\"}";
 
     @Test
     void quote_withoutKey_is401() throws Exception {

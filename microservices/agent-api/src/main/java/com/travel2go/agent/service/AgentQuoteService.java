@@ -1,41 +1,37 @@
 package com.travel2go.agent.service;
 
+import com.travel2go.agent.client.TripQuoteClient;
 import com.travel2go.agent.dto.AgentQuoteRequest;
 import com.travel2go.agent.dto.AgentQuoteResponse;
-import com.travel2go.backend.service.QuoteTokenService;
+import com.travel2go.backend.dto.LegQuoteResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * Issues a price-locked quote for an agent using the SAME shared QuoteTokenService
- * as trip-service, so the token is identical in format and re-validates server-side
- * on any future booking (G2). The traveller fee is always zero (G1).
+ * Returns a price-locked quote for an agent by delegating to trip-service, the
+ * price authority. The facade holds no signing secret and never trusts a caller
+ * price: trip-service signs the leg's real price and returns the token (G2), with
+ * feePaise always 0 (G1).
  */
 @Service
 @RequiredArgsConstructor
 public class AgentQuoteService {
 
-    private final QuoteTokenService quoteTokenService;
+    private final TripQuoteClient tripQuoteClient;
 
     public AgentQuoteResponse quote(AgentQuoteRequest request) {
         if (request.getLegId() == null || request.getLegId().isBlank()) {
             throw new IllegalArgumentException("legId is required");
         }
-        if (request.getPricePaise() == null || request.getPricePaise() < 0) {
-            throw new IllegalArgumentException("pricePaise must be a non-negative amount in paise");
-        }
-        long pricePaise = request.getPricePaise();
-        String currency = (request.getCurrency() == null || request.getCurrency().isBlank())
-                ? "INR" : request.getCurrency();
 
-        String quoteToken = quoteTokenService.issue(request.getLegId(), pricePaise);
+        LegQuoteResponse quote = tripQuoteClient.quoteLeg(request.getLegId());
 
         return AgentQuoteResponse.builder()
-                .legId(request.getLegId())
-                .pricePaise(pricePaise)
-                .currency(currency)
-                .quoteToken(quoteToken)
-                .feePaise(0L)   // G1: never a booking/convenience fee
+                .legId(quote.getLegId())
+                .pricePaise(quote.getPricePaise())
+                .currency(quote.getCurrency())
+                .quoteToken(quote.getQuoteToken())
+                .feePaise(quote.getFeePaise())   // trip-service already guarantees 0 (G1)
                 .build();
     }
 }

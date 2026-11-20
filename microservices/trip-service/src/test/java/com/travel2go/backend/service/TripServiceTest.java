@@ -244,6 +244,28 @@ class TripServiceTest {
     }
 
     @Test
+    void quoteLeg_signsServerSidePriceAndNeverAddsAFee() {
+        Leg leg = Leg.builder().id("leg-1").tripId("trip-1").pricePaise(275000L).build();
+        when(legRepository.findById("leg-1")).thenReturn(Mono.just(leg));
+        when(quoteTokenService.issue("leg-1", 275000L)).thenReturn("server-signed-token");
+
+        com.travel2go.backend.dto.LegQuoteResponse result = tripService.quoteLeg("leg-1");
+
+        assertThat(result.getLegId()).isEqualTo("leg-1");
+        assertThat(result.getPricePaise()).isEqualTo(275000L);
+        assertThat(result.getQuoteToken()).isEqualTo("server-signed-token");
+        assertThat(result.getFeePaise()).isZero();
+        verify(quoteTokenService).issue("leg-1", 275000L);
+    }
+
+    @Test
+    void quoteLeg_throwsWhenLegMissing() {
+        when(legRepository.findById("missing")).thenReturn(Mono.empty());
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> tripService.quoteLeg("missing"));
+    }
+
+    @Test
     void bookLeg_rejectsInvalidQuoteToken_withoutCallingBookingClient() {
         Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
         com.travel2go.backend.model.Leg leg = com.travel2go.backend.model.Leg.builder()

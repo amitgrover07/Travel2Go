@@ -1,9 +1,11 @@
 package com.travel2go.agent.controller;
 
+import com.travel2go.agent.client.UpstreamUnavailableException;
 import com.travel2go.agent.dto.AgentQuoteRequest;
 import com.travel2go.agent.dto.AgentQuoteResponse;
 import com.travel2go.agent.service.AgentQuoteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +25,8 @@ public class AgentQuoteController {
             return ResponseEntity.ok(quoteService.quote(request));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
+        } catch (UpstreamUnavailableException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
     }
 }

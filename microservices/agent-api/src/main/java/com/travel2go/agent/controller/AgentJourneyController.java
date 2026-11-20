@@ -5,6 +5,7 @@ import com.travel2go.agent.dto.AgentJourneyStatusResponse;
 import com.travel2go.backend.model.Booking;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +25,10 @@ public class AgentJourneyController {
 
     @GetMapping("/{bookingRef}/status")
     public ResponseEntity<AgentJourneyStatusResponse> status(@PathVariable String bookingRef) {
-        Booking booking = bookingStatusClient.getByLegId(bookingRef);
+        // Forward the authenticated agent id so the lookup is scoped to bookings this
+        // agent is authorized for (guards IDOR); enforcement lives in booking-service.
+        String agentId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Booking booking = bookingStatusClient.getByLegId(bookingRef, agentId);
         if (booking == null) {
             return ResponseEntity.ok(AgentJourneyStatusResponse.builder()
                     .legId(bookingRef)

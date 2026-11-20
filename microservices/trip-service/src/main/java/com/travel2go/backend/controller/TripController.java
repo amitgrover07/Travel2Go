@@ -45,4 +45,18 @@ public class TripController {
         String phone = request != null ? request.getPhone() : null;
         return ResponseEntity.ok(tripService.bookLeg(id, legId, currentUserId(), email, phone));
     }
+
+    /**
+     * Server-priced quote for a leg (F2 agent quoting). trip-service is the price
+     * authority: it signs the leg's real price, so a caller can never choose the
+     * price sealed into the token (G2).
+     */
+    @GetMapping("/legs/{legId}/quote")
+    public ResponseEntity<com.travel2go.backend.dto.LegQuoteResponse> quoteLeg(@PathVariable String legId) {
+        try {
+            return ResponseEntity.ok(tripService.quoteLeg(legId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

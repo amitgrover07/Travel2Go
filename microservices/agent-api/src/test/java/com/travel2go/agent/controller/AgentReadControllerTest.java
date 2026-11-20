@@ -22,6 +22,18 @@ class AgentReadControllerTest {
     @Mock private WaitlistClient waitlistClient;
     @Mock private BookingStatusClient bookingStatusClient;
 
+    private void setAuth(String agentId) {
+        var ctx = org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+        ctx.setAuthentication(new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                agentId, null, java.util.List.of()));
+        org.springframework.security.core.context.SecurityContextHolder.setContext(ctx);
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void clearAuth() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+    }
+
     @Test
     void waitlist_returnsEstimate() {
         AgentWaitlistController controller = new AgentWaitlistController(waitlistClient);
@@ -51,8 +63,9 @@ class AgentReadControllerTest {
     @Test
     void journey_reportsStatusWhenBookingFound() {
         AgentJourneyController controller = new AgentJourneyController(bookingStatusClient);
-        when(bookingStatusClient.getByLegId("leg-1")).thenReturn(
+        when(bookingStatusClient.getByLegId(org.mockito.ArgumentMatchers.eq("leg-1"), org.mockito.ArgumentMatchers.any())).thenReturn(
                 Booking.builder().legId("leg-1").status("CONFIRMED").amountPaise(150000L).build());
+        setAuth("agent-x");
 
         var response = controller.status("leg-1");
 
@@ -65,7 +78,9 @@ class AgentReadControllerTest {
     @Test
     void journey_reportsUnavailableWhenUpstreamDegraded() {
         AgentJourneyController controller = new AgentJourneyController(bookingStatusClient);
-        when(bookingStatusClient.getByLegId("leg-1")).thenReturn(null); // circuit-breaker fallback
+        when(bookingStatusClient.getByLegId(org.mockito.ArgumentMatchers.eq("leg-1"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(null); // circuit-breaker fallback
+        setAuth("agent-x");
 
         var response = controller.status("leg-1");
 
