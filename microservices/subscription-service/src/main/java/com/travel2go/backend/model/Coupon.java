@@ -22,6 +22,9 @@ public class Coupon {
     @Column(name = "price_paise", nullable = false)
     private Long pricePaise;
 
+    @Column(name = "plan_code", nullable = false)
+    private String planCode; // the plan this coupon applies to
+
     @Column(nullable = false)
     private boolean active;
 }

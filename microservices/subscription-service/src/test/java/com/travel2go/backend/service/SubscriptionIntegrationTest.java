@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -86,6 +87,14 @@ class SubscriptionIntegrationTest {
 
         assertThat(sub.getPricePaise()).isEqualTo(29900L); // INR 299 founding offer, from data not code
         assertThat(sub.getCouponCode()).isEqualTo("FOUNDING");
+    }
+
+    @Test
+    void coupon_isRejectedOnAPlanItDoesNotBelongTo() {
+        chargerSucceeds();
+        // FOUNDING is a Family+ promo; it must not discount the Business plan.
+        assertThatThrownBy(() -> subscriptionService.subscribe("u-biz-1", "BUSINESS", "FOUNDING"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

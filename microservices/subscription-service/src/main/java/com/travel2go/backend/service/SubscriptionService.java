@@ -59,8 +59,10 @@ public class SubscriptionService {
         long price = plan.getPricePaise();
         String appliedCoupon = null;
         if (couponCode != null && !couponCode.isBlank()) {
-            Coupon coupon = couponRepository.findByCodeAndActiveTrue(couponCode)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid coupon: " + couponCode));
+            // Coupon must be valid for THIS plan - a plan's promo can't discount another plan.
+            Coupon coupon = couponRepository.findByCodeAndPlanCodeAndActiveTrue(couponCode, plan.getCode())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Invalid coupon " + couponCode + " for plan " + plan.getCode()));
             price = coupon.getPricePaise();
             appliedCoupon = coupon.getCode();
         }

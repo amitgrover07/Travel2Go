@@ -62,9 +62,20 @@ public class OrgController {
         }
     }
 
-    /** The booking flow calls this before confirming an org booking. */
+    /**
+     * The booking flow calls this before confirming an org booking.
+     *
+     * PRD-OPEN: the authoritative amount must be resolved server-side from the
+     * booking/payment record (by bookingRef) rather than trusted from the caller,
+     * so a member cannot understate an amount to slip past the spend caps / credit
+     * line. Until that cross-service lookup is wired, this at least rejects a
+     * non-positive amount; the endpoint is intended for the internal booking flow.
+     */
     @PostMapping("/{id}/bookings/evaluate")
     public ResponseEntity<Map<String, String>> evaluate(@PathVariable UUID id, @RequestBody EvaluateRequest req) {
+        if (req.bookingRef == null || req.bookingRef.isBlank() || req.amountPaise <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
         try {
             OrgSpendService.Decision decision =
                     orgSpendService.evaluateBooking(id, currentUserId(), req.bookingRef, req.amountPaise);

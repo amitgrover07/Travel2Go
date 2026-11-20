@@ -6,6 +6,7 @@ import com.travel2go.backend.service.DisruptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,9 +27,19 @@ public class DisruptionController {
 
     private final DisruptionService disruptionService;
 
+    private boolean isAdmin() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
     @PostMapping("/{legId}/disruptions")
     public ResponseEntity<Map<String, String>> reportDisruption(@PathVariable String legId,
                                                                 @RequestBody DisruptionRequest request) {
+        // Admin/feed only (SecurityConfig also gates this). A real feed source should
+        // present a dedicated service credential / HMAC-signed webhook (PRD-OPEN).
+        if (!isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (request.getSourceEventId() == null || request.getSourceEventId().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
