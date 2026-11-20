@@ -18,7 +18,15 @@ public class GstCalculator {
         }
         long denom = 10_000L + rateBps;
         // Round to nearest paise; totalTax is the remainder so taxable + tax == charged.
-        long taxable = (chargedPaise * 10_000L + denom / 2) / denom;
+        // multiplyExact rejects a charge large enough to overflow (which would otherwise
+        // wrap negative and break reconciliation) rather than silently miscomputing tax.
+        long scaled;
+        try {
+            scaled = Math.addExact(Math.multiplyExact(chargedPaise, 10_000L), denom / 2);
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException("chargedPaise too large to invoice");
+        }
+        long taxable = scaled / denom;
         long totalTax = chargedPaise - taxable;
 
         boolean intraState = sellerStateCode != null && sellerStateCode.equals(placeOfSupplyStateCode);

@@ -58,6 +58,7 @@ public class InvoiceService {
         Invoice.InvoiceBuilder builder = Invoice.builder()
                 .number(number).fy(fy)
                 .bookingRef(request.getBookingRef())
+                .ownerUserId(request.getOwnerUserId())
                 .placeOfSupply(placeOfSupply)
                 .pdfRef("invoices/" + number.replace("/", "_") + ".pdf")
                 .createdAt(new Date());
@@ -79,9 +80,18 @@ public class InvoiceService {
         return invoiceRepository.save(builder.build());
     }
 
-    public Invoice getByBooking(String bookingRef) {
-        return invoiceRepository.findByBookingRef(bookingRef)
+    /**
+     * Ownership-checked read: only the booking's owner (or an admin/service caller)
+     * may fetch its invoice - a user can never read another user's invoice.
+     */
+    public Invoice getByBooking(String bookingRef, String requestingUserId, boolean isAdmin) {
+        Invoice invoice = invoiceRepository.findByBookingRef(bookingRef)
                 .orElseThrow(() -> new IllegalArgumentException("No invoice for booking " + bookingRef));
+        if (!isAdmin && (invoice.getOwnerUserId() == null || !invoice.getOwnerUserId().equals(requestingUserId))) {
+            // Do not reveal existence to a non-owner.
+            throw new IllegalArgumentException("No invoice for booking " + bookingRef);
+        }
+        return invoice;
     }
 
     /** Consolidated monthly GST invoice for an org (ties to F6's consolidated bill). Idempotent per org+period. */

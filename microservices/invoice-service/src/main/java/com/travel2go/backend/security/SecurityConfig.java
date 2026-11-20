@@ -33,6 +33,8 @@ public class SecurityConfig {
                         // Invoice generation is internal/admin (driven by the booking/payment flow).
                         .requestMatchers(HttpMethod.POST, "/api/invoices").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/org/*/gst-invoice/*").hasAuthority("ROLE_ADMIN")
+                        // Org GST invoice reads are admin/internal until per-org JWT org-claim auth is wired.
+                        .requestMatchers(HttpMethod.GET, "/api/org/*/gst-invoice/*").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
@@ -59,7 +61,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:5173", "https://travel2go-495007.web.app", "https://travel2go.in"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Org-Id"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

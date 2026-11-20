@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class GenerateInvoiceRequest {
     private String bookingRef;
+    private String ownerUserId;    // the booking owner (for ownership-checked reads)
     private Long chargedPaise;
     private String buyerGstin;     // present -> full GST invoice; absent -> simple receipt
     private String placeOfSupply;  // destination state code (e.g. 07 for Delhi)

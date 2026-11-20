@@ -4,6 +4,7 @@ import com.travel2go.backend.service.GstCalculator.GstBreakdown;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tax-split + reconciliation (F7), pure logic. Place of supply drives intra- vs
@@ -44,6 +45,12 @@ class GstCalculatorTest {
                 assertThat(b.totalPaise()).isEqualTo(charged);
             }
         }
+    }
+
+    @Test
+    void rejectsAChargeLargeEnoughToOverflow() {
+        assertThatThrownBy(() -> calculator.compute(Long.MAX_VALUE, 500, "07", "07"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

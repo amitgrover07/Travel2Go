@@ -41,7 +41,8 @@ class InvoiceIntegrationTest {
 
     private GenerateInvoiceRequest booking(String ref, long charged, String buyerGstin, String pos) {
         return GenerateInvoiceRequest.builder()
-                .bookingRef(ref).chargedPaise(charged).buyerGstin(buyerGstin).placeOfSupply(pos).build();
+                .bookingRef(ref).ownerUserId("u-owner").chargedPaise(charged)
+                .buyerGstin(buyerGstin).placeOfSupply(pos).build();
     }
 
     @Test
@@ -94,6 +95,18 @@ class InvoiceIntegrationTest {
                 .isInstanceOf(AccessDeniedException.class);
         // The owning org can.
         assertThat(invoiceService.getOrgGstInvoice(orgA, "2026-11", orgA).getOrgId()).isEqualTo(orgA);
+    }
+
+    @Test
+    void bookingInvoiceRead_isOwnershipChecked() {
+        invoiceService.generateBookingInvoice(booking("own-1", 100_000L, null, "07")); // owner u-owner
+
+        assertThat(invoiceService.getByBooking("own-1", "u-owner", false).getBookingRef()).isEqualTo("own-1");
+        // A different user cannot read it (not revealed).
+        assertThatThrownBy(() -> invoiceService.getByBooking("own-1", "someone-else", false))
+                .isInstanceOf(IllegalArgumentException.class);
+        // An admin/service caller can.
+        assertThat(invoiceService.getByBooking("own-1", "admin", true).getBookingRef()).isEqualTo("own-1");
     }
 
     private long tail(String number) {

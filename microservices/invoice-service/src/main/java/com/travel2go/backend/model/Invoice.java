@@ -38,6 +38,9 @@ public class Invoice {
     @Column(name = "booking_ref")
     private String bookingRef;
 
+    @Column(name = "owner_user_id")
+    private String ownerUserId; // the booking owner; null for org-level invoices
+
     @Column(name = "org_id")
     private UUID orgId;
 
