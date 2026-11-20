@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -18,7 +19,13 @@ public class TravellerGroup {
     @DocumentId
     private String id;
 
+    // Existing fields - do not rename. ownerUserId is the organiser.
     private String ownerUserId;
     private String name;
     private List<String> travellerIds;
+
+    // --- F8 Group travel additions ---
+    private List<TravellerProfile> savedTravellerProfiles; // reusable name/ID records
+    private String inviteToken;                            // share/join deep-link token
+    private Date createdAt;
 }
