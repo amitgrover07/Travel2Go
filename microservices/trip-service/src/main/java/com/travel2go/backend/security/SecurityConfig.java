@@ -30,6 +30,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Disruption ingestion is an admin/feed webhook (F4), not an end-user action.
+                        .requestMatchers(HttpMethod.POST, "/api/trips/legs/*/disruptions").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

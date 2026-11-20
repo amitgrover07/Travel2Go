@@ -33,5 +33,10 @@ public class Leg {
     private Date startAt;
     private Date endAt;
 
+    // --- F4 Disruption + auto-rebooking ---
+    private String disruptionReason;   // set when a qualifying disruption is handled
+    private String rebookedToLegId;    // the alternative leg this one was rebooked onto
+    private Date disruptionHandledAt;  // when the disruption was resolved
+
     private Map<String, Object> metadata;
 }

@@ -45,4 +45,30 @@ class EmailServiceTest {
 
         verify(mailSender, never()).send(any(SimpleMailMessage.class));
     }
+
+    @Test
+    void sendDisruptionNotice_rebooked_tellsTravellerTheyreAlreadyRebooked() {
+        emailService.sendDisruptionNotice("traveller@example.com", "RAIL", "REBOOKED", "leg-2");
+
+        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender).send(captor.capture());
+        assertThat(captor.getValue().getSubject()).contains("rebooked");
+        assertThat(captor.getValue().getText()).contains("leg-2");
+    }
+
+    @Test
+    void sendDisruptionNotice_refunded_mentionsRefund() {
+        emailService.sendDisruptionNotice("traveller@example.com", "RAIL", "REFUNDED", null);
+
+        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender).send(captor.capture());
+        assertThat(captor.getValue().getSubject().toLowerCase()).contains("refund");
+    }
+
+    @Test
+    void sendDisruptionNotice_skipsSendWhenEmailIsBlank() {
+        emailService.sendDisruptionNotice(null, "RAIL", "REBOOKED", "leg-2");
+
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+    }
 }

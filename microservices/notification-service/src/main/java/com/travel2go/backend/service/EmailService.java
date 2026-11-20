@@ -112,4 +112,40 @@ public class EmailService {
                 bookingReference, legType, amountPaise / 100.0));
         mailSender.send(message);
     }
+
+    /**
+     * Proactive disruption notice (F4). The copy depends on the outcome: already
+     * rebooked, refunded, or awaiting consent for a fare-increasing option.
+     */
+    public void sendDisruptionNotice(String email, String legType, String outcome, String rebookedToLegId) {
+        if (email == null || email.isBlank()) {
+            return;
+        }
+        String legLabel = legType == null ? "trip" : legType.toLowerCase(java.util.Locale.ROOT);
+        String subject;
+        String body;
+        switch (outcome == null ? "" : outcome) {
+            case "REBOOKED" -> {
+                subject = "We've already rebooked your " + legLabel;
+                body = "Your " + legLabel + " was disrupted, but we have already rebooked you onto the next "
+                        + "available option at no extra cost. Your new booking reference is " + rebookedToLegId
+                        + ". There is nothing you need to do.";
+            }
+            case "REFUNDED" -> {
+                subject = "Your disrupted " + legLabel + " has been refunded";
+                body = "Your " + legLabel + " was disrupted and no suitable alternative was available, so we have "
+                        + "started a full refund. It will settle within 72 hours.";
+            }
+            default -> {
+                subject = "Action needed: your " + legLabel + " was disrupted";
+                body = "Your " + legLabel + " was disrupted. The only alternative we found costs more, so we will "
+                        + "not charge you without your say-so. Please confirm if you'd like us to rebook you on it.";
+            }
+        }
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject(subject);
+        message.setText(body + "\n\nTravel2Go");
+        mailSender.send(message);
+    }
 }

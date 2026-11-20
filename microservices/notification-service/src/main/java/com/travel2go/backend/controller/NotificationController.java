@@ -58,6 +58,17 @@ public class NotificationController {
         }
     }
 
+    @PostMapping("/disruption")
+    public ResponseEntity<Void> sendDisruptionNotice(@RequestBody DisruptionNoticeRequest request) {
+        try {
+            emailService.sendDisruptionNotice(request.email, request.legType, request.outcome, request.rebookedToLegId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @PostMapping("/send-leg-booking-confirmation")
     public ResponseEntity<Void> sendLegBookingConfirmation(@RequestBody LegBookingConfirmationRequest request) {
         try {
@@ -75,6 +86,14 @@ public class NotificationController {
         public String legType;
         public long amountPaise;
         public String bookingReference;
+    }
+
+    public static class DisruptionNoticeRequest {
+        public String legId;
+        public String legType;
+        public String outcome;          // REBOOKED | REFUNDED | CONSENT_REQUIRED
+        public String rebookedToLegId;
+        public String email;
     }
 
     public static class NotificationRequest {
