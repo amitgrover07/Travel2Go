@@ -60,6 +60,7 @@
 		<module>booking-service</module>
 		<module>trip-service</module>
 		<module>payment-service</module>
+		<module>waitlist-service</module>
 		<module>reactive-booking-function</module>
 		<module>api-gateway</module>
 	</modules>
