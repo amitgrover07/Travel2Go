@@ -1,0 +1,136 @@
+openapi: 3.1.0
+info:
+  title: Travel2Go Agent API
+  version: "1.0.0"
+  description: >
+    Public, versioned surface that AI agents call to manage a journey - quote a leg,
+    check a journey/booking status, and check waitlist probability. Booking and
+    payment via an agent are Phase 2+ and gated behind the `book` scope.
+    Authentication is by agent API key in the `X-Agent-Key` header (separate from
+    the end-user JWT), with least-privilege scopes (`read`, `book`).
+servers:
+  - url: /
+security:
+  - AgentApiKey: []
+components:
+  securitySchemes:
+    AgentApiKey:
+      type: apiKey
+      in: header
+      name: X-Agent-Key
+  schemas:
+    QuoteRequest:
+      type: object
+      required: [legId, pricePaise]
+      properties:
+        legId: { type: string }
+        pricePaise: { type: integer, format: int64, description: Amount in paise (long). }
+        currency: { type: string, default: INR }
+    QuoteResponse:
+      type: object
+      properties:
+        legId: { type: string }
+        pricePaise: { type: integer, format: int64 }
+        currency: { type: string }
+        quoteToken:
+          type: string
+          description: Signed price lock, identical in format to the internal quote-token.
+        feePaise:
+          type: integer
+          format: int64
+          description: Always 0 - the traveller is never charged a booking fee (G1).
+    JourneyStatusResponse:
+      type: object
+      properties:
+        legId: { type: string }
+        status: { type: string }
+        amountPaise: { type: integer, format: int64 }
+        available:
+          type: boolean
+          description: false when upstream status could not be resolved (circuit open).
+    WaitlistRequest:
+      type: object
+      required: [trainNo, travelDate, classCode, currentPosition]
+      properties:
+        trainNo: { type: string }
+        travelDate: { type: string, format: date }
+        classCode: { type: string }
+        currentPosition: { type: integer }
+    WaitlistResponse:
+      type: object
+      properties:
+        probability: { type: number, format: double }
+        verdict: { type: string, enum: [likely to clear, borderline, unlikely] }
+        explanation: { type: string }
+        shareToken: { type: string }
+        shareUrl: { type: string }
+paths:
+  /api/agent/v1/quote:
+    post:
+      summary: Quote a leg and return a signed price lock (quote-token).
+      operationId: quoteLeg
+      security:
+        - AgentApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QuoteRequest' }
+      responses:
+        "200":
+          description: A price-locked quote.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuoteResponse' }
+        "400": { description: Invalid request. }
+        "401": { description: Missing or invalid agent key. }
+        "403": { description: Key lacks the read scope. }
+  /api/agent/v1/journeys/{bookingRef}/status:
+    get:
+      summary: Check a journey/booking status.
+      operationId: journeyStatus
+      security:
+        - AgentApiKey: []
+      parameters:
+        - name: bookingRef
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Journey status (available=false if upstream is down).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JourneyStatusResponse' }
+        "401": { description: Missing or invalid agent key. }
+        "403": { description: Key lacks the read scope. }
+  /api/agent/v1/waitlist/check:
+    post:
+      summary: Check waitlist confirmation probability (wraps the public F1 service).
+      operationId: waitlistCheck
+      security:
+        - AgentApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WaitlistRequest' }
+      responses:
+        "200":
+          description: Probability estimate and verdict.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WaitlistResponse' }
+        "401": { description: Missing or invalid agent key. }
+        "403": { description: Key lacks the read scope. }
+        "503": { description: Waitlist service unavailable. }
+  /api/agent/v1/bookings:
+    post:
+      summary: Book on behalf of a traveller (Phase 2+; requires the book scope).
+      operationId: agentBook
+      security:
+        - AgentApiKey: []
+      responses:
+        "401": { description: Missing or invalid agent key. }
+        "403": { description: Key lacks the book scope. }
+        "501": { description: Agent booking not yet enabled. }
