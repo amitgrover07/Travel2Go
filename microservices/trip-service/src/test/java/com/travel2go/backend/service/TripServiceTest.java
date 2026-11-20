@@ -245,11 +245,13 @@ class TripServiceTest {
 
     @Test
     void quoteLeg_signsServerSidePriceAndNeverAddsAFee() {
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
         Leg leg = Leg.builder().id("leg-1").tripId("trip-1").pricePaise(275000L).build();
         when(legRepository.findById("leg-1")).thenReturn(Mono.just(leg));
+        when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
         when(quoteTokenService.issue("leg-1", 275000L)).thenReturn("server-signed-token");
 
-        com.travel2go.backend.dto.LegQuoteResponse result = tripService.quoteLeg("leg-1");
+        com.travel2go.backend.dto.LegQuoteResponse result = tripService.quoteLeg("leg-1", "user-1");
 
         assertThat(result.getLegId()).isEqualTo("leg-1");
         assertThat(result.getPricePaise()).isEqualTo(275000L);
@@ -259,10 +261,24 @@ class TripServiceTest {
     }
 
     @Test
+    void quoteLeg_rejectsNonOwner_withoutIssuingToken() {
+        Trip trip = Trip.builder().id("trip-1").ownerUserId("user-1").build();
+        Leg leg = Leg.builder().id("leg-1").tripId("trip-1").pricePaise(275000L).build();
+        when(legRepository.findById("leg-1")).thenReturn(Mono.just(leg));
+        when(tripRepository.findById("trip-1")).thenReturn(Mono.just(trip));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> tripService.quoteLeg("leg-1", "user-2"));
+
+        verify(quoteTokenService, never()).issue(any(), org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
     void quoteLeg_throwsWhenLegMissing() {
         when(legRepository.findById("missing")).thenReturn(Mono.empty());
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
-                () -> tripService.quoteLeg("missing"));
+                () -> tripService.quoteLeg("missing", "user-1"));
     }
 
     @Test

@@ -54,7 +54,7 @@ public class TripController {
     @GetMapping("/legs/{legId}/quote")
     public ResponseEntity<com.travel2go.backend.dto.LegQuoteResponse> quoteLeg(@PathVariable String legId) {
         try {
-            return ResponseEntity.ok(tripService.quoteLeg(legId));
+            return ResponseEntity.ok(tripService.quoteLeg(legId, currentUserId()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }

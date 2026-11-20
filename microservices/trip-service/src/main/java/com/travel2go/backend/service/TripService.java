@@ -132,15 +132,25 @@ public class TripService {
     }
 
     /**
-     * Issues a fresh, server-signed price lock for an existing leg (F2 agent quoting).
+     * Issues a fresh, server-signed price lock for an existing leg (F2 quoting).
      * The price is the leg's authoritative price - never a caller-supplied number - so
      * the quote-token can only ever seal the real price (G2). Fee is always 0 (G1).
+     *
+     * <p>Ownership is enforced exactly like the sibling leg handlers: a caller may only
+     * quote a leg on a trip they own (guards IDOR). Agent (service-to-service) access
+     * does not use this end-user-gated path - it is PRD-OPEN pending a dedicated service
+     * credential + an agent-&gt;traveller authorization model.
      */
-    public com.travel2go.backend.dto.LegQuoteResponse quoteLeg(String legId) {
+    public com.travel2go.backend.dto.LegQuoteResponse quoteLeg(String legId, String requestingUserId) {
         Leg leg = legRepository.findById(legId).block();
         if (leg == null) {
             throw new IllegalArgumentException("Leg not found: " + legId);
         }
+        Trip trip = tripRepository.findById(leg.getTripId()).block();
+        if (trip == null) {
+            throw new IllegalArgumentException("Trip not found for leg: " + legId);
+        }
+        assertOwner(trip, requestingUserId);
         if (leg.getPricePaise() == null) {
             throw new IllegalStateException("Leg has no price to quote: " + legId);
         }
