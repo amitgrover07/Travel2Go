@@ -84,9 +84,11 @@ public class GroupController {
     }
 
     @PostMapping("/join/{inviteToken}")
-    public ResponseEntity<TravellerGroup> join(@PathVariable String inviteToken, @RequestBody TravellerProfile profile) {
+    public ResponseEntity<GroupService.JoinResult> join(@PathVariable String inviteToken,
+                                                        @RequestBody TravellerProfile profile) {
         try {
-            return ResponseEntity.ok(groupService.join(inviteToken, profile));
+            // Minimal, PII-free response; the join is attributed to the authenticated caller.
+            return ResponseEntity.ok(groupService.join(inviteToken, currentUserId(), profile));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }

@@ -7,9 +7,11 @@ import com.travel2go.backend.model.GroupBooking;
 import com.travel2go.backend.model.Leg;
 import com.travel2go.backend.model.TravellerGroup;
 import com.travel2go.backend.model.TravellerProfile;
+import com.travel2go.backend.model.Trip;
 import com.travel2go.backend.repository.GroupBookingRepository;
 import com.travel2go.backend.repository.GroupRepository;
 import com.travel2go.backend.repository.LegRepository;
+import com.travel2go.backend.repository.TripRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +43,7 @@ public class GroupService {
     private final GroupRepository groupRepository;
     private final GroupBookingRepository groupBookingRepository;
     private final LegRepository legRepository;
+    private final TripRepository tripRepository;
     private final QuoteTokenService quoteTokenService;
     private final BookingClient bookingClient;
     private final EntitlementChecker entitlementChecker;
@@ -86,16 +89,26 @@ public class GroupService {
         return group.getInviteToken();
     }
 
-    /** A new member joins via the invite link; recorded as an acquisition signal. */
-    public TravellerGroup join(String inviteToken, TravellerProfile profile) {
+    /**
+     * A new member joins via the invite link; recorded as an acquisition signal. Returns
+     * a minimal view only - never the other members' saved profiles (which carry PII such
+     * as ID numbers) or the invite token.
+     */
+    public JoinResult join(String inviteToken, String joiningUserId, TravellerProfile profile) {
         TravellerGroup group = groupRepository.findByInviteToken(inviteToken).block();
         if (group == null) {
             throw new IllegalArgumentException("Invalid invite token");
         }
         addMember(group, profile, group.getOwnerUserId());
-        TravellerGroup saved = groupRepository.save(group).block();
-        log.info("group.member_joined group={} traveller={} (acquisition)", group.getId(), profile.getTravellerId());
-        return saved;
+        groupRepository.save(group).block();
+        log.info("group.member_joined group={} traveller={} by user={} (acquisition)",
+                group.getId(), profile.getTravellerId(), joiningUserId);
+        return new JoinResult(group.getId(), group.getName(), profile.getTravellerId(),
+                group.getTravellerIds().size());
+    }
+
+    /** Minimal, PII-free confirmation returned to a joining member. */
+    public record JoinResult(String groupId, String groupName, String joinedTravellerId, int memberCount) {
     }
 
     /**
@@ -108,7 +121,7 @@ public class GroupService {
 
         List<GroupBooking.LegResult> results = new ArrayList<>();
         for (String legId : legIds) {
-            results.add(bookOneLeg(tripId, legId));
+            results.add(bookOneLeg(ownerUserId, tripId, legId));
         }
 
         GroupBooking groupBooking = GroupBooking.builder()
@@ -120,11 +133,18 @@ public class GroupService {
         return groupBookingRepository.save(groupBooking).block();
     }
 
-    private GroupBooking.LegResult bookOneLeg(String tripId, String legId) {
+    private GroupBooking.LegResult bookOneLeg(String ownerUserId, String tripId, String legId) {
         try {
             Leg leg = legRepository.findById(legId).block();
             if (leg == null || !tripId.equals(leg.getTripId())) {
                 return result(legId, "FAILED", "leg not found for trip");
+            }
+            // Authorization: the organiser must own the leg's trip. Derive the trip from
+            // the leg (not the client-supplied tripId) and verify ownership, so an organiser
+            // can never book legs on someone else's trip (IDOR).
+            Trip trip = tripRepository.findById(leg.getTripId()).block();
+            if (trip == null || !ownerUserId.equals(trip.getOwnerUserId())) {
+                return result(legId, "FAILED", "not authorized for this leg");
             }
             Long price = leg.getPricePaise();
             String token = leg.getQuoteToken();

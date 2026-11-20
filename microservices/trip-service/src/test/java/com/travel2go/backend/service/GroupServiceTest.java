@@ -6,9 +6,11 @@ import com.travel2go.backend.model.GroupBooking;
 import com.travel2go.backend.model.Leg;
 import com.travel2go.backend.model.TravellerGroup;
 import com.travel2go.backend.model.TravellerProfile;
+import com.travel2go.backend.model.Trip;
 import com.travel2go.backend.repository.GroupBookingRepository;
 import com.travel2go.backend.repository.GroupRepository;
 import com.travel2go.backend.repository.LegRepository;
+import com.travel2go.backend.repository.TripRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +37,7 @@ class GroupServiceTest {
     @Mock private GroupRepository groupRepository;
     @Mock private GroupBookingRepository groupBookingRepository;
     @Mock private LegRepository legRepository;
+    @Mock private TripRepository tripRepository;
     @Mock private QuoteTokenService quoteTokenService;
     @Mock private BookingClient bookingClient;
     @Mock private EntitlementChecker entitlementChecker;
@@ -43,7 +46,7 @@ class GroupServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GroupService(groupRepository, groupBookingRepository, legRepository,
+        service = new GroupService(groupRepository, groupBookingRepository, legRepository, tripRepository,
                 quoteTokenService, bookingClient, entitlementChecker);
         ReflectionTestUtils.setField(service, "baseCap", 5);
         lenient().when(groupRepository.save(any())).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
@@ -96,6 +99,8 @@ class GroupServiceTest {
         Leg bad = Leg.builder().id("leg-2").tripId("trip-1").pricePaise(200000L).quoteToken("tampered").build();
         when(legRepository.findById("leg-1")).thenReturn(Mono.just(ok));
         when(legRepository.findById("leg-2")).thenReturn(Mono.just(bad));
+        when(tripRepository.findById("trip-1"))
+                .thenReturn(Mono.just(Trip.builder().id("trip-1").ownerUserId("owner-1").build()));
         when(quoteTokenService.isValid("good", "leg-1", 150000L)).thenReturn(true);
         when(quoteTokenService.isValid("tampered", "leg-2", 200000L)).thenReturn(false);
         when(bookingClient.createLegBooking(any()))
@@ -130,16 +135,35 @@ class GroupServiceTest {
                 .build();
         when(groupRepository.findByInviteToken("tok123")).thenReturn(Mono.just(group));
 
-        TravellerGroup joined = service.join("tok123", profile(2));
+        GroupService.JoinResult joined = service.join("tok123", "joiner-1", profile(2));
 
-        assertThat(joined.getTravellerIds()).contains("t1", "t2");
-        assertThat(joined.getSavedTravellerProfiles()).hasSize(2);
+        // Minimal, PII-free response (no other members' profiles / id numbers, no invite token).
+        assertThat(joined.groupId()).isEqualTo("g1");
+        assertThat(joined.joinedTravellerId()).isEqualTo("t2");
+        assertThat(joined.memberCount()).isEqualTo(2);
+        // The member was still added to the stored group.
+        assertThat(group.getTravellerIds()).contains("t1", "t2");
+    }
+
+    @Test
+    void bookGroup_rejectsLegsOnAnotherUsersTrip() {
+        TravellerGroup group = TravellerGroup.builder().id("g1").ownerUserId("owner-1").build();
+        when(groupRepository.findById("g1")).thenReturn(Mono.just(group));
+        Leg leg = Leg.builder().id("leg-x").tripId("trip-victim").pricePaise(150000L).quoteToken("good").build();
+        when(legRepository.findById("leg-x")).thenReturn(Mono.just(leg));
+        when(tripRepository.findById("trip-victim"))
+                .thenReturn(Mono.just(Trip.builder().id("trip-victim").ownerUserId("someone-else").build()));
+
+        GroupBooking result = service.bookGroup("g1", "owner-1", "trip-victim", List.of("leg-x"));
+
+        assertThat(result.getLegResults().get(0).getStatus()).isEqualTo("FAILED");
+        verify(bookingClient, never()).createLegBooking(any());
     }
 
     @Test
     void join_rejectsUnknownToken() {
         when(groupRepository.findByInviteToken("nope")).thenReturn(Mono.empty());
-        assertThatThrownBy(() -> service.join("nope", profile(2)))
+        assertThatThrownBy(() -> service.join("nope", "joiner-1", profile(2)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }
