@@ -114,6 +114,10 @@ public class OrgSpendService {
         requireRole(orgId, approverUserId, APPROVER_ROLES);
         Approval approval = approvalRepository.findByOrgIdAndBookingRef(orgId, bookingRef)
                 .orElseThrow(() -> new IllegalArgumentException("No approval pending for " + bookingRef));
+        // Separation of duties: the booker cannot approve their own over-cap booking.
+        if (approverUserId.equals(approval.getMemberUserId())) {
+            throw new AccessDeniedException("An approver cannot approve their own booking");
+        }
         if ("APPROVED".equals(approval.getStatus())
                 && orgBookingRepository.findByOrgIdAndBookingRef(orgId, bookingRef).isPresent()) {
             return Decision.APPROVED; // idempotent
@@ -135,6 +139,11 @@ public class OrgSpendService {
     public CreditAccount credit(UUID orgId) {
         return creditRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("No credit account for org " + orgId));
+    }
+
+    /** Authorize a read of an org's billing data: the caller must be a member. */
+    public void assertMember(UUID orgId, String userId) {
+        requireMember(orgId, userId);
     }
 
     private Decision confirm(UUID orgId, String bookingRef, long amountPaise) {

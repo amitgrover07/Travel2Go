@@ -88,16 +88,24 @@ public class OrgController {
 
     @GetMapping("/{id}/invoice/{period}")
     public ResponseEntity<Map<String, Object>> invoice(@PathVariable UUID id, @PathVariable String period) {
-        long total = orgSpendService.consolidatedBillPaise(id, period);
-        return ResponseEntity.ok(Map.of(
-                "orgId", id.toString(), "period", period, "totalPaise", total,
-                "lineCount", orgSpendService.bookingsForPeriod(id, period).size()));
+        try {
+            orgSpendService.assertMember(id, currentUserId()); // billing data is members-only
+            long total = orgSpendService.consolidatedBillPaise(id, period);
+            return ResponseEntity.ok(Map.of(
+                    "orgId", id.toString(), "period", period, "totalPaise", total,
+                    "lineCount", orgSpendService.bookingsForPeriod(id, period).size()));
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 
     @GetMapping("/{id}/credit")
     public ResponseEntity<CreditAccount> credit(@PathVariable UUID id) {
         try {
+            orgSpendService.assertMember(id, currentUserId()); // credit data is members-only
             return ResponseEntity.ok(orgSpendService.credit(id));
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }

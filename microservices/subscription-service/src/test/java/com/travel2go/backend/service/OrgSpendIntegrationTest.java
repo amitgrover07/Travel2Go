@@ -108,4 +108,28 @@ class OrgSpendIntegrationTest {
         assertThatThrownBy(() -> orgSpendService.evaluateBooking(org.getId(), "outsider", "x-1", 10_000L))
                 .isInstanceOf(AccessDeniedException.class);
     }
+
+    @Test
+    void approver_cannotApproveTheirOwnBooking() {
+        Org org = orgSpendService.createOrg("Stark", "admin-5", null);
+        orgSpendService.addMember(org.getId(), "admin-5", "appr-5", "APPROVER");
+        orgSpendService.setPolicy(org.getId(), "admin-5", 100_000L, 10_000_000L);
+
+        // The approver themselves raises an over-cap booking.
+        assertThat(orgSpendService.evaluateBooking(org.getId(), "appr-5", "s-1", 150_000L))
+                .isEqualTo(Decision.PENDING_APPROVAL);
+
+        // They must not be able to clear their own booking (separation of duties).
+        assertThatThrownBy(() -> orgSpendService.approve(org.getId(), "s-1", "appr-5"))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void billingReads_requireOrgMembership() {
+        Org org = orgSpendService.createOrg("Wayne", "admin-6", null);
+        assertThatThrownBy(() -> orgSpendService.assertMember(org.getId(), "outsider"))
+                .isInstanceOf(AccessDeniedException.class);
+        // A member passes.
+        orgSpendService.assertMember(org.getId(), "admin-6");
+    }
 }
