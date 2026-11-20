@@ -62,6 +62,7 @@
 		<module>payment-service</module>
 		<module>waitlist-service</module>
 		<module>agent-api</module>
+		<module>subscription-service</module>
 		<module>reactive-booking-function</module>
 		<module>api-gateway</module>
 	</modules>
