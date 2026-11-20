@@ -60,23 +60,24 @@ class WaitlistControllerTest {
     }
 
     @Test
-    void check_returns400OnBadInput() {
+    void check_returns400OnInvalidInput() {
         when(rateLimiter.tryAcquire(anyString())).thenReturn(true);
         when(http.getRemoteAddr()).thenReturn("203.0.113.5");
         when(waitlistService.check(any(), anyString()))
-                .thenThrow(new IllegalArgumentException("travelDate must be an ISO date (yyyy-MM-dd)"));
+                .thenThrow(new com.travel2go.backend.service.InvalidWaitlistInputException("bad trainNo"));
 
         ResponseEntity<WaitlistCheckResponse> response = controller.check(
-                WaitlistCheckRequest.builder().travelDate("nonsense").build(), http);
+                WaitlistCheckRequest.builder().trainNo("!!").build(), http);
 
         assertThat(response.getStatusCode().value()).isEqualTo(400);
     }
 
     @Test
-    void check_usesForwardedForFirstHopAsClientIp() {
-        when(rateLimiter.tryAcquire("198.51.100.7")).thenReturn(true);
-        when(http.getHeader("X-Forwarded-For")).thenReturn("198.51.100.7, 10.0.0.1");
-        when(waitlistService.check(any(), org.mockito.ArgumentMatchers.eq("198.51.100.7")))
+    void check_keysRateLimitOnRemoteAddrNotForwardedForHeader() {
+        // A forged X-Forwarded-For must not change the rate-limit key: the real peer wins.
+        when(rateLimiter.tryAcquire("198.51.100.9")).thenReturn(true);
+        when(http.getRemoteAddr()).thenReturn("198.51.100.9");
+        when(waitlistService.check(any(), org.mockito.ArgumentMatchers.eq("198.51.100.9")))
                 .thenReturn(WaitlistCheckResponse.builder().shareToken("t").build());
 
         ResponseEntity<WaitlistCheckResponse> response = controller.check(

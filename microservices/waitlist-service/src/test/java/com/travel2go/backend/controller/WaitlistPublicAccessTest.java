@@ -28,7 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
         "spring.cloud.gcp.firestore.enabled=false",
         "spring.cloud.gcp.storage.enabled=false",
-        "spring.cloud.gcp.core.enabled=false"
+        "spring.cloud.gcp.core.enabled=false",
+        "waitlist.ip-hash.secret=test-ip-hash-secret-at-least-32-bytes-long"
 })
 @MockitoBean(types = WaitlistWatchRepository.class)
 class WaitlistPublicAccessTest {

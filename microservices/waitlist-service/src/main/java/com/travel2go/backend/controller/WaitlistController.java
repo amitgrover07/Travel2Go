@@ -3,6 +3,7 @@ package com.travel2go.backend.controller;
 import com.travel2go.backend.dto.WaitlistCheckRequest;
 import com.travel2go.backend.dto.WaitlistCheckResponse;
 import com.travel2go.backend.dto.WaitlistWatchRequest;
+import com.travel2go.backend.service.InvalidWaitlistInputException;
 import com.travel2go.backend.service.IpRateLimiter;
 import com.travel2go.backend.service.WaitlistService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,7 +33,7 @@ public class WaitlistController {
         }
         try {
             return ResponseEntity.ok(waitlistService.check(request, clientIp));
-        } catch (IllegalArgumentException e) {
+        } catch (InvalidWaitlistInputException e) {
             return ResponseEntity.badRequest().build();
         }
     }
@@ -58,17 +59,21 @@ public class WaitlistController {
         try {
             waitlistService.watch(shareToken, contact, channel);
             return ResponseEntity.accepted().build();
+        } catch (InvalidWaitlistInputException e) {
+            return ResponseEntity.badRequest().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    /** First hop of X-Forwarded-For (gateway/CDN) if present, else the socket address. */
+    /**
+     * The client IP for rate-limiting. We deliberately do NOT trust a raw X-Forwarded-For
+     * header here: a caller can forge the leftmost hop and sidestep the per-IP limit.
+     * getRemoteAddr() reflects the real peer, and Spring's RemoteIp valve (configured via
+     * server.tomcat.remoteip.* with an internal-proxy allow-list) rewrites it from
+     * X-Forwarded-For only for requests that actually arrive through a trusted proxy.
+     */
     private String clientIp(HttpServletRequest http) {
-        String forwarded = http.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
         return http.getRemoteAddr();
     }
 }
