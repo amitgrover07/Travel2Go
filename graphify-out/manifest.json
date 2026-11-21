@@ -24,221 +24,6 @@
     "ast_hash": "6acd89926f3f9c0f034e28044cc6fa80",
     "semantic_hash": "6acd89926f3f9c0f034e28044cc6fa80"
   },
-  "backend/fake-sa.json": {
-    "mtime": 1781788165.9479432,
-    "ast_hash": "3ec06a88ce6aa1f1d14a3e9b6ccc8f78",
-    "semantic_hash": "3ec06a88ce6aa1f1d14a3e9b6ccc8f78"
-  },
-  "backend/mvnw": {
-    "mtime": 1781788165.9479432,
-    "ast_hash": "ab50dd89da7da2346b28003352eeeeeb",
-    "semantic_hash": "ab50dd89da7da2346b28003352eeeeeb"
-  },
-  "backend/pom.xml": {
-    "mtime": 1781788165.9479432,
-    "ast_hash": "9724a81014d059b516bf9d7a9165393d",
-    "semantic_hash": "9724a81014d059b516bf9d7a9165393d"
-  },
-  "backend/src/main/java/com/travel2go/backend/BackendApplication.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "d87bd0939939d79043fcc388368eded1",
-    "semantic_hash": "d87bd0939939d79043fcc388368eded1"
-  },
-  "backend/src/main/java/com/travel2go/backend/controller/AllocationRuleController.java": {
-    "mtime": 1781875370.8286364,
-    "ast_hash": "2a1af551ab40cfbe831d8f904fc06cfe",
-    "semantic_hash": "2a1af551ab40cfbe831d8f904fc06cfe"
-  },
-  "backend/src/main/java/com/travel2go/backend/controller/AuthController.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "55af2799d66eaffecde34c1071843c18",
-    "semantic_hash": "55af2799d66eaffecde34c1071843c18"
-  },
-  "backend/src/main/java/com/travel2go/backend/controller/BookingController.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "fca3fc2c6f2a78dcfa2532ee689bff5b",
-    "semantic_hash": "fca3fc2c6f2a78dcfa2532ee689bff5b"
-  },
-  "backend/src/main/java/com/travel2go/backend/controller/ConfiguratorCategoryController.java": {
-    "mtime": 1781789029.6043541,
-    "ast_hash": "d4406e88608bd90851671d489eca1375",
-    "semantic_hash": "d4406e88608bd90851671d489eca1375"
-  },
-  "backend/src/main/java/com/travel2go/backend/controller/HolidayPackageController.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "1c8e56be11fe90fb75dd6023ee147f47",
-    "semantic_hash": "1c8e56be11fe90fb75dd6023ee147f47"
-  },
-  "backend/src/main/java/com/travel2go/backend/controller/MediaController.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "1f5b217e00d2471e936d7b988114861b",
-    "semantic_hash": "1f5b217e00d2471e936d7b988114861b"
-  },
-  "backend/src/main/java/com/travel2go/backend/controller/SettingsController.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "d631f2c843c78356763da70872635bae",
-    "semantic_hash": "d631f2c843c78356763da70872635bae"
-  },
-  "backend/src/main/java/com/travel2go/backend/controller/TravelConfigurationController.java": {
-    "mtime": 1781789754.9157102,
-    "ast_hash": "833c6123a1f95fffd6675ab9831013f7",
-    "semantic_hash": "833c6123a1f95fffd6675ab9831013f7"
-  },
-  "backend/src/main/java/com/travel2go/backend/controller/UserController.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "3b9b7ad2a5b0a9faf6884743259bcbd4",
-    "semantic_hash": "3b9b7ad2a5b0a9faf6884743259bcbd4"
-  },
-  "backend/src/main/java/com/travel2go/backend/dto/BookingRequest.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "4d50f81d2553573a24de336fdd1a89f9",
-    "semantic_hash": "4d50f81d2553573a24de336fdd1a89f9"
-  },
-  "backend/src/main/java/com/travel2go/backend/dto/MediaFileDTO.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "4e5fe4b8701ef7aa3ae202fe489cd5af",
-    "semantic_hash": "4e5fe4b8701ef7aa3ae202fe489cd5af"
-  },
-  "backend/src/main/java/com/travel2go/backend/model/AllocationRule.java": {
-    "mtime": 1781875365.8233325,
-    "ast_hash": "0ffd5e581d9eb96cde64714cbb17163d",
-    "semantic_hash": "0ffd5e581d9eb96cde64714cbb17163d"
-  },
-  "backend/src/main/java/com/travel2go/backend/model/Booking.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "1ee133f82375a2d3fd9f85d2d213aea3",
-    "semantic_hash": "1ee133f82375a2d3fd9f85d2d213aea3"
-  },
-  "backend/src/main/java/com/travel2go/backend/model/ConfiguratorCategory.java": {
-    "mtime": 1781788977.2378118,
-    "ast_hash": "dbf6ec4cdabdc3e8198adae50630fdb5",
-    "semantic_hash": "dbf6ec4cdabdc3e8198adae50630fdb5"
-  },
-  "backend/src/main/java/com/travel2go/backend/model/GlobalSettings.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "51f109c81651493ae57a7876b03c5b11",
-    "semantic_hash": "51f109c81651493ae57a7876b03c5b11"
-  },
-  "backend/src/main/java/com/travel2go/backend/model/HolidayPackage.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "c9a1db5fdfd6de1c840430e7327c6dff",
-    "semantic_hash": "c9a1db5fdfd6de1c840430e7327c6dff"
-  },
-  "backend/src/main/java/com/travel2go/backend/model/TravelConfiguration.java": {
-    "mtime": 1781790331.9932747,
-    "ast_hash": "a5f2cb2c46c958b5fe97cb9d41b9adce",
-    "semantic_hash": "a5f2cb2c46c958b5fe97cb9d41b9adce"
-  },
-  "backend/src/main/java/com/travel2go/backend/model/User.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "5771a381900316167851a3dfead11f6a",
-    "semantic_hash": "5771a381900316167851a3dfead11f6a"
-  },
-  "backend/src/main/java/com/travel2go/backend/model/VerificationCode.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "57f4b449574a38f69cc264fb482deba8",
-    "semantic_hash": "57f4b449574a38f69cc264fb482deba8"
-  },
-  "backend/src/main/java/com/travel2go/backend/repository/AllocationRuleRepository.java": {
-    "mtime": 1781856754.6534433,
-    "ast_hash": "87725ebe736774611e99455b4f650541",
-    "semantic_hash": "87725ebe736774611e99455b4f650541"
-  },
-  "backend/src/main/java/com/travel2go/backend/repository/BookingRepository.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "a2277fa600cbc73d55597929d7b9ab0b",
-    "semantic_hash": "a2277fa600cbc73d55597929d7b9ab0b"
-  },
-  "backend/src/main/java/com/travel2go/backend/repository/ConfiguratorCategoryRepository.java": {
-    "mtime": 1781789002.0233417,
-    "ast_hash": "1d0155d09f5d8ff391b7fcd4b5fa6120",
-    "semantic_hash": "1d0155d09f5d8ff391b7fcd4b5fa6120"
-  },
-  "backend/src/main/java/com/travel2go/backend/repository/GlobalSettingsRepository.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "de089520aaf1254887a3e40052e1d97b",
-    "semantic_hash": "de089520aaf1254887a3e40052e1d97b"
-  },
-  "backend/src/main/java/com/travel2go/backend/repository/HolidayPackageRepository.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "ec2108b484647fc20dd247eb6f685fc3",
-    "semantic_hash": "ec2108b484647fc20dd247eb6f685fc3"
-  },
-  "backend/src/main/java/com/travel2go/backend/repository/TravelConfigurationRepository.java": {
-    "mtime": 1781789014.871141,
-    "ast_hash": "74a6eec8842dd7bdb7807f9c1bc95107",
-    "semantic_hash": "74a6eec8842dd7bdb7807f9c1bc95107"
-  },
-  "backend/src/main/java/com/travel2go/backend/repository/UserRepository.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "3bcaec14bf0b377eda2f7fefe06f1903",
-    "semantic_hash": "3bcaec14bf0b377eda2f7fefe06f1903"
-  },
-  "backend/src/main/java/com/travel2go/backend/repository/VerificationCodeRepository.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "503e9c5aae24c8b9613094933aedb543",
-    "semantic_hash": "503e9c5aae24c8b9613094933aedb543"
-  },
-  "backend/src/main/java/com/travel2go/backend/security/CustomUserDetailsService.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "8adc690049ddb32ef2c6471309f6924b",
-    "semantic_hash": "8adc690049ddb32ef2c6471309f6924b"
-  },
-  "backend/src/main/java/com/travel2go/backend/security/JwtAuthenticationFilter.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "ab5a804ed6a74957a6972cc5f3441936",
-    "semantic_hash": "ab5a804ed6a74957a6972cc5f3441936"
-  },
-  "backend/src/main/java/com/travel2go/backend/security/JwtUtil.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "a1b89a580af48801d7f0bf599d21673f",
-    "semantic_hash": "a1b89a580af48801d7f0bf599d21673f"
-  },
-  "backend/src/main/java/com/travel2go/backend/security/OAuth2AuthenticationSuccessHandler.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "eb79676a504fdda8eb4b9c684955b894",
-    "semantic_hash": "eb79676a504fdda8eb4b9c684955b894"
-  },
-  "backend/src/main/java/com/travel2go/backend/security/RateLimitingFilter.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "8a0fcaf45cbf2683adeb40990ee72bc8",
-    "semantic_hash": "8a0fcaf45cbf2683adeb40990ee72bc8"
-  },
-  "backend/src/main/java/com/travel2go/backend/security/SecurityConfig.java": {
-    "mtime": 1781856779.6298864,
-    "ast_hash": "b00dc35a6e4f4e3e0fe7d7a4ca0ad736",
-    "semantic_hash": "b00dc35a6e4f4e3e0fe7d7a4ca0ad736"
-  },
-  "backend/src/main/java/com/travel2go/backend/service/EmailService.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "e7324ab038618e436c15efe02fee313e",
-    "semantic_hash": "e7324ab038618e436c15efe02fee313e"
-  },
-  "backend/src/main/java/com/travel2go/backend/service/GcsStorageService.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "33180864c440d9103b1a09ec28965d71",
-    "semantic_hash": "33180864c440d9103b1a09ec28965d71"
-  },
-  "backend/src/main/java/com/travel2go/backend/service/NumberToWordsConverter.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "0ffb570de145d978b9653746d5b50a19",
-    "semantic_hash": "0ffb570de145d978b9653746d5b50a19"
-  },
-  "backend/src/main/java/com/travel2go/backend/service/PdfService.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "ed8938b9e44d1e24aaedc81a5b008389",
-    "semantic_hash": "ed8938b9e44d1e24aaedc81a5b008389"
-  },
-  "backend/src/main/java/com/travel2go/backend/service/SmsService.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "61fd963744ab1979a773d068d055ca0a",
-    "semantic_hash": "61fd963744ab1979a773d068d055ca0a"
-  },
-  "backend/src/test/java/com/travel2go/backend/BackendApplicationTests.java": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "f8dbec44caead7f0e3290c56c6c0226f",
-    "semantic_hash": "f8dbec44caead7f0e3290c56c6c0226f"
-  },
   "check_str.js": {
     "mtime": 1781788165.9620147,
     "ast_hash": "5e7a41209618a2864ca8d3b3970e8296",
@@ -260,14 +45,14 @@
     "semantic_hash": "e3048a6919d2700ae300bc25aef0080f"
   },
   "frontend/package.json": {
-    "mtime": 1781788165.9777117,
-    "ast_hash": "5445512d86308e8e1b70e15c13675dea",
-    "semantic_hash": "5445512d86308e8e1b70e15c13675dea"
+    "mtime": 1786539740.4634473,
+    "ast_hash": "5e882ad695a8eae16e8fff5f34f4979a",
+    "semantic_hash": "5e882ad695a8eae16e8fff5f34f4979a"
   },
   "frontend/src/App.jsx": {
-    "mtime": 1781788165.9777117,
-    "ast_hash": "58507c0e8ae0e7d9a6d777f0fcceab8a",
-    "semantic_hash": "58507c0e8ae0e7d9a6d777f0fcceab8a"
+    "mtime": 1789388405.2701359,
+    "ast_hash": "22f3f23660c44fb08b61b1e752995674",
+    "semantic_hash": "22f3f23660c44fb08b61b1e752995674"
   },
   "frontend/src/components/AdminAllocationRules.jsx": {
     "mtime": 1781875449.8554163,
@@ -300,9 +85,9 @@
     "semantic_hash": "64c73c6d2c6317b2e622470d06f20c51"
   },
   "frontend/src/components/Navbar.jsx": {
-    "mtime": 1781788165.9777117,
-    "ast_hash": "7c25836b8ea42700f501db1c821fee2d",
-    "semantic_hash": "7c25836b8ea42700f501db1c821fee2d"
+    "mtime": 1783401572.554092,
+    "ast_hash": "3a951bda30248c68ef7e1dd33ca19ba4",
+    "semantic_hash": "3a951bda30248c68ef7e1dd33ca19ba4"
   },
   "frontend/src/components/SEO.jsx": {
     "mtime": 1781788165.9777117,
@@ -320,9 +105,9 @@
     "semantic_hash": "51fd21c378330142b61bf8d1ef3795ef"
   },
   "frontend/src/pages/Admin.jsx": {
-    "mtime": 1781875469.77363,
-    "ast_hash": "209081621c4c72e89fea24c5c0ffaeea",
-    "semantic_hash": "209081621c4c72e89fea24c5c0ffaeea"
+    "mtime": 1786540164.8936942,
+    "ast_hash": "aa2780309251977f5855051b8a8ec635",
+    "semantic_hash": "aa2780309251977f5855051b8a8ec635"
   },
   "frontend/src/pages/ForgotPassword.jsx": {
     "mtime": 1781788165.9935894,
@@ -340,9 +125,9 @@
     "semantic_hash": "2fd1abfae797da68ad0da0142d679e97"
   },
   "frontend/src/pages/Login.jsx": {
-    "mtime": 1781788165.9935894,
-    "ast_hash": "25cd51caa1a2225349a0f1057ec7e098",
-    "semantic_hash": "25cd51caa1a2225349a0f1057ec7e098"
+    "mtime": 1786619838.1951294,
+    "ast_hash": "28b7581e6eb0affa2cc70d9a9b016007",
+    "semantic_hash": "28b7581e6eb0affa2cc70d9a9b016007"
   },
   "frontend/src/pages/OAuth2RedirectHandler.jsx": {
     "mtime": 1781788165.9935894,
@@ -360,9 +145,9 @@
     "semantic_hash": "eeda46c7341ece94339f141588b99794"
   },
   "frontend/src/services/api.js": {
-    "mtime": 1781788165.9935894,
-    "ast_hash": "d110f9110287af81b72991ef621f7f36",
-    "semantic_hash": "d110f9110287af81b72991ef621f7f36"
+    "mtime": 1789388405.27166,
+    "ast_hash": "875513b78e7265cb95b90734f763dbbc",
+    "semantic_hash": "875513b78e7265cb95b90734f763dbbc"
   },
   "frontend/src/utils/formatUtils.js": {
     "mtime": 1781788165.9935894,
@@ -385,7 +170,7 @@
     "semantic_hash": "ab50dd89da7da2346b28003352eeeeeb"
   },
   "microservices/api-gateway/pom.xml": {
-    "mtime": 1781788165.9935894,
+    "mtime": 1788755938.3759973,
     "ast_hash": "7d0d029b5aff7f57195a7c25c172f181",
     "semantic_hash": "7d0d029b5aff7f57195a7c25c172f181"
   },
@@ -405,9 +190,9 @@
     "semantic_hash": "ab50dd89da7da2346b28003352eeeeeb"
   },
   "microservices/booking-service/pom.xml": {
-    "mtime": 1781788165.9935894,
-    "ast_hash": "6ccdb4d128801de968c9ccbb7cf016f4",
-    "semantic_hash": "6ccdb4d128801de968c9ccbb7cf016f4"
+    "mtime": 1789133704.9965782,
+    "ast_hash": "281ac4663257fe24be6cfc1f76ea1fcd",
+    "semantic_hash": "281ac4663257fe24be6cfc1f76ea1fcd"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/BackendApplication.java": {
     "mtime": 1781788166.0097022,
@@ -415,24 +200,24 @@
     "semantic_hash": "c2cdeff33147b3c0c436259d3acbba4c"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/client/NotificationClient.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "dbfdd48f19f39f1df433b81336f9b833",
-    "semantic_hash": "dbfdd48f19f39f1df433b81336f9b833"
+    "mtime": 1789388405.2727747,
+    "ast_hash": "9118261efeeb338c2c48413f93e9a409",
+    "semantic_hash": "9118261efeeb338c2c48413f93e9a409"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/client/PackageClient.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "d0c4c79c8b99b2085a330445718059e5",
-    "semantic_hash": "d0c4c79c8b99b2085a330445718059e5"
+    "mtime": 1788267262.5984745,
+    "ast_hash": "4b0a3a2cb305bb80f7781ddde52c99ba",
+    "semantic_hash": "4b0a3a2cb305bb80f7781ddde52c99ba"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/client/SettingsClient.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "a6d43848434795170a4f3be1ba056f16",
-    "semantic_hash": "a6d43848434795170a4f3be1ba056f16"
+    "mtime": 1788267262.599474,
+    "ast_hash": "0b8b2317e17c9288671e7a75b9d1b532",
+    "semantic_hash": "0b8b2317e17c9288671e7a75b9d1b532"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/config/FeignConfig.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "f08677a1bc7feb90815f6c2729a92b99",
-    "semantic_hash": "f08677a1bc7feb90815f6c2729a92b99"
+    "mtime": 1788083489.7617135,
+    "ast_hash": "6c016386db9774247e09b26b8c7d2922",
+    "semantic_hash": "6c016386db9774247e09b26b8c7d2922"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/config/FirestoreConfig.java": {
     "mtime": 1781788166.0097022,
@@ -440,9 +225,9 @@
     "semantic_hash": "b31d05115d5aad05a95d5c1de048ac46"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/config/RabbitMQConfig.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "eb0fc9bf01cfa4f63c950207a0ac08ca",
-    "semantic_hash": "eb0fc9bf01cfa4f63c950207a0ac08ca"
+    "mtime": 1789133704.9970968,
+    "ast_hash": "b6d8b33fe2bb453313799ec3db3f9e35",
+    "semantic_hash": "b6d8b33fe2bb453313799ec3db3f9e35"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/controller/BookingController.java": {
     "mtime": 1781788166.0097022,
@@ -455,9 +240,9 @@
     "semantic_hash": "67a2afa2e670553f3386318564c5d222"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/repository/BookingRepository.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "a2277fa600cbc73d55597929d7b9ab0b",
-    "semantic_hash": "a2277fa600cbc73d55597929d7b9ab0b"
+    "mtime": 1788434581.6479893,
+    "ast_hash": "bc107663d33a3006a832059be069b388",
+    "semantic_hash": "bc107663d33a3006a832059be069b388"
   },
   "microservices/booking-service/src/main/java/com/travel2go/backend/repository/GlobalSettingsRepository.java": {
     "mtime": 1781788166.0097022,
@@ -484,20 +269,10 @@
     "ast_hash": "503e9c5aae24c8b9613094933aedb543",
     "semantic_hash": "503e9c5aae24c8b9613094933aedb543"
   },
-  "microservices/booking-service/src/main/java/com/travel2go/backend/security/JwtAuthenticationFilter.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "e4d3a838e0ef50eafb16ab59515a061c",
-    "semantic_hash": "e4d3a838e0ef50eafb16ab59515a061c"
-  },
-  "microservices/booking-service/src/main/java/com/travel2go/backend/security/JwtUtil.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "ef538c2c4516e790a641adf4a3989389",
-    "semantic_hash": "ef538c2c4516e790a641adf4a3989389"
-  },
   "microservices/booking-service/src/main/java/com/travel2go/backend/security/SecurityConfig.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "06e107f0f068e4c2de42fb17f16422b4",
-    "semantic_hash": "06e107f0f068e4c2de42fb17f16422b4"
+    "mtime": 1788267262.6007283,
+    "ast_hash": "b4187a246af656610c3ea83bab1f4d43",
+    "semantic_hash": "b4187a246af656610c3ea83bab1f4d43"
   },
   "microservices/booking-service/src/test/java/com/travel2go/backend/BackendApplicationTests.java": {
     "mtime": 1781788166.0097022,
@@ -510,9 +285,9 @@
     "semantic_hash": "a2a96102e44344e62ceb287667ebf497"
   },
   "microservices/common-models/pom.xml": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "bae33983b6ab1ed65484be687a3db2c0",
-    "semantic_hash": "bae33983b6ab1ed65484be687a3db2c0"
+    "mtime": 1788756074.9732666,
+    "ast_hash": "3f957cebbf108cd976bed0e86aa564e8",
+    "semantic_hash": "3f957cebbf108cd976bed0e86aa564e8"
   },
   "microservices/common-models/src/main/java/com/travel2go/backend/dto/BookingRequest.java": {
     "mtime": 1781788166.0097022,
@@ -530,9 +305,9 @@
     "semantic_hash": "7b0b406975cda8cf73651f045554f733"
   },
   "microservices/common-models/src/main/java/com/travel2go/backend/model/Booking.java": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "1ee133f82375a2d3fd9f85d2d213aea3",
-    "semantic_hash": "1ee133f82375a2d3fd9f85d2d213aea3"
+    "mtime": 1788434581.649744,
+    "ast_hash": "21a75d9dc5eb11283c0d54d0d755c4a3",
+    "semantic_hash": "21a75d9dc5eb11283c0d54d0d755c4a3"
   },
   "microservices/common-models/src/main/java/com/travel2go/backend/model/ConfiguratorCategory.java": {
     "mtime": 1781788973.5525806,
@@ -595,9 +370,9 @@
     "semantic_hash": "ab50dd89da7da2346b28003352eeeeeb"
   },
   "microservices/identity-service/pom.xml": {
-    "mtime": 1781788166.0259225,
-    "ast_hash": "2b1a660cac3f7f33ae95e431228986b2",
-    "semantic_hash": "2b1a660cac3f7f33ae95e431228986b2"
+    "mtime": 1788756074.9732666,
+    "ast_hash": "b7b971c7576f961030c0df64be551bf7",
+    "semantic_hash": "b7b971c7576f961030c0df64be551bf7"
   },
   "microservices/identity-service/src/main/java/com/travel2go/backend/BackendApplication.java": {
     "mtime": 1781788166.0415802,
@@ -605,9 +380,9 @@
     "semantic_hash": "c2cdeff33147b3c0c436259d3acbba4c"
   },
   "microservices/identity-service/src/main/java/com/travel2go/backend/client/NotificationClient.java": {
-    "mtime": 1781788166.0415802,
-    "ast_hash": "d656cfd6777672eac4aab438a1235eae",
-    "semantic_hash": "d656cfd6777672eac4aab438a1235eae"
+    "mtime": 1788267262.6047337,
+    "ast_hash": "ad8ca40b8c85b90dd663951d52d0069b",
+    "semantic_hash": "ad8ca40b8c85b90dd663951d52d0069b"
   },
   "microservices/identity-service/src/main/java/com/travel2go/backend/config/FirestoreConfig.java": {
     "mtime": 1781788166.0415802,
@@ -674,11 +449,6 @@
     "ast_hash": "ab5a804ed6a74957a6972cc5f3441936",
     "semantic_hash": "ab5a804ed6a74957a6972cc5f3441936"
   },
-  "microservices/identity-service/src/main/java/com/travel2go/backend/security/JwtUtil.java": {
-    "mtime": 1781788166.048208,
-    "ast_hash": "252436a93d3d84f0dfffde24aad92deb",
-    "semantic_hash": "252436a93d3d84f0dfffde24aad92deb"
-  },
   "microservices/identity-service/src/main/java/com/travel2go/backend/security/OAuth2AuthenticationSuccessHandler.java": {
     "mtime": 1781788166.048208,
     "ast_hash": "07c8504906ff52029d8b9d9d30c9b3ee",
@@ -700,9 +470,9 @@
     "semantic_hash": "61fd963744ab1979a773d068d055ca0a"
   },
   "microservices/identity-service/src/test/java/com/travel2go/backend/BackendApplicationTests.java": {
-    "mtime": 1781788166.048208,
-    "ast_hash": "7d0246e8580eb75f2de2677fff8ae1ba",
-    "semantic_hash": "7d0246e8580eb75f2de2677fff8ae1ba"
+    "mtime": 1788506144.5732539,
+    "ast_hash": "ee33aaa3cd4e7e6a1ced3fa080afb469",
+    "semantic_hash": "ee33aaa3cd4e7e6a1ced3fa080afb469"
   },
   "microservices/media-service/fake-sa.json": {
     "mtime": 1781788166.048208,
@@ -715,9 +485,9 @@
     "semantic_hash": "ab50dd89da7da2346b28003352eeeeeb"
   },
   "microservices/media-service/pom.xml": {
-    "mtime": 1781788166.048208,
-    "ast_hash": "0519a2ee1bcc8732f862ba3e15f579b6",
-    "semantic_hash": "0519a2ee1bcc8732f862ba3e15f579b6"
+    "mtime": 1788756074.9742672,
+    "ast_hash": "a4601478d74d99803df6d18aef9b417a",
+    "semantic_hash": "a4601478d74d99803df6d18aef9b417a"
   },
   "microservices/media-service/src/main/java/com/travel2go/backend/BackendApplication.java": {
     "mtime": 1781788166.048208,
@@ -754,20 +524,10 @@
     "ast_hash": "503e9c5aae24c8b9613094933aedb543",
     "semantic_hash": "503e9c5aae24c8b9613094933aedb543"
   },
-  "microservices/media-service/src/main/java/com/travel2go/backend/security/JwtAuthenticationFilter.java": {
-    "mtime": 1781788166.0574791,
-    "ast_hash": "e4d3a838e0ef50eafb16ab59515a061c",
-    "semantic_hash": "e4d3a838e0ef50eafb16ab59515a061c"
-  },
-  "microservices/media-service/src/main/java/com/travel2go/backend/security/JwtUtil.java": {
-    "mtime": 1781788166.0574791,
-    "ast_hash": "ef538c2c4516e790a641adf4a3989389",
-    "semantic_hash": "ef538c2c4516e790a641adf4a3989389"
-  },
   "microservices/media-service/src/main/java/com/travel2go/backend/security/SecurityConfig.java": {
-    "mtime": 1781788166.0574791,
-    "ast_hash": "486a568193365570c45199eb3789b059",
-    "semantic_hash": "486a568193365570c45199eb3789b059"
+    "mtime": 1788267262.606732,
+    "ast_hash": "74f5ccc787b57ec47faf0c7fdae0daee",
+    "semantic_hash": "74f5ccc787b57ec47faf0c7fdae0daee"
   },
   "microservices/media-service/src/main/java/com/travel2go/backend/service/GcsStorageService.java": {
     "mtime": 1781788166.0574791,
@@ -775,9 +535,9 @@
     "semantic_hash": "33180864c440d9103b1a09ec28965d71"
   },
   "microservices/media-service/src/test/java/com/travel2go/backend/BackendApplicationTests.java": {
-    "mtime": 1781788166.0574791,
-    "ast_hash": "f8dbec44caead7f0e3290c56c6c0226f",
-    "semantic_hash": "f8dbec44caead7f0e3290c56c6c0226f"
+    "mtime": 1788506144.5732539,
+    "ast_hash": "b2a49772711c335d42066074a54484f5",
+    "semantic_hash": "b2a49772711c335d42066074a54484f5"
   },
   "microservices/notification-service/fake-sa.json": {
     "mtime": 1781788166.0574791,
@@ -790,7 +550,7 @@
     "semantic_hash": "ab50dd89da7da2346b28003352eeeeeb"
   },
   "microservices/notification-service/pom.xml": {
-    "mtime": 1781788166.0574791,
+    "mtime": 1788756074.9752638,
     "ast_hash": "58d20d5a704ac066ec1d9bacc97b6e6d",
     "semantic_hash": "58d20d5a704ac066ec1d9bacc97b6e6d"
   },
@@ -805,9 +565,9 @@
     "semantic_hash": "b31d05115d5aad05a95d5c1de048ac46"
   },
   "microservices/notification-service/src/main/java/com/travel2go/backend/controller/NotificationController.java": {
-    "mtime": 1781788166.0574791,
-    "ast_hash": "7e1cd9d39cf0c2800949b94919fe0cc6",
-    "semantic_hash": "7e1cd9d39cf0c2800949b94919fe0cc6"
+    "mtime": 1789388405.2776587,
+    "ast_hash": "622eaf93a2067991872101e89cbf2be6",
+    "semantic_hash": "622eaf93a2067991872101e89cbf2be6"
   },
   "microservices/notification-service/src/main/java/com/travel2go/backend/security/SecurityConfig.java": {
     "mtime": 1781788166.0574791,
@@ -815,9 +575,9 @@
     "semantic_hash": "6ec45f56d08edb18c3d393d1f75173ed"
   },
   "microservices/notification-service/src/main/java/com/travel2go/backend/service/EmailService.java": {
-    "mtime": 1781788166.0574791,
-    "ast_hash": "7c67a4730acefa08e85fbe7544025140",
-    "semantic_hash": "7c67a4730acefa08e85fbe7544025140"
+    "mtime": 1789388405.2776587,
+    "ast_hash": "231764d3f02940a85498200ece12af86",
+    "semantic_hash": "231764d3f02940a85498200ece12af86"
   },
   "microservices/notification-service/src/main/java/com/travel2go/backend/service/NumberToWordsConverter.java": {
     "mtime": 1781788166.0574791,
@@ -835,9 +595,9 @@
     "semantic_hash": "61fd963744ab1979a773d068d055ca0a"
   },
   "microservices/notification-service/src/test/java/com/travel2go/backend/BackendApplicationTests.java": {
-    "mtime": 1781788166.0574791,
-    "ast_hash": "f8dbec44caead7f0e3290c56c6c0226f",
-    "semantic_hash": "f8dbec44caead7f0e3290c56c6c0226f"
+    "mtime": 1788506144.5732539,
+    "ast_hash": "df206757efbd2c5110dad71f30a92c60",
+    "semantic_hash": "df206757efbd2c5110dad71f30a92c60"
   },
   "microservices/package-service/fake-sa.json": {
     "mtime": 1781788166.0736847,
@@ -850,9 +610,9 @@
     "semantic_hash": "ab50dd89da7da2346b28003352eeeeeb"
   },
   "microservices/package-service/pom.xml": {
-    "mtime": 1781788166.0736847,
-    "ast_hash": "2372ddb907b6ebd0c03d9ca13793e14b",
-    "semantic_hash": "2372ddb907b6ebd0c03d9ca13793e14b"
+    "mtime": 1788756074.975771,
+    "ast_hash": "61132d808b3855c0980c15f278c9dbf4",
+    "semantic_hash": "61132d808b3855c0980c15f278c9dbf4"
   },
   "microservices/package-service/src/main/java/com/travel2go/backend/BackendApplication.java": {
     "mtime": 1781788166.0736847,
@@ -934,25 +694,15 @@
     "ast_hash": "503e9c5aae24c8b9613094933aedb543",
     "semantic_hash": "503e9c5aae24c8b9613094933aedb543"
   },
-  "microservices/package-service/src/main/java/com/travel2go/backend/security/JwtAuthenticationFilter.java": {
-    "mtime": 1781788166.0736847,
-    "ast_hash": "de2aa8cd85bfe93dec53e9145fb05aeb",
-    "semantic_hash": "de2aa8cd85bfe93dec53e9145fb05aeb"
-  },
-  "microservices/package-service/src/main/java/com/travel2go/backend/security/JwtUtil.java": {
-    "mtime": 1781788166.0736847,
-    "ast_hash": "a53571f1886e2ce845bf7982d40b334d",
-    "semantic_hash": "a53571f1886e2ce845bf7982d40b334d"
-  },
   "microservices/package-service/src/main/java/com/travel2go/backend/security/SecurityConfig.java": {
-    "mtime": 1781856773.7549222,
-    "ast_hash": "a3b48979d3af5c72ca6665fa7b1dc49a",
-    "semantic_hash": "a3b48979d3af5c72ca6665fa7b1dc49a"
+    "mtime": 1788267262.6097322,
+    "ast_hash": "5c2d886d46f3bc0a41cff3ababa5c800",
+    "semantic_hash": "5c2d886d46f3bc0a41cff3ababa5c800"
   },
   "microservices/package-service/src/test/java/com/travel2go/backend/BackendApplicationTests.java": {
-    "mtime": 1781788166.0736847,
-    "ast_hash": "f8dbec44caead7f0e3290c56c6c0226f",
-    "semantic_hash": "f8dbec44caead7f0e3290c56c6c0226f"
+    "mtime": 1788506144.5732539,
+    "ast_hash": "95e27fd8416c5d6fd3b3c76d3a80085e",
+    "semantic_hash": "95e27fd8416c5d6fd3b3c76d3a80085e"
   },
   "microservices/reactive-booking-function/mvnw": {
     "mtime": 1781788166.0736847,
@@ -960,7 +710,7 @@
     "semantic_hash": "a2a96102e44344e62ceb287667ebf497"
   },
   "microservices/reactive-booking-function/pom.xml": {
-    "mtime": 1781788166.0736847,
+    "mtime": 1788756074.9767783,
     "ast_hash": "8cab1382565e708dcdcfc41595581b51",
     "semantic_hash": "8cab1382565e708dcdcfc41595581b51"
   },
@@ -1050,24 +800,19 @@
     "semantic_hash": "2d3dbc302f858c1b92e890efa7e19b9f"
   },
   ".github/workflows/backend-deploy.yml": {
-    "mtime": 1781788165.9479432,
-    "ast_hash": "6c025c5e584fccd1010f324cc6ee7a8b",
-    "semantic_hash": "6c025c5e584fccd1010f324cc6ee7a8b"
+    "mtime": 1789133704.995396,
+    "ast_hash": "4185ccd0fe9fe92b7dc2ea9ad2519587",
+    "semantic_hash": "4185ccd0fe9fe92b7dc2ea9ad2519587"
   },
   ".github/workflows/frontend-deploy.yml": {
-    "mtime": 1781788165.9479432,
-    "ast_hash": "31b06603bd60a39536df9f6429e43f8c",
-    "semantic_hash": "31b06603bd60a39536df9f6429e43f8c"
-  },
-  "backend/tree.txt": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "dd90b29fe6f4c1c113b96933777ddacc",
-    "semantic_hash": "dd90b29fe6f4c1c113b96933777ddacc"
+    "mtime": 1789388405.2691245,
+    "ast_hash": "f2646d0a3959d9b66256695c3165a697",
+    "semantic_hash": "f2646d0a3959d9b66256695c3165a697"
   },
   "docker-compose-microservices.yml": {
-    "mtime": 1781788165.9620147,
-    "ast_hash": "3d1455e07069149ecb87394052bafb7a",
-    "semantic_hash": "3d1455e07069149ecb87394052bafb7a"
+    "mtime": 1783395832.5665352,
+    "ast_hash": "aad4fba54ca721c3c52047bdb10a967c",
+    "semantic_hash": "aad4fba54ca721c3c52047bdb10a967c"
   },
   "docker-compose.yml": {
     "mtime": 1781788165.9620147,
@@ -1088,36 +833,6 @@
     "mtime": 1781788165.9777117,
     "ast_hash": "4f3bdcb4c667eaacd843452966980359",
     "semantic_hash": "4f3bdcb4c667eaacd843452966980359"
-  },
-  "microservices/api-gateway/tree.txt": {
-    "mtime": 1781788165.9935894,
-    "ast_hash": "dd90b29fe6f4c1c113b96933777ddacc",
-    "semantic_hash": "dd90b29fe6f4c1c113b96933777ddacc"
-  },
-  "microservices/booking-service/tree.txt": {
-    "mtime": 1781788166.0097022,
-    "ast_hash": "dd90b29fe6f4c1c113b96933777ddacc",
-    "semantic_hash": "dd90b29fe6f4c1c113b96933777ddacc"
-  },
-  "microservices/identity-service/tree.txt": {
-    "mtime": 1781788166.048208,
-    "ast_hash": "dd90b29fe6f4c1c113b96933777ddacc",
-    "semantic_hash": "dd90b29fe6f4c1c113b96933777ddacc"
-  },
-  "microservices/media-service/tree.txt": {
-    "mtime": 1781788166.0574791,
-    "ast_hash": "dd90b29fe6f4c1c113b96933777ddacc",
-    "semantic_hash": "dd90b29fe6f4c1c113b96933777ddacc"
-  },
-  "microservices/notification-service/tree.txt": {
-    "mtime": 1781788166.0574791,
-    "ast_hash": "dd90b29fe6f4c1c113b96933777ddacc",
-    "semantic_hash": "dd90b29fe6f4c1c113b96933777ddacc"
-  },
-  "microservices/package-service/tree.txt": {
-    "mtime": 1781788166.0736847,
-    "ast_hash": "dd90b29fe6f4c1c113b96933777ddacc",
-    "semantic_hash": "dd90b29fe6f4c1c113b96933777ddacc"
   },
   "microservices/reactive-booking-function/src/main/resources/application.yml": {
     "mtime": 1781788166.0736847,
@@ -1198,5 +913,805 @@
     "mtime": 1781788165.9777117,
     "ast_hash": "6d5180a782d64c8cf51ba01c2a2184d8",
     "semantic_hash": "6d5180a782d64c8cf51ba01c2a2184d8"
+  },
+  ".claude/settings.json": {
+    "mtime": 1788755777.018844,
+    "ast_hash": "ca2b8f9fd417f573a3efb52a9e0086b2",
+    "semantic_hash": "ca2b8f9fd417f573a3efb52a9e0086b2"
+  },
+  ".github/modernize/java-upgrade/hooks/8351a6c7-0ed5-4b99-8912-4db138eb1997.json": {
+    "mtime": 1788756560.5823593,
+    "ast_hash": "4798638021d681a33196ca9c52602b59",
+    "semantic_hash": "4798638021d681a33196ca9c52602b59"
+  },
+  ".github/modernize/java-upgrade/hooks/scripts/recordToolUse.ps1": {
+    "mtime": 1789442622.8057492,
+    "ast_hash": "9ecf230451dfd20ff4e0a2a01e80a4e6",
+    "semantic_hash": "9ecf230451dfd20ff4e0a2a01e80a4e6"
+  },
+  ".github/modernize/java-upgrade/hooks/scripts/recordToolUse.sh": {
+    "mtime": 1789442622.8067484,
+    "ast_hash": "e25ae501603ce6bf738198f5ce32ba83",
+    "semantic_hash": "e25ae501603ce6bf738198f5ce32ba83"
+  },
+  "frontend/src/components/AdminPMPlayground.jsx": {
+    "mtime": 1786615994.9140248,
+    "ast_hash": "4fa79ff62ee0a5f394c9102aa3f72135",
+    "semantic_hash": "4fa79ff62ee0a5f394c9102aa3f72135"
+  },
+  "frontend/src/pages/Checkout.jsx": {
+    "mtime": 1789388405.2701359,
+    "ast_hash": "0a005533e1594198463e4bc46d9062fb",
+    "semantic_hash": "0a005533e1594198463e4bc46d9062fb"
+  },
+  "frontend/src/pages/TrustPortal.jsx": {
+    "mtime": 1783401553.1294384,
+    "ast_hash": "bd19bc71f37af009b16431ab423211de",
+    "semantic_hash": "bd19bc71f37af009b16431ab423211de"
+  },
+  "frontend/src/utils/pmTemplates.js": {
+    "mtime": 1786615955.947597,
+    "ast_hash": "8e69d361c3ce8443b0abdee7ce19881a",
+    "semantic_hash": "8e69d361c3ce8443b0abdee7ce19881a"
+  },
+  "infra/terraform/cloudsql.tf": {
+    "mtime": 1788958138.9438534,
+    "ast_hash": "84d3848c8f51b874809384bd2a58e32b",
+    "semantic_hash": "84d3848c8f51b874809384bd2a58e32b"
+  },
+  "infra/terraform/iam.tf": {
+    "mtime": 1788267262.5939634,
+    "ast_hash": "19fbe3cd4ec45d54b36aaf3e97bc96f2",
+    "semantic_hash": "19fbe3cd4ec45d54b36aaf3e97bc96f2"
+  },
+  "infra/terraform/outputs.tf": {
+    "mtime": 1788267262.5939634,
+    "ast_hash": "d17c657bc443fad3771b4b5d066bca16",
+    "semantic_hash": "d17c657bc443fad3771b4b5d066bca16"
+  },
+  "infra/terraform/run-invoker.tf": {
+    "mtime": 1788267262.5939634,
+    "ast_hash": "62591dd9bce14b39c607d727488c684c",
+    "semantic_hash": "62591dd9bce14b39c607d727488c684c"
+  },
+  "infra/terraform/variables.tf": {
+    "mtime": 1788958138.9458573,
+    "ast_hash": "8141f7fd484f27919e9886af35163b89",
+    "semantic_hash": "8141f7fd484f27919e9886af35163b89"
+  },
+  "infra/terraform/versions.tf": {
+    "mtime": 1788267262.595966,
+    "ast_hash": "feb175dafa76cda23191f67b70e2ecf0",
+    "semantic_hash": "feb175dafa76cda23191f67b70e2ecf0"
+  },
+  "microservices/api-gateway/src/main/java/com/travel2go/apigateway/config/DownstreamUrlValidator.java": {
+    "mtime": 1788267262.595966,
+    "ast_hash": "5de8c6928ec5bbf06b0871365d71616a",
+    "semantic_hash": "5de8c6928ec5bbf06b0871365d71616a"
+  },
+  "microservices/api-gateway/src/test/java/com/travel2go/apigateway/ApiGatewayApplicationTests.java": {
+    "mtime": 1788506144.5732539,
+    "ast_hash": "3846c1070559e8b123c6e29b4afcc7e6",
+    "semantic_hash": "3846c1070559e8b123c6e29b4afcc7e6"
+  },
+  "microservices/booking-service/src/main/java/com/travel2go/backend/client/NotificationClientFallbackFactory.java": {
+    "mtime": 1789388405.2727747,
+    "ast_hash": "405495f172f613014deff0fe0b5e132e",
+    "semantic_hash": "405495f172f613014deff0fe0b5e132e"
+  },
+  "microservices/booking-service/src/main/java/com/travel2go/backend/config/DownstreamUrlValidator.java": {
+    "mtime": 1788267262.599474,
+    "ast_hash": "986604aa099cc61295ac17ffca39a095",
+    "semantic_hash": "986604aa099cc61295ac17ffca39a095"
+  },
+  "microservices/booking-service/src/main/java/com/travel2go/backend/config/ReadFeignRetryConfig.java": {
+    "mtime": 1788083489.7622297,
+    "ast_hash": "b5544f7bf524b62227572cd81ffba5bd",
+    "semantic_hash": "b5544f7bf524b62227572cd81ffba5bd"
+  },
+  "microservices/booking-service/src/main/java/com/travel2go/backend/consumer/LegConfirmedConsumer.java": {
+    "mtime": 1789388405.2727747,
+    "ast_hash": "8ffcc72375b6e2c102570b4a2904d506",
+    "semantic_hash": "8ffcc72375b6e2c102570b4a2904d506"
+  },
+  "microservices/booking-service/src/main/java/com/travel2go/backend/consumer/LegConfirmedEvent.java": {
+    "mtime": 1789133704.9982302,
+    "ast_hash": "527aff0266093829417bdd81463b1e2e",
+    "semantic_hash": "527aff0266093829417bdd81463b1e2e"
+  },
+  "microservices/booking-service/src/main/java/com/travel2go/backend/controller/LegBookingController.java": {
+    "mtime": 1789388405.2727747,
+    "ast_hash": "4f6ee5dae688753758f732aecd3afdc7",
+    "semantic_hash": "4f6ee5dae688753758f732aecd3afdc7"
+  },
+  "microservices/booking-service/src/main/java/com/travel2go/backend/service/LegBookingConflictException.java": {
+    "mtime": 1788434581.6479893,
+    "ast_hash": "81501bf43bca63e7ccee7cf8d90f17db",
+    "semantic_hash": "81501bf43bca63e7ccee7cf8d90f17db"
+  },
+  "microservices/booking-service/src/main/java/com/travel2go/backend/service/LegBookingRejectedException.java": {
+    "mtime": 1788434581.6479893,
+    "ast_hash": "e63b713e4e12a087c2b96c1e35d5dfc1",
+    "semantic_hash": "e63b713e4e12a087c2b96c1e35d5dfc1"
+  },
+  "microservices/booking-service/src/main/java/com/travel2go/backend/service/LegBookingService.java": {
+    "mtime": 1789388405.2727747,
+    "ast_hash": "edc4266804dfd5ed9f405062c5efb5e8",
+    "semantic_hash": "edc4266804dfd5ed9f405062c5efb5e8"
+  },
+  "microservices/booking-service/src/test/java/com/travel2go/backend/client/NotificationClientFallbackFactoryTest.java": {
+    "mtime": 1788083489.7637577,
+    "ast_hash": "1ea4359bd1ac0fe89c1560f630e07b17",
+    "semantic_hash": "1ea4359bd1ac0fe89c1560f630e07b17"
+  },
+  "microservices/booking-service/src/test/java/com/travel2go/backend/consumer/LegConfirmedConsumerTest.java": {
+    "mtime": 1789388405.2727747,
+    "ast_hash": "dab2a360741fc9598889b3b81484bb9d",
+    "semantic_hash": "dab2a360741fc9598889b3b81484bb9d"
+  },
+  "microservices/booking-service/src/test/java/com/travel2go/backend/consumer/LegConfirmedDlqIntegrationTest.java": {
+    "mtime": 1789133705.0003512,
+    "ast_hash": "8ea1542a833af93b14dcaed932b6bfbd",
+    "semantic_hash": "8ea1542a833af93b14dcaed932b6bfbd"
+  },
+  "microservices/booking-service/src/test/java/com/travel2go/backend/controller/LegBookingControllerTest.java": {
+    "mtime": 1789388405.276557,
+    "ast_hash": "24d24a71de2d50b769ff02c768b75324",
+    "semantic_hash": "24d24a71de2d50b769ff02c768b75324"
+  },
+  "microservices/booking-service/src/test/java/com/travel2go/backend/service/LegBookingServiceTest.java": {
+    "mtime": 1789388405.2776587,
+    "ast_hash": "1d734494bab5c4810cf9130e2ff6b769",
+    "semantic_hash": "1d734494bab5c4810cf9130e2ff6b769"
+  },
+  "microservices/common-models/src/main/java/com/travel2go/backend/dto/LegBookingRequest.java": {
+    "mtime": 1789388405.2776587,
+    "ast_hash": "fed3a93ace025d055c2a269ff07f0ea5",
+    "semantic_hash": "fed3a93ace025d055c2a269ff07f0ea5"
+  },
+  "microservices/common-models/src/main/java/com/travel2go/backend/dto/LegBookingResponse.java": {
+    "mtime": 1788434581.649744,
+    "ast_hash": "d7820c46b11bc322c29c799311fb19d0",
+    "semantic_hash": "d7820c46b11bc322c29c799311fb19d0"
+  },
+  "microservices/common-models/src/main/java/com/travel2go/backend/model/Leg.java": {
+    "mtime": 1783354428.3503447,
+    "ast_hash": "61a88fd6202f349bc2773848d3d971aa",
+    "semantic_hash": "61a88fd6202f349bc2773848d3d971aa"
+  },
+  "microservices/common-models/src/main/java/com/travel2go/backend/model/Traveller.java": {
+    "mtime": 1783354428.3503447,
+    "ast_hash": "f19ab5cdd1bca3a9fcc6961381d110a5",
+    "semantic_hash": "f19ab5cdd1bca3a9fcc6961381d110a5"
+  },
+  "microservices/common-models/src/main/java/com/travel2go/backend/model/TravellerGroup.java": {
+    "mtime": 1783354428.351345,
+    "ast_hash": "1db433a4190125deb8cdfeb0369cc47e",
+    "semantic_hash": "1db433a4190125deb8cdfeb0369cc47e"
+  },
+  "microservices/common-models/src/main/java/com/travel2go/backend/model/Trip.java": {
+    "mtime": 1783354428.351345,
+    "ast_hash": "238f33bd77a9496aa7c3d3a54c402ae4",
+    "semantic_hash": "238f33bd77a9496aa7c3d3a54c402ae4"
+  },
+  "microservices/common-models/src/test/java/com/travel2go/backend/model/NewModelsTest.java": {
+    "mtime": 1783354428.352345,
+    "ast_hash": "aa689de5a96ba5a3feb952a1860f65d7",
+    "semantic_hash": "aa689de5a96ba5a3feb952a1860f65d7"
+  },
+  "microservices/identity-service/src/main/java/com/travel2go/backend/config/DownstreamUrlValidator.java": {
+    "mtime": 1788267262.6047337,
+    "ast_hash": "e0b934414f46cc1c1feb31a9d4c32c78",
+    "semantic_hash": "e0b934414f46cc1c1feb31a9d4c32c78"
+  },
+  "microservices/notification-service/src/test/java/com/travel2go/backend/service/EmailServiceTest.java": {
+    "mtime": 1789388405.2776587,
+    "ast_hash": "62ef5a6a36984c0837d505d941c6f75d",
+    "semantic_hash": "62ef5a6a36984c0837d505d941c6f75d"
+  },
+  "microservices/payment-service/mvnw": {
+    "mtime": 1783354428.353345,
+    "ast_hash": "a2a96102e44344e62ceb287667ebf497",
+    "semantic_hash": "a2a96102e44344e62ceb287667ebf497"
+  },
+  "microservices/payment-service/pom.xml": {
+    "mtime": 1788958138.9458573,
+    "ast_hash": "9bf7909bea1106b0dedf20a6795592ad",
+    "semantic_hash": "9bf7909bea1106b0dedf20a6795592ad"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/PaymentServiceApplication.java": {
+    "mtime": 1789133705.000877,
+    "ast_hash": "216319458208a33f2b68255e135a739c",
+    "semantic_hash": "216319458208a33f2b68255e135a739c"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/config/RabbitMQConfig.java": {
+    "mtime": 1788267262.6107333,
+    "ast_hash": "e67cb36d740c7e2087e8e02b1e05fc94",
+    "semantic_hash": "e67cb36d740c7e2087e8e02b1e05fc94"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/controller/PaymentController.java": {
+    "mtime": 1788434581.649744,
+    "ast_hash": "c84082f56af4bd871b47fdfefebe9872",
+    "semantic_hash": "c84082f56af4bd871b47fdfefebe9872"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/controller/ReconciliationController.java": {
+    "mtime": 1788958138.9458573,
+    "ast_hash": "993ef8f1f3ec4f568fb624627ecee268",
+    "semantic_hash": "993ef8f1f3ec4f568fb624627ecee268"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/dto/CreateOrderRequest.java": {
+    "mtime": 1788267262.6127343,
+    "ast_hash": "2e7e255d55d91c4a3a55314a55a1a629",
+    "semantic_hash": "2e7e255d55d91c4a3a55314a55a1a629"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/model/OutboxEntry.java": {
+    "mtime": 1789133705.0014818,
+    "ast_hash": "16ccc6be6dfa590e23f49b13c7f21eca",
+    "semantic_hash": "16ccc6be6dfa590e23f49b13c7f21eca"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/model/Payment.java": {
+    "mtime": 1788958138.9479206,
+    "ast_hash": "3e8578956400e7549051cfcf40f12704",
+    "semantic_hash": "3e8578956400e7549051cfcf40f12704"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/model/Refund.java": {
+    "mtime": 1788958138.9479206,
+    "ast_hash": "81209a8ae0a77bde68f7a767963dbfee",
+    "semantic_hash": "81209a8ae0a77bde68f7a767963dbfee"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/model/Settlement.java": {
+    "mtime": 1788958138.9489996,
+    "ast_hash": "8bd64d729e33ef9fe791050a9b39e05b",
+    "semantic_hash": "8bd64d729e33ef9fe791050a9b39e05b"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/provider/CreatedOrder.java": {
+    "mtime": 1788267262.6127343,
+    "ast_hash": "87f603a2d110dcecfec090edcd0d4c1f",
+    "semantic_hash": "87f603a2d110dcecfec090edcd0d4c1f"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/provider/InvalidWebhookSignatureException.java": {
+    "mtime": 1788267262.6127343,
+    "ast_hash": "01fa1736e7da86898515610546892711",
+    "semantic_hash": "01fa1736e7da86898515610546892711"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/provider/PaymentProvider.java": {
+    "mtime": 1788267262.6137328,
+    "ast_hash": "e7688e95bfdc267fd3cda898080ccf6f",
+    "semantic_hash": "e7688e95bfdc267fd3cda898080ccf6f"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/provider/RazorpayProvider.java": {
+    "mtime": 1788267262.6137328,
+    "ast_hash": "e93eb69f8165c5f92f020e5f73dad64b",
+    "semantic_hash": "e93eb69f8165c5f92f020e5f73dad64b"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/provider/RefundResult.java": {
+    "mtime": 1788267262.6137328,
+    "ast_hash": "2664819c5d696a5de30c9d4500432ba3",
+    "semantic_hash": "2664819c5d696a5de30c9d4500432ba3"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/provider/SandboxPaymentProvider.java": {
+    "mtime": 1788267262.614732,
+    "ast_hash": "f8f2b2389851b8668c271e492edc945e",
+    "semantic_hash": "f8f2b2389851b8668c271e492edc945e"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/provider/WebhookEvent.java": {
+    "mtime": 1788267262.614732,
+    "ast_hash": "052960da16c171a474639ec4bc94762b",
+    "semantic_hash": "052960da16c171a474639ec4bc94762b"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/provider/WebhookEventType.java": {
+    "mtime": 1788267262.614732,
+    "ast_hash": "7cf4b49ff4660e6fa4007ad4fb79d23b",
+    "semantic_hash": "7cf4b49ff4660e6fa4007ad4fb79d23b"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/provider/WebhookPayloadParser.java": {
+    "mtime": 1788267262.6157322,
+    "ast_hash": "02193720d1cedb1c6e125ac1f6761433",
+    "semantic_hash": "02193720d1cedb1c6e125ac1f6761433"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/repository/OutboxRepository.java": {
+    "mtime": 1789133705.002008,
+    "ast_hash": "7fc86fc2f4e95355d7b9845e42f8128d",
+    "semantic_hash": "7fc86fc2f4e95355d7b9845e42f8128d"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/repository/PaymentRepository.java": {
+    "mtime": 1788958138.9489996,
+    "ast_hash": "fb6c3de1b749d2f126c1cc0fb0b9030f",
+    "semantic_hash": "fb6c3de1b749d2f126c1cc0fb0b9030f"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/repository/RefundRepository.java": {
+    "mtime": 1788958138.9500005,
+    "ast_hash": "dc5e673aec537b24773d32d1857da6aa",
+    "semantic_hash": "dc5e673aec537b24773d32d1857da6aa"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/repository/SettlementRepository.java": {
+    "mtime": 1788958138.9500005,
+    "ast_hash": "ff62a2f3d318c848bca7831387d43867",
+    "semantic_hash": "ff62a2f3d318c848bca7831387d43867"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/security/SecurityConfig.java": {
+    "mtime": 1788958138.9510002,
+    "ast_hash": "563b7751c3ff8355b39302229ae1d6e2",
+    "semantic_hash": "563b7751c3ff8355b39302229ae1d6e2"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/service/OutboxRelay.java": {
+    "mtime": 1789133705.002008,
+    "ast_hash": "d942f3749d39b917215fe9ec6505ee8d",
+    "semantic_hash": "d942f3749d39b917215fe9ec6505ee8d"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/service/PaymentCapturedEvent.java": {
+    "mtime": 1788267262.6167324,
+    "ast_hash": "fd13ff8934bfc1c082612e997843fa8b",
+    "semantic_hash": "fd13ff8934bfc1c082612e997843fa8b"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/service/PaymentConflictException.java": {
+    "mtime": 1788434581.649744,
+    "ast_hash": "2f2da8ffeb27aacd6759a57fead6664b",
+    "semantic_hash": "2f2da8ffeb27aacd6759a57fead6664b"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/service/PaymentEventPublisher.java": {
+    "mtime": 1788267262.6167324,
+    "ast_hash": "c2d173e5819c9b0bf6e1747c29fa7ca6",
+    "semantic_hash": "c2d173e5819c9b0bf6e1747c29fa7ca6"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/service/PaymentRefundedEvent.java": {
+    "mtime": 1788267262.617732,
+    "ast_hash": "d0c116ef639001360c038bbf038a64c8",
+    "semantic_hash": "d0c116ef639001360c038bbf038a64c8"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/service/PaymentService.java": {
+    "mtime": 1789133705.0027118,
+    "ast_hash": "7d56cdd112b507d65cf05534ee708e4a",
+    "semantic_hash": "7d56cdd112b507d65cf05534ee708e4a"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/service/ReconciliationService.java": {
+    "mtime": 1788958138.9520001,
+    "ast_hash": "e546da0969fa6aefe09bf38bd67a9d78",
+    "semantic_hash": "e546da0969fa6aefe09bf38bd67a9d78"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/service/ReconciliationSummary.java": {
+    "mtime": 1788958138.9520001,
+    "ast_hash": "c454e6fc5bdb08b2f148cf30bd8c61a1",
+    "semantic_hash": "c454e6fc5bdb08b2f148cf30bd8c61a1"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/webhook/ProcessedWebhookEvent.java": {
+    "mtime": 1788958138.9520001,
+    "ast_hash": "66d4dde182dde5a8a4bfe6c573c52857",
+    "semantic_hash": "66d4dde182dde5a8a4bfe6c573c52857"
+  },
+  "microservices/payment-service/src/main/java/com/travel2go/backend/webhook/ProcessedWebhookEventRepository.java": {
+    "mtime": 1788958138.9531846,
+    "ast_hash": "f82b5563ac969cdf0199bf2074ed66bc",
+    "semantic_hash": "f82b5563ac969cdf0199bf2074ed66bc"
+  },
+  "microservices/payment-service/src/main/resources/db/migration/V1__money_ledger.sql": {
+    "mtime": 1788958138.9551833,
+    "ast_hash": "fcba86145803cc077e8eb37110cab8bb",
+    "semantic_hash": "fcba86145803cc077e8eb37110cab8bb"
+  },
+  "microservices/payment-service/src/main/resources/db/migration/V2__outbox.sql": {
+    "mtime": 1789133705.0032237,
+    "ast_hash": "d0cfab43221ddd4280bea1122857892f",
+    "semantic_hash": "d0cfab43221ddd4280bea1122857892f"
+  },
+  "microservices/payment-service/src/test/java/com/travel2go/backend/PaymentServiceApplicationTests.java": {
+    "mtime": 1789133705.0037794,
+    "ast_hash": "a686136f9e83a3441d2ed47f54a6ab11",
+    "semantic_hash": "a686136f9e83a3441d2ed47f54a6ab11"
+  },
+  "microservices/payment-service/src/test/java/com/travel2go/backend/controller/PaymentControllerWebhookTest.java": {
+    "mtime": 1788434581.649744,
+    "ast_hash": "c31ab6712ae0ecb9d9e03aaa26c840d6",
+    "semantic_hash": "c31ab6712ae0ecb9d9e03aaa26c840d6"
+  },
+  "microservices/payment-service/src/test/java/com/travel2go/backend/controller/ReconciliationControllerTest.java": {
+    "mtime": 1788958138.9561834,
+    "ast_hash": "0f13cba2554baffc085aaf2efee571e7",
+    "semantic_hash": "0f13cba2554baffc085aaf2efee571e7"
+  },
+  "microservices/payment-service/src/test/java/com/travel2go/backend/provider/RazorpayProviderTest.java": {
+    "mtime": 1788267262.6207428,
+    "ast_hash": "a637bc0f2a68f614897d5582ebb37055",
+    "semantic_hash": "a637bc0f2a68f614897d5582ebb37055"
+  },
+  "microservices/payment-service/src/test/java/com/travel2go/backend/provider/SandboxPaymentProviderTest.java": {
+    "mtime": 1788267262.6217327,
+    "ast_hash": "61f58eebbf2f08a010049b681e0318e1",
+    "semantic_hash": "61f58eebbf2f08a010049b681e0318e1"
+  },
+  "microservices/payment-service/src/test/java/com/travel2go/backend/service/OutboxRelayTest.java": {
+    "mtime": 1789133705.0042863,
+    "ast_hash": "24ceeb3555f7f69cb3db034c9c8c611f",
+    "semantic_hash": "24ceeb3555f7f69cb3db034c9c8c611f"
+  },
+  "microservices/payment-service/src/test/java/com/travel2go/backend/service/PaymentCaptureConcurrencyTest.java": {
+    "mtime": 1789133705.0042863,
+    "ast_hash": "305370084a27ff4bd3b113a7d77d61d2",
+    "semantic_hash": "305370084a27ff4bd3b113a7d77d61d2"
+  },
+  "microservices/payment-service/src/test/java/com/travel2go/backend/service/PaymentServiceTest.java": {
+    "mtime": 1789133705.0048177,
+    "ast_hash": "272fe937e17d24fdc4dc04681f91b54f",
+    "semantic_hash": "272fe937e17d24fdc4dc04681f91b54f"
+  },
+  "microservices/payment-service/src/test/java/com/travel2go/backend/service/ReconciliationServiceTest.java": {
+    "mtime": 1788958138.9561834,
+    "ast_hash": "db6e1b4be49a7b1b726318fe5951f0ae",
+    "semantic_hash": "db6e1b4be49a7b1b726318fe5951f0ae"
+  },
+  "microservices/platform-security/mvnw": {
+    "mtime": 1788506144.5732539,
+    "ast_hash": "a2a96102e44344e62ceb287667ebf497",
+    "semantic_hash": "a2a96102e44344e62ceb287667ebf497"
+  },
+  "microservices/platform-security/pom.xml": {
+    "mtime": 1788756074.975771,
+    "ast_hash": "98e250f9049f649893e124579287ee4d",
+    "semantic_hash": "98e250f9049f649893e124579287ee4d"
+  },
+  "microservices/platform-security/src/main/java/com/travel2go/backend/security/JwtUtil.java": {
+    "mtime": 1788267262.624734,
+    "ast_hash": "71024f9fffe2c9c5e5181f8004670d01",
+    "semantic_hash": "71024f9fffe2c9c5e5181f8004670d01"
+  },
+  "microservices/platform-security/src/main/java/com/travel2go/backend/security/ResourceServerJwtAuthenticationFilter.java": {
+    "mtime": 1788267262.624734,
+    "ast_hash": "2d0e9a36155e94e29e8226812c7041f3",
+    "semantic_hash": "2d0e9a36155e94e29e8226812c7041f3"
+  },
+  "microservices/platform-security/src/main/java/com/travel2go/backend/service/QuoteTokenService.java": {
+    "mtime": 1788267262.6257331,
+    "ast_hash": "0f608655f37652450204518f74c5eac9",
+    "semantic_hash": "0f608655f37652450204518f74c5eac9"
+  },
+  "microservices/platform-security/src/test/java/com/travel2go/backend/service/QuoteTokenServiceTest.java": {
+    "mtime": 1788267262.6267333,
+    "ast_hash": "403804147dc11305b2acf482092723b3",
+    "semantic_hash": "403804147dc11305b2acf482092723b3"
+  },
+  "microservices/trip-service/mvnw": {
+    "mtime": 1783354428.379439,
+    "ast_hash": "a2a96102e44344e62ceb287667ebf497",
+    "semantic_hash": "a2a96102e44344e62ceb287667ebf497"
+  },
+  "microservices/trip-service/pom.xml": {
+    "mtime": 1789133705.00534,
+    "ast_hash": "5bc7671df03473f1dc5c7c6434a6f682",
+    "semantic_hash": "5bc7671df03473f1dc5c7c6434a6f682"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/TripServiceApplication.java": {
+    "mtime": 1783354428.381443,
+    "ast_hash": "404061cf0c5a6ea1efd635e6a661d007",
+    "semantic_hash": "404061cf0c5a6ea1efd635e6a661d007"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/client/BookingClient.java": {
+    "mtime": 1788340355.6673968,
+    "ast_hash": "e699876b9e7bed7ff7880bb7636a3b57",
+    "semantic_hash": "e699876b9e7bed7ff7880bb7636a3b57"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/config/DownstreamUrlValidator.java": {
+    "mtime": 1788340360.4097302,
+    "ast_hash": "b70ff82912e2ba0e6c7ac838282815de",
+    "semantic_hash": "b70ff82912e2ba0e6c7ac838282815de"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/config/FeignConfig.java": {
+    "mtime": 1783354428.382443,
+    "ast_hash": "9bcaf5cb703769a23baa077fdce67b1e",
+    "semantic_hash": "9bcaf5cb703769a23baa077fdce67b1e"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/config/FirestoreConfig.java": {
+    "mtime": 1783354428.382443,
+    "ast_hash": "b31d05115d5aad05a95d5c1de048ac46",
+    "semantic_hash": "b31d05115d5aad05a95d5c1de048ac46"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/config/RabbitMQConfig.java": {
+    "mtime": 1789133705.0064075,
+    "ast_hash": "911e7236f4a3f623cf180605f5022916",
+    "semantic_hash": "911e7236f4a3f623cf180605f5022916"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/consumer/PaymentCapturedConsumer.java": {
+    "mtime": 1789133705.006968,
+    "ast_hash": "66440118d3b858f43754c9060d2654df",
+    "semantic_hash": "66440118d3b858f43754c9060d2654df"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/consumer/PaymentCapturedEvent.java": {
+    "mtime": 1788434581.649744,
+    "ast_hash": "62f7f9b281a43d2bdee60938392ba723",
+    "semantic_hash": "62f7f9b281a43d2bdee60938392ba723"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/controller/TripController.java": {
+    "mtime": 1789388405.281195,
+    "ast_hash": "ebcfd788324a741efa0897f14a3b7e0f",
+    "semantic_hash": "ebcfd788324a741efa0897f14a3b7e0f"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/dto/AddLegRequest.java": {
+    "mtime": 1783354428.3834429,
+    "ast_hash": "9868ee64fa5b669bd54f1fdb050ae19b",
+    "semantic_hash": "9868ee64fa5b669bd54f1fdb050ae19b"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/dto/BookLegRequest.java": {
+    "mtime": 1789388405.281195,
+    "ast_hash": "61841401064f541f29cc1b79c32c699c",
+    "semantic_hash": "61841401064f541f29cc1b79c32c699c"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/dto/CreateTripRequest.java": {
+    "mtime": 1783354428.3844433,
+    "ast_hash": "38bbe35f67ec764b42d3ac85fcbf9316",
+    "semantic_hash": "38bbe35f67ec764b42d3ac85fcbf9316"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/dto/TripDetailResponse.java": {
+    "mtime": 1783354428.3844433,
+    "ast_hash": "9a678f23eb71d9dfd5af961d4ee90b7a",
+    "semantic_hash": "9a678f23eb71d9dfd5af961d4ee90b7a"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/repository/LegRepository.java": {
+    "mtime": 1783354428.3854442,
+    "ast_hash": "dc09b5ecf5f017b07853528330846512",
+    "semantic_hash": "dc09b5ecf5f017b07853528330846512"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/repository/TripRepository.java": {
+    "mtime": 1783354428.3854442,
+    "ast_hash": "981718d931c715cb97138e06cd081001",
+    "semantic_hash": "981718d931c715cb97138e06cd081001"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/security/SecurityConfig.java": {
+    "mtime": 1788267262.6297333,
+    "ast_hash": "2eb5d019b1477397d44848a8198f55c8",
+    "semantic_hash": "2eb5d019b1477397d44848a8198f55c8"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/service/LegConfirmedEvent.java": {
+    "mtime": 1789133705.00749,
+    "ast_hash": "895a57b93134f59e6c547fa6807079ab",
+    "semantic_hash": "895a57b93134f59e6c547fa6807079ab"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/service/TripEventPublisher.java": {
+    "mtime": 1783354428.3864434,
+    "ast_hash": "837c0b8ff652a64dfd67ac5ff65deaca",
+    "semantic_hash": "837c0b8ff652a64dfd67ac5ff65deaca"
+  },
+  "microservices/trip-service/src/main/java/com/travel2go/backend/service/TripService.java": {
+    "mtime": 1789388405.281195,
+    "ast_hash": "b84a04f5795c528e5112b0758a601843",
+    "semantic_hash": "b84a04f5795c528e5112b0758a601843"
+  },
+  "microservices/trip-service/src/test/java/com/travel2go/backend/TripServiceApplicationTests.java": {
+    "mtime": 1783354428.388444,
+    "ast_hash": "c2ba14b2c434011bc7af0c2d0c69c130",
+    "semantic_hash": "c2ba14b2c434011bc7af0c2d0c69c130"
+  },
+  "microservices/trip-service/src/test/java/com/travel2go/backend/consumer/PaymentCapturedConsumerTest.java": {
+    "mtime": 1789133705.0090504,
+    "ast_hash": "3797c816fc5e07a96aae7d72778e8ad4",
+    "semantic_hash": "3797c816fc5e07a96aae7d72778e8ad4"
+  },
+  "microservices/trip-service/src/test/java/com/travel2go/backend/consumer/PaymentCapturedDlqIntegrationTest.java": {
+    "mtime": 1789133705.0090504,
+    "ast_hash": "9decb3cd44bc20c4b304bb1d59765889",
+    "semantic_hash": "9decb3cd44bc20c4b304bb1d59765889"
+  },
+  "microservices/trip-service/src/test/java/com/travel2go/backend/service/TripServiceTest.java": {
+    "mtime": 1789388405.2829058,
+    "ast_hash": "ce890841251cf683da8a7cec9b09a73b",
+    "semantic_hash": "ce890841251cf683da8a7cec9b09a73b"
+  },
+  ".github/modernize/java-upgrade/20260907043524/plan.md": {
+    "mtime": 1788755948.408936,
+    "ast_hash": "1a02d3df53dff7e5dc8e8727861bb82d",
+    "semantic_hash": "1a02d3df53dff7e5dc8e8727861bb82d"
+  },
+  ".github/modernize/java-upgrade/20260907043524/progress.md": {
+    "mtime": 1788755948.408936,
+    "ast_hash": "dfdb72a3ddd30766befc8f1941dce00b",
+    "semantic_hash": "dfdb72a3ddd30766befc8f1941dce00b"
+  },
+  ".github/workflows/backend-ci.yml": {
+    "mtime": 1788506144.5685804,
+    "ast_hash": "107d59f1d91958de3b33e69e7313ae41",
+    "semantic_hash": "107d59f1d91958de3b33e69e7313ae41"
+  },
+  ".superpowers/sdd/final-review-fix-report.md": {
+    "mtime": 1789386799.1880343,
+    "ast_hash": "99622d6db8d31b4b07b998cab8648771",
+    "semantic_hash": "99622d6db8d31b4b07b998cab8648771"
+  },
+  ".superpowers/sdd/progress.md": {
+    "mtime": 1789387145.0306866,
+    "ast_hash": "d671f1c4a8210589253404185c472c9c",
+    "semantic_hash": "d671f1c4a8210589253404185c472c9c"
+  },
+  ".superpowers/sdd/task-1-brief.md": {
+    "mtime": 1789192428.9699352,
+    "ast_hash": "005c9f2b368ae875846c6bf5cf0d4da7",
+    "semantic_hash": "005c9f2b368ae875846c6bf5cf0d4da7"
+  },
+  ".superpowers/sdd/task-1-report.md": {
+    "mtime": 1789192588.168811,
+    "ast_hash": "7c7d5387505dfc770034b89018ad4435",
+    "semantic_hash": "7c7d5387505dfc770034b89018ad4435"
+  },
+  ".superpowers/sdd/task-10-brief.md": {
+    "mtime": 1788233434.840937,
+    "ast_hash": "965aa1ce2882739d635928a44fa8ce13",
+    "semantic_hash": "965aa1ce2882739d635928a44fa8ce13"
+  },
+  ".superpowers/sdd/task-10-report.md": {
+    "mtime": 1788233540.226939,
+    "ast_hash": "3564f1f3dd93f7051af86369798e0972",
+    "semantic_hash": "3564f1f3dd93f7051af86369798e0972"
+  },
+  ".superpowers/sdd/task-11-brief.md": {
+    "mtime": 1788233604.5428526,
+    "ast_hash": "09a226fec823511df4c55d68299f3613",
+    "semantic_hash": "09a226fec823511df4c55d68299f3613"
+  },
+  ".superpowers/sdd/task-11-report.md": {
+    "mtime": 1788233737.0568058,
+    "ast_hash": "c30074560205c7e4d4ddb3f08adbc98e",
+    "semantic_hash": "c30074560205c7e4d4ddb3f08adbc98e"
+  },
+  ".superpowers/sdd/task-2-brief.md": {
+    "mtime": 1789210829.2484515,
+    "ast_hash": "cccd8e1bc440d3e2d2caea94ccb9ab8c",
+    "semantic_hash": "cccd8e1bc440d3e2d2caea94ccb9ab8c"
+  },
+  ".superpowers/sdd/task-2-report.md": {
+    "mtime": 1789210924.2175505,
+    "ast_hash": "b964e8e5421d071129b5ce254a98d32c",
+    "semantic_hash": "b964e8e5421d071129b5ce254a98d32c"
+  },
+  ".superpowers/sdd/task-3-brief.md": {
+    "mtime": 1789211036.8553104,
+    "ast_hash": "633f336b1521fb699f3b025e0fa5f3b4",
+    "semantic_hash": "633f336b1521fb699f3b025e0fa5f3b4"
+  },
+  ".superpowers/sdd/task-3-fix-report.md": {
+    "mtime": 1788338916.8391447,
+    "ast_hash": "c13b63303ffd7b95e17cbf7da55f468e",
+    "semantic_hash": "c13b63303ffd7b95e17cbf7da55f468e"
+  },
+  ".superpowers/sdd/task-3-report.md": {
+    "mtime": 1789211173.9008598,
+    "ast_hash": "5388a2c6c82bece6d3c223c0d0a5e329",
+    "semantic_hash": "5388a2c6c82bece6d3c223c0d0a5e329"
+  },
+  ".superpowers/sdd/task-4-brief.md": {
+    "mtime": 1789282134.4780936,
+    "ast_hash": "b03c3db9e0f3a35b3d725bed9fd57a1e",
+    "semantic_hash": "b03c3db9e0f3a35b3d725bed9fd57a1e"
+  },
+  ".superpowers/sdd/task-4-report.md": {
+    "mtime": 1789282618.7569516,
+    "ast_hash": "2fca11ef41533f3aba1de37dab8b3184",
+    "semantic_hash": "2fca11ef41533f3aba1de37dab8b3184"
+  },
+  ".superpowers/sdd/task-5-brief.md": {
+    "mtime": 1789282879.9847372,
+    "ast_hash": "84b687ebdeac48584c6bbca848f227c9",
+    "semantic_hash": "84b687ebdeac48584c6bbca848f227c9"
+  },
+  ".superpowers/sdd/task-5-report.md": {
+    "mtime": 1789283183.6653545,
+    "ast_hash": "42b945c8ee6173d275bd5119b6afb2ed",
+    "semantic_hash": "42b945c8ee6173d275bd5119b6afb2ed"
+  },
+  ".superpowers/sdd/task-6-brief.md": {
+    "mtime": 1789283437.5898902,
+    "ast_hash": "0e8a2186f2ee68348ae0ddd1a682714a",
+    "semantic_hash": "0e8a2186f2ee68348ae0ddd1a682714a"
+  },
+  ".superpowers/sdd/task-6-report.md": {
+    "mtime": 1789283514.423298,
+    "ast_hash": "c0695ec0c86d5ff71f83cf5e0ba6a8d9",
+    "semantic_hash": "c0695ec0c86d5ff71f83cf5e0ba6a8d9"
+  },
+  ".superpowers/sdd/task-7-brief.md": {
+    "mtime": 1789283587.008415,
+    "ast_hash": "ea5f7643663a4d2c8bd2c523a469afdf",
+    "semantic_hash": "ea5f7643663a4d2c8bd2c523a469afdf"
+  },
+  ".superpowers/sdd/task-7-report.md": {
+    "mtime": 1789283818.4828682,
+    "ast_hash": "39cb9ba3463fc892b5610026b0aa23f6",
+    "semantic_hash": "39cb9ba3463fc892b5610026b0aa23f6"
+  },
+  ".superpowers/sdd/task-8-brief.md": {
+    "mtime": 1788172660.0034966,
+    "ast_hash": "ecdf76553b7beb29854ffb12c7bfa47e",
+    "semantic_hash": "ecdf76553b7beb29854ffb12c7bfa47e"
+  },
+  ".superpowers/sdd/task-9-brief.md": {
+    "mtime": 1788233243.1749496,
+    "ast_hash": "f2d30e0f97cdcb68f70545e139ec17fa",
+    "semantic_hash": "f2d30e0f97cdcb68f70545e139ec17fa"
+  },
+  ".superpowers/sdd/task-9-report.md": {
+    "mtime": 1788233366.7205415,
+    "ast_hash": "e608878b38ef81996282a1b90fc7ceb7",
+    "semantic_hash": "e608878b38ef81996282a1b90fc7ceb7"
+  },
+  "MIGRATIONS.md": {
+    "mtime": 1783354428.343346,
+    "ast_hash": "2dc5455992f3d128190e89896f1516ca",
+    "semantic_hash": "2dc5455992f3d128190e89896f1516ca"
+  },
+  "OPEN_QUESTIONS.md": {
+    "mtime": 1783396753.9989011,
+    "ast_hash": "7595a2fda8548f9165f7e04457252820",
+    "semantic_hash": "7595a2fda8548f9165f7e04457252820"
+  },
+  "PROJECT_DOCUMENTATION.md": {
+    "mtime": 1786512521.0397115,
+    "ast_hash": "53abe1112816ce239b1fe1f717f3e8d8",
+    "semantic_hash": "53abe1112816ce239b1fe1f717f3e8d8"
+  },
+  "docs/superpowers/plans/2026-07-06-phase0-foundations.md": {
+    "mtime": 1783354428.3463452,
+    "ast_hash": "765e6a1872c68394e76d24b1bf423b55",
+    "semantic_hash": "765e6a1872c68394e76d24b1bf423b55"
+  },
+  "docs/superpowers/plans/2026-08-31-p1-1-payment-provider.md": {
+    "mtime": 1788267262.5921478,
+    "ast_hash": "3d7676271ebc7a7b0dd7f0317fabece2",
+    "semantic_hash": "3d7676271ebc7a7b0dd7f0317fabece2"
+  },
+  "docs/superpowers/plans/2026-09-02-p1-2-booking-validation.md": {
+    "mtime": 1788321716.8060536,
+    "ast_hash": "3a3247e55a484beba869ce0350226923",
+    "semantic_hash": "3a3247e55a484beba869ce0350226923"
+  },
+  "docs/superpowers/plans/2026-09-03-f1-f2-ci-gate.md": {
+    "mtime": 1788436330.349316,
+    "ast_hash": "d3c01e0a517b4c0309ee37726b094e07",
+    "semantic_hash": "d3c01e0a517b4c0309ee37726b094e07"
+  },
+  "docs/superpowers/plans/2026-09-05-p1-3-postgres-ledger.md": {
+    "mtime": 1788582003.7082527,
+    "ast_hash": "e97e70cc25b6bcdb47415764419a85c7",
+    "semantic_hash": "e97e70cc25b6bcdb47415764419a85c7"
+  },
+  "docs/superpowers/plans/2026-09-11-p1-4-saga-outbox.md": {
+    "mtime": 1789111235.2961013,
+    "ast_hash": "56d9243238f570d5a906d5920faf5875",
+    "semantic_hash": "56d9243238f570d5a906d5920faf5875"
+  },
+  "docs/superpowers/plans/2026-09-12-mvp-checkout.md": {
+    "mtime": 1789192138.8391352,
+    "ast_hash": "4f1c7733065f93dcde282c345cd23a74",
+    "semantic_hash": "4f1c7733065f93dcde282c345cd23a74"
+  },
+  "docs/superpowers/specs/2026-08-31-p1-1-payment-provider-design.md": {
+    "mtime": 1788267262.5921478,
+    "ast_hash": "74de6c31fce95425ddd5b41b97519d4a",
+    "semantic_hash": "74de6c31fce95425ddd5b41b97519d4a"
+  },
+  "docs/superpowers/specs/2026-09-02-p1-2-booking-validation-design.md": {
+    "mtime": 1788320834.3046644,
+    "ast_hash": "4f645741a2f47df93035c170ee2b3102",
+    "semantic_hash": "4f645741a2f47df93035c170ee2b3102"
+  },
+  "docs/superpowers/specs/2026-09-03-f1-f2-ci-gate-design.md": {
+    "mtime": 1788435951.6153607,
+    "ast_hash": "1641cb6320e53d50cf0d9af88b7e7ea2",
+    "semantic_hash": "1641cb6320e53d50cf0d9af88b7e7ea2"
+  },
+  "docs/superpowers/specs/2026-09-05-p1-3-postgres-ledger-design.md": {
+    "mtime": 1788580425.9775608,
+    "ast_hash": "f4b88d8cb749a4c7a413ed6db1eb1312",
+    "semantic_hash": "f4b88d8cb749a4c7a413ed6db1eb1312"
+  },
+  "docs/superpowers/specs/2026-09-11-p1-4-saga-outbox-design.md": {
+    "mtime": 1789110428.4098053,
+    "ast_hash": "bab34a7ef0c9ef70ea6335d197e2eeef",
+    "semantic_hash": "bab34a7ef0c9ef70ea6335d197e2eeef"
+  },
+  "docs/superpowers/specs/2026-09-12-mvp-checkout-design.md": {
+    "mtime": 1789190456.225996,
+    "ast_hash": "babdd1abef6bd7caa93a6f5e9b09582b",
+    "semantic_hash": "babdd1abef6bd7caa93a6f5e9b09582b"
+  },
+  "infra/terraform/README.md": {
+    "mtime": 1788958138.9438534,
+    "ast_hash": "34f67582a502dfba05bde23f40898e62",
+    "semantic_hash": "34f67582a502dfba05bde23f40898e62"
   }
 }

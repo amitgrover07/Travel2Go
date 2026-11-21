@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel2Go — System Architecture, ER & UML Blueprint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(19, 27, 46, 0.75);
+      --card-border: rgba(56, 189, 248, 0.15);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --indigo: #6366f1;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --purple: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 10% 10%, #111827, #090d16 90%);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    /* Header & Navigation Bar */
+    header {
+      background: rgba(11, 15, 25, 0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      padding: 14px 28px;
+    }
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);
+    }
+    .brand-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .brand-tag {
+      font-size: 0.75rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .nav-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .nav-tab:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .nav-tab.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .container {
+      max-width: 1440px;
+      margin: 30px auto;
+      padding: 0 24px;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      margin-bottom: 35px;
+      padding: 30px 20px;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0) 100%);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* Invariants Row */
+    .invariants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 35px;
+    }
+    .invariant-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      border-left: 4px solid var(--primary);
+    }
+    .invariant-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .invariant-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Tab Panels */
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Section Cards */
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 26px;
+      margin-bottom: 35px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+    .section-header {
+      margin-bottom: 20px;
+    }
+    .section-header h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    /* Mermaid Canvas Container */
+    .diagram-canvas {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 24px;
+      overflow-x: auto;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    /* Microservices Cards Grid */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+      margin-top: 20px;
+    }
+    .service-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 20px;
+      transition: all 0.2s;
+    }
+    .service-box:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.1);
+    }
+    .service-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .service-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-port { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    
+    .service-desc {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      margin-bottom: 14px;
+    }
+    .service-details {
+      list-style: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 10px;
+    }
+    .service-details li {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: flex;
+      gap: 8px;
+    }
+    .service-details li strong {
+      color: #e2e8f0;
+    }
+
+    /* Port Table */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+    table.spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    table.spec-table th, table.spec-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    table.spec-table th {
+      background: rgba(255, 255, 255, 0.03);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    table.spec-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .code-font {
+      font-family: 'JetBrains Mono', monospace;
+      color: #38bdf8;
+      font-size: 0.82rem;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding: 30px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Header & Navigation -->
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">T2G</div>
+        <div>
+          <div class="brand-title">Travel2Go System Architecture</div>
+        </div>
+        <span class="brand-tag">Spring Boot 3.2.4 & React 19</span>
+      </div>
+
+      <div class="nav-tabs" role="tablist">
+        <button class="nav-tab active" onclick="switchTab('tab-overview')">🌐 Architecture Topology</button>
+        <button class="nav-tab" onclick="switchTab('tab-er')">🗄️ ER Diagram (Data Model)</button>
+        <button class="nav-tab" onclick="switchTab('tab-classes')">📐 UML Class Diagrams</button>
+        <button class="nav-tab" onclick="switchTab('tab-saga')">⚡ Checkout Saga Sequence</button>
+        <button class="nav-tab" onclick="switchTab('tab-auth')">🔑 Auth & OAuth2 Sequence</button>
+        <button class="nav-tab" onclick="switchTab('tab-fleet')">📦 Fleet & Ports Matrix</button>
+        <button class="nav-tab" onclick="switchTab('tab-gcp')">☁️ GCP Cloud & IAM Matrix</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Hero Banner -->
+    <div class="hero">
+      <h1>Distributed Microservices <span>Architecture</span></h1>
+      <p>Visual blueprint, Entity-Relationship model, and UML choreographies of the Travel2Go travel booking platform.</p>
+    </div>
+
+    <!-- Core Architectural Invariants -->
+    <div class="invariants-grid">
+      <div class="invariant-card" style="border-left-color: #10b981;">
+        <div class="invariant-title">🛡️ Invariant G1: Zero Convenience Fee</div>
+        <div class="invariant-desc">All amounts stored as <code>Long paise</code>. The booking fee (<code>feePaise</code>) across bookings, quotes, and payments must strictly equal <code>0L</code>.</div>
+      </div>
+      <div class="invariant-card" style="border-left-color: #38bdf8;">
+        <div class="invariant-title">🔐 Invariant G2: Cryptographic Quote Token</div>
+        <div class="invariant-desc">Prices sealed via server-signed HMAC-SHA256 tokens over <code>{ legId, pricePaise }</code> with 15-min TTL. Client price tampering throws immediate rejections.</div>
+      </div>
+      <div class="invariant-card" style="border-left-color: #a855f7;">
+        <div class="invariant-title">⚡ Transactional Outbox & DLQ</div>
+        <div class="invariant-desc">PostgreSQL atomic ledger updates with outbox polling via <code>FOR UPDATE SKIP LOCKED</code>. RabbitMQ consumers feature bounded retries & dead-letter queues.</div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: OVERALL ARCHITECTURE TOPOLOGY -->
+    <!-- ========================================================================= -->
+    <div id="tab-overview" class="tab-content active">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>🌐 Overall Multi-Tier System Topology</h2>
+          <p>Full interaction model across the React presentation tier, Spring Cloud API Gateway, 9 backend microservices, RabbitMQ event bus, and Google Cloud datastores.</p>
+        </div>
+
+        <!-- High-Resolution Visual Architecture Infographic -->
+        <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--card-border); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-bottom: 30px; padding: 10px;">
+          <img src="travel2go-architecture-diagram.jpg" alt="Travel2Go Architecture Infographic" style="width: 100%; height: auto; border-radius: 12px; display: block;" />
+        </div>
+
+        <div class="diagram-canvas">
+          <div class="mermaid">
+flowchart TB
+    subgraph CLIENT_LAYER ["Client Layer (React 19 / Vite SPA :5173)"]
+        SPA["React Web App\nHome | Package Details | Trust Portal"]
+        CHECKOUT_UI["Checkout Funnel\nRazorpay Modal & Status Polling"]
+        ADMIN_UI["Admin Portal & PM Playground\nAllocation Rules | Leads CRM | 18 D3 Models"]
+    end
+
+    subgraph EDGE_GATEWAY ["Edge Routing & Security (Spring Cloud Gateway)"]
+        GATEWAY["api-gateway (:8080)\nRoutes 0..10 | DownstreamUrlValidator\nBearer JWT Pass-through | Readiness Probes"]
+    end
+
+    subgraph MICROSERVICES_FLEET ["Spring Boot Microservices Fleet (Java 17 / Spring Boot 3.2.4)"]
+        ID_SVC["identity-service (:8081)\nAuth | Google OAuth2 | SMS OTP\nUsers & Global Settings"]
+        PKG_SVC["package-service (:8082)\nHoliday & Custom Packages\nAllocation Rules | Dynamic Pricing"]
+        BOOK_SVC["booking-service (:8083)\nLeg Bookings | CRM Leads\nLegConfirmedConsumer with DLQ"]
+        MEDIA_SVC["media-service (:8084)\nMultipart Upload & GCS Bridge\nAsset Metadata Catalog"]
+        NOTIF_SVC["notification-service (:8085)\nJavaMail HTML | Twilio SMS\niText PDF Invoice Generation"]
+        REACTIVE_FN["reactive-booking-function (:8086)\nProject Reactor Event Consumer\nReal-time Metrics Aggregator"]
+        TRIP_SVC["trip-service (:8087)\nJourney Spine | Leg Quotes\nHMAC Signing | PaymentConsumer with DLQ"]
+        PAY_SVC["payment-service (:8088)\nPostgreSQL Double-Entry Ledger\nRazorpay Provider | OutboxRelay"]
+        
+        PLAT_SEC["platform-security (Shared JAR)\nJwtUtil | ResourceServerJwtFilter\nQuoteTokenService HMAC-SHA256"]
+        COMM_MOD["common-models (Shared JAR)\n16 Domain Entities | 4 DTOs"]
+    end
+
+    subgraph ASYNC_BROKER ["Asynchronous Event Broker & Caching"]
+        RABBIT["RabbitMQ (:5672 / :15672)\ntrip.exchange | payment.exchange\nDLX: trip.dlx | booking.dlx"]
+        REDIS["Redis (:6379)\n24h Idempotency Cache\nLive Booking Counters"]
+    end
+
+    subgraph DATA_PERSISTENCE ["Data Persistence Layer"]
+        FIRESTORE[("Google Cloud Firestore\ntravel2go-db (asia-south2)\nReactive Repositories")]
+        POSTGRES[("Cloud SQL PostgreSQL 15\npayment_ledger (asia-south2)\nTransactional Outbox")]
+        GCS[("Google Cloud Storage\ntravel2go-media Bucket")]
+    end
+
+    subgraph EXTERNAL_SYSTEMS ["External Cloud Providers"]
+        RAZORPAY["Razorpay Payment Gateway\nOrders API & Webhook Dispatch"]
+        GOOGLE_AUTH["Google OAuth2 Server\nSSO Identity Provider"]
+        TWILIO["Twilio REST API\nSMS OTP Delivery"]
+    end
+
+    SPA -->|HTTP / REST| GATEWAY
+    CHECKOUT_UI -->|HTTP / REST| GATEWAY
+    ADMIN_UI -->|HTTP / REST| GATEWAY
+
+    GATEWAY -->|/api/auth/**, /api/users/**| ID_SVC
+    GATEWAY -->|/api/packages/**, /api/custom-packages/**| PKG_SVC
+    GATEWAY -->|/api/bookings/**| BOOK_SVC
+    GATEWAY -->|/api/media/**| MEDIA_SVC
+    GATEWAY -->|/api/trips/**| TRIP_SVC
+    GATEWAY -->|/api/payments/**| PAY_SVC
+
+    TRIP_SVC -->|OpenFeign: POST /api/leg-bookings| BOOK_SVC
+    BOOK_SVC -->|OpenFeign: GET /api/packages/id| PKG_SVC
+    BOOK_SVC -->|OpenFeign FallbackFactory| NOTIF_SVC
+    ID_SVC -->|OpenFeign: POST /api/notifications/email| NOTIF_SVC
+
+    PAY_SVC -->|Atomic Outbox Insert| POSTGRES
+    PAY_SVC -.->|OutboxRelay SKIP LOCKED| RABBIT
+    RABBIT -->|payment.captured| TRIP_SVC
+    TRIP_SVC -->|leg.confirmed| RABBIT
+    RABBIT -->|leg.confirmed| BOOK_SVC
+    RABBIT -->|booking.created| REACTIVE_FN
+    REACTIVE_FN <--> REDIS
+
+    ID_SVC --> FIRESTORE
+    PKG_SVC --> FIRESTORE
+    BOOK_SVC --> FIRESTORE
+    TRIP_SVC --> FIRESTORE
+    MEDIA_SVC --> FIRESTORE
+    MEDIA_SVC --> GCS
+    PAY_SVC --> POSTGRES
+
+    ID_SVC -.-> GOOGLE_AUTH
+    ID_SVC -.-> TWILIO
+    PAY_SVC <--> RAZORPAY
+    CHECKOUT_UI -.-> RAZORPAY
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: ENTITY-RELATIONSHIP (ER) DIAGRAM -->
+    <!-- ========================================================================= -->
+    <div id="tab-er" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>🗄️ Complete Entity-Relationship (ER) Model</h2>
+          <p>Covers both Google Cloud Firestore reactive collections and PostgreSQL ledger tables with keys, attributes, and explicit cardinalities.</p>
+        </div>
+        <div class="diagram-canvas">
+          <div class="mermaid">
+erDiagram
+    USER ||--o{ TRIP : owns
+    USER ||--o{ TRAVELLER : manages
+    USER ||--o{ TRAVELLER_GROUP : creates
+    USER ||--o{ VERIFICATION_CODE : receives
+    USER ||--o{ CUSTOM_PACKAGE : designs
+
+    TRIP ||--|{ LEG : contains
+    TRAVELLER_GROUP }o--o{ TRAVELLER : includes
+    
+    LEG ||--o| BOOKING : reserved_as
+    LEG ||--o| PAYMENT : paid_via
+    
+    LEAD ||--o{ LEAD_ACTIVITY : tracks
+    LEAD ||--o{ LEAD_AUDIT_LOG : audits
+    
+    CONFIGURATOR_CATEGORY ||--o{ ALLOCATION_RULE : configures
+
+    PAYMENT ||--o{ REFUND : has
+    PAYMENT ||--o{ SETTLEMENT : settled_via
+    PAYMENT ||--o| OUTBOX_ENTRY : triggers_event
+
+    USER {
+        string id PK
+        string name
+        string email
+        string phone
+        string password
+        string provider
+        boolean active
+        string createdAt
+    }
+
+    VERIFICATION_CODE {
+        string id PK
+        string email
+        string phone
+        string code
+        string type
+        string expiresAt
+        boolean used
+    }
+
+    TRIP {
+        string id PK
+        string ownerUserId FK
+        string title
+        string status
+        string origin
+        string destination
+        string startDate
+        string endDate
+        int budgetPaise
+        int savingsLedgerPaise
+        string createdAt
+        string updatedAt
+    }
+
+    LEG {
+        string id PK
+        string tripId FK
+        string type
+        string status
+        string supplierRef
+        string pnr
+        float confirmationProbability
+        int pricePaise
+        string quoteToken
+        string startAt
+        string endAt
+    }
+
+    TRAVELLER {
+        string id PK
+        string ownerUserId FK
+        string fullName
+        string dateOfBirth
+        string idType
+        string idReferenceToken
+        string gender
+        string relationship
+        boolean isMinor
+    }
+
+    TRAVELLER_GROUP {
+        string id PK
+        string ownerUserId FK
+        string name
+    }
+
+    BOOKING {
+        string id PK
+        string tripId
+        string legId
+        string quoteToken
+        int amountPaise
+        int feePaise
+        string ownerUserId
+        string providerPaymentId
+        string status
+        string bookingDate
+        string confirmedAt
+        string firstName
+        string email
+        string phone
+    }
+
+    HOLIDAY_PACKAGE {
+        string id PK
+        string packageCode
+        string title
+        string destination
+        string packageType
+        string status
+        int version
+    }
+
+    CUSTOM_PACKAGE {
+        string id PK
+        string packageCode
+        string title
+        string destination
+        int days
+        int nights
+        int totalPrice
+        string userId FK
+        string status
+    }
+
+    ALLOCATION_RULE {
+        string id PK
+        string ruleType
+        int minPax
+        int maxPax
+        int adults
+        int cwb
+        int cnb
+        int infants
+    }
+
+    CONFIGURATOR_CATEGORY {
+        string id PK
+        string name
+        string categoryCode
+        string description
+        string icon
+        string status
+    }
+
+    LEAD {
+        string id PK
+        string fullName
+        string email
+        string phone
+        string destination
+        string travelDate
+        int paxCount
+        int budget
+        string status
+        string assignedTo
+        string createdAt
+    }
+
+    LEAD_ACTIVITY {
+        string id PK
+        string leadId FK
+        string type
+        string notes
+        string agentEmail
+        string createdAt
+    }
+
+    LEAD_AUDIT_LOG {
+        string id PK
+        string leadId FK
+        string fieldName
+        string oldValue
+        string newValue
+        string changedAt
+    }
+
+    GLOBAL_SETTINGS {
+        string id PK
+        string termsAndConditions
+        string privacyPolicy
+        string supportEmail
+        string supportPhone
+        string updatedAt
+    }
+
+    PAYMENT {
+        string id PK
+        string booking_ref
+        string owner_user_id
+        string status
+        int amount_paise
+        int fee_paise
+        string method
+        string provider_order_id
+        string provider_payment_id
+        boolean quote_token_validated
+        string created_at
+        string updated_at
+    }
+
+    OUTBOX_ENTRY {
+        string id PK
+        string aggregate_id
+        string type
+        string payload
+        string created_at
+        string published_at
+        int attempts
+    }
+
+    PROCESSED_WEBHOOK_EVENT {
+        string event_id PK
+        string processed_at
+    }
+
+    REFUND {
+        string id PK
+        string payment_id FK
+        string provider_refund_id
+        int amount_paise
+        string status
+        string created_at
+    }
+
+    SETTLEMENT {
+        string id PK
+        string payment_id FK
+        string provider_settlement_id
+        int amount_paise
+        string settled_at
+        string status
+    }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: UML CLASS DIAGRAMS -->
+    <!-- ========================================================================= -->
+    <div id="tab-classes" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>📐 UML Class Diagram: Domain Models & DTO Hierarchy</h2>
+          <p>Class specifications for core domain models in common-models and payment-service.</p>
+        </div>
+        <div class="diagram-canvas">
+          <div class="mermaid">
+classDiagram
+    direction TB
+
+    class Trip {
+        +String id
+        +String ownerUserId
+        +String title
+        +String status
+        +List travellerIds
+        +List legIds
+        +String origin
+        +String destination
+        +Date startDate
+        +Date endDate
+        +Long budgetPaise
+        +Long savingsLedgerPaise
+        +Date createdAt
+        +Date updatedAt
+    }
+
+    class Leg {
+        +String id
+        +String tripId
+        +String type
+        +String status
+        +String supplierRef
+        +String pnr
+        +Double confirmationProbability
+        +Long pricePaise
+        +String quoteToken
+        +Date startAt
+        +Date endAt
+        +Map metadata
+    }
+
+    class Booking {
+        +String id
+        +String tripId
+        +String legId
+        +String quoteToken
+        +Long amountPaise
+        +Long feePaise
+        +String ownerUserId
+        +String providerPaymentId
+        +String status
+        +Date bookingDate
+        +Date confirmedAt
+        +String firstName
+        +String lastName
+        +String email
+        +String phone
+    }
+
+    class Payment {
+        +UUID id
+        +String bookingRef
+        +String ownerUserId
+        +String method
+        +String status
+        +Long amountPaise
+        +Long feePaise
+        +String providerRef
+        +String providerPaymentId
+        +Boolean quoteTokenValidated
+        +Date createdAt
+        +Date updatedAt
+    }
+
+    class OutboxEntry {
+        +UUID id
+        +String aggregateId
+        +String type
+        +String payload
+        +Date createdAt
+        +Date publishedAt
+        +Integer attempts
+    }
+
+    class HolidayPackage {
+        +String id
+        +String packageCode
+        +String title
+        +String destination
+        +String packageType
+        +String overview
+        +Map duration
+        +Map pricing
+        +Map media
+        +List inclusions
+        +List exclusions
+        +List itinerary
+        +String status
+        +Integer version
+    }
+
+    class Traveller {
+        +String id
+        +String ownerUserId
+        +String fullName
+        +Date dateOfBirth
+        +String idType
+        +String idReferenceToken
+        +String gender
+        +String relationship
+        +Boolean isMinor
+    }
+
+    class LegBookingRequest {
+        +String tripId
+        +String legId
+        +String quoteToken
+        +Long amountPaise
+        +Long feePaise
+        +String ownerUserId
+        +String email
+        +String phone
+    }
+
+    class CreateOrderRequest {
+        +String legId
+        +Long amountPaise
+        +String quoteToken
+    }
+
+    Trip "1" *-- "0..*" Leg : contains
+    Leg "1" ..> "1" Booking : references
+    Leg "1" ..> "1" Payment : references
+    Payment "1" *-- "0..1" OutboxEntry : writes
+    Trip "1" ..> "0..*" Traveller : includes
+    Booking ..> LegBookingRequest : creates
+    Payment ..> CreateOrderRequest : creates
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <h2>📐 UML Class Diagram: Microservices Service Layer & Security</h2>
+          <p>Component relationships between Controllers, Services, Cryptographic Validators, and Event Handlers.</p>
+        </div>
+        <div class="diagram-canvas">
+          <div class="mermaid">
+classDiagram
+    direction TB
+
+    class JwtUtil {
+        -String secret
+        -long jwtExpirationMs
+        +generateToken() String
+        +extractUsername() String
+        +extractRoles() List
+        +validateToken() boolean
+    }
+
+    class QuoteTokenService {
+        -String secret
+        -long ttlMs
+        +issue() String
+        +isValid() boolean
+        -validateSecret() void
+    }
+
+    class ResourceServerJwtAuthenticationFilter {
+        -JwtUtil jwtUtil
+        #doFilterInternal() void
+    }
+
+    class TripController {
+        -TripService tripService
+        +createTrip() Trip
+        +getTripDetail() TripDetailResponse
+        +addLeg() Leg
+        +bookLeg() Leg
+    }
+
+    class TripService {
+        -TripRepository tripRepository
+        -LegRepository legRepository
+        -BookingClient bookingClient
+        -TripEventPublisher eventPublisher
+        -QuoteTokenService quoteTokenService
+        +createTrip() Trip
+        +addLeg() Leg
+        +bookLeg() Leg
+    }
+
+    class PaymentCapturedConsumer {
+        -LegRepository legRepository
+        -TripEventPublisher tripEventPublisher
+        +onPaymentCaptured() void
+    }
+
+    class LegBookingController {
+        -LegBookingService legBookingService
+        +bookLeg() LegBookingResponse
+    }
+
+    class LegBookingService {
+        -BookingRepository bookingRepository
+        -QuoteTokenService quoteTokenService
+        +createLegBooking() Booking
+    }
+
+    class LegConfirmedConsumer {
+        -BookingRepository bookingRepository
+        -NotificationClient notificationClient
+        +onLegConfirmed() void
+    }
+
+    class PaymentController {
+        -PaymentService paymentService
+        +createOrder() CreatedOrder
+        +getPaymentStatus() Map
+        +handleWebhook() ResponseEntity
+    }
+
+    class PaymentService {
+        -PaymentRepository paymentRepository
+        -OutboxRepository outboxRepository
+        -ProcessedWebhookEventRepository eventRepository
+        -PaymentProvider paymentProvider
+        -QuoteTokenService quoteTokenService
+        +createOrder() CreatedOrder
+        +handleWebhook() void
+    }
+
+    class OutboxRelay {
+        -OutboxRepository outboxRepository
+        -PaymentEventPublisher publisher
+        +relayUnpublishedEvents() void
+    }
+
+    ResourceServerJwtAuthenticationFilter --> JwtUtil : validates
+    TripService --> QuoteTokenService : uses
+    LegBookingService --> QuoteTokenService : uses
+    PaymentService --> QuoteTokenService : uses
+    
+    TripController --> TripService : delegates
+    TripService --> PaymentCapturedConsumer : listens
+    LegBookingController --> LegBookingService : delegates
+    LegBookingService --> LegConfirmedConsumer : listens
+    PaymentController --> PaymentService : delegates
+    PaymentService --> OutboxRelay : produces
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: CHECKOUT SAGA SEQUENCE DIAGRAM -->
+    <!-- ========================================================================= -->
+    <div id="tab-saga" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>⚡ UML Sequence: End-to-End Checkout & Transactional Saga</h2>
+          <p>Chronological flow of leg addition, quote token HMAC sealing, order creation, webhook verification, transactional outbox dispatch, and RabbitMQ dead-letter retry safety.</p>
+        </div>
+        <div class="diagram-canvas">
+          <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User as Customer / Browser
+    participant Gateway as api-gateway (:8080)
+    participant TripSvc as trip-service (:8087)
+    participant BookSvc as booking-service (:8083)
+    participant PaySvc as payment-service (:8088)
+    participant Razorpay as Razorpay Gateway
+    participant Rabbit as RabbitMQ Broker
+    participant NotifSvc as notification-service (:8085)
+
+    %% Step 1: Add Leg & Sign Quote
+    Note over User,TripSvc: Phase 1: Itinerary Building & Quote Token Signing
+    User->>Gateway: POST /api/trips/{id}/legs { type: "HOTEL", pricePaise: 150000 }
+    Gateway->>TripSvc: Forward with Bearer JWT
+    TripSvc->>TripSvc: QuoteTokenService.issue(legId, 150000)<br/>Signs HMAC-SHA256 token
+    TripSvc-->>Gateway: Returns Leg with sealed quoteToken
+    Gateway-->>User: 200 OK (Leg created)
+
+    %% Step 2: Book Leg
+    Note over User,BookSvc: Phase 2: Booking Reservation Orchestration
+    User->>Gateway: POST /api/trips/{id}/legs/{legId}/book { email, phone }
+    Gateway->>TripSvc: Forward with Bearer JWT
+    TripSvc->>TripSvc: Validate leg stored quoteToken
+    TripSvc->>BookSvc: OpenFeign: POST /api/leg-bookings (LegBookingRequest)
+    BookSvc->>BookSvc: Validate quoteToken, assert feePaise == 0L
+    BookSvc->>BookSvc: Persist Booking(status="PENDING")
+    BookSvc-->>TripSvc: 200 OK (Booking registered)
+    TripSvc->>TripSvc: Set Leg(status="PENDING")
+    TripSvc-->>Gateway: 200 OK (Leg pending payment)
+    Gateway-->>User: 200 OK
+
+    %% Step 3: Create Payment Order
+    Note over User,Razorpay: Phase 3: Payment Order Generation
+    User->>Gateway: POST /api/payments/order { legId, amountPaise, quoteToken }
+    Gateway->>PaySvc: Forward with Bearer JWT
+    PaySvc->>PaySvc: QuoteTokenService.isValid(quoteToken, legId, 150000)
+    PaySvc->>Razorpay: SDK: createOrder(150000 paise)
+    Razorpay-->>PaySvc: Returns provider_order_id ("order_xyz")
+    PaySvc->>PaySvc: Persist Payment(status="CREATED", providerRef="order_xyz")
+    PaySvc-->>Gateway: Returns { orderId, amountPaise, currency: "INR" }
+    Gateway-->>User: 200 OK
+
+    %% Step 4: Checkout Execution
+    User->>Razorpay: Customer enters UPI / Card credentials in Razorpay Modal
+    Razorpay-->>User: Payment Authorized (pay_abc123)
+
+    %% Step 5: Webhook & Transactional Outbox
+    Note over Razorpay,PaySvc: Phase 4: Webhook Processing & Transactional Outbox
+    Razorpay->>Gateway: POST /api/payments/webhook (payment.captured)
+    Gateway->>PaySvc: Route to /api/payments/webhook
+    PaySvc->>PaySvc: WebhookPayloadParser: verify HMAC signature
+    PaySvc->>PaySvc: Dedupe via processed_webhook_events(eventId)
+    rect rgb(240, 248, 255)
+        Note over PaySvc: ATOMIC POSTGRESQL TRANSACTION
+        PaySvc->>PaySvc: UPDATE payments SET status='CAPTURED', providerPaymentId='pay_abc123'
+        PaySvc->>PaySvc: INSERT INTO outbox (type='payment.captured', payload={...})
+    end
+    PaySvc-->>Gateway: 200 OK (Webhook Acknowledged)
+    Gateway-->>Razorpay: 200 OK
+
+    %% Step 6: Asynchronous Outbox Relay
+    Note over PaySvc,Rabbit: Phase 5: Outbox Dispatch & Saga Event Bus
+    loop Every 500ms (@Scheduled OutboxRelay)
+        PaySvc->>PaySvc: SELECT * FROM outbox WHERE published_at IS NULL FOR UPDATE SKIP LOCKED
+        PaySvc->>Rabbit: Publish "payment.captured" to payment.exchange
+        PaySvc->>PaySvc: UPDATE outbox SET published_at = now()
+    end
+
+    %% Step 7: Trip Service Leg Confirmation
+    Rabbit->>TripSvc: Deliver "payment.captured" (Queue: trip.payment-captured.v2)
+    TripSvc->>TripSvc: Validate leg status & amount match
+    TripSvc->>TripSvc: UPDATE legs SET status='CONFIRMED'
+    TripSvc->>Rabbit: Publish "leg.confirmed" to trip.exchange
+
+    %% Step 8: Booking Service Finalization & Email Dispatch
+    Rabbit->>BookSvc: Deliver "leg.confirmed" (Queue: booking.leg-confirmed)
+    BookSvc->>BookSvc: UPDATE bookings SET status='CONFIRMED', providerPaymentId='pay_abc123'
+    BookSvc->>NotifSvc: OpenFeign: POST /api/notifications/email (Voucher + Invoice)
+    NotifSvc->>User: Dispatches HTML confirmation email with PDF attachment
+
+    %% Step 9: Frontend Status Polling
+    loop Poll every 2s
+        User->>Gateway: GET /api/payments/{legId}
+        Gateway->>PaySvc: Forward
+        PaySvc-->>User: { status: "CAPTURED" }
+    end
+    User->>User: Displays "Booking Confirmed" Success Screen!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 5: AUTHENTICATION & OAUTH2 SEQUENCE -->
+    <!-- ========================================================================= -->
+    <div id="tab-auth" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>🔑 UML Sequence: Authentication, Google OAuth2 & SMS OTP</h2>
+          <p>Multi-provider customer identity workflows supporting email passwords, Google OAuth2 redirects, and Twilio SMS verification.</p>
+        </div>
+        <div class="diagram-canvas">
+          <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Client as Customer / Frontend
+    participant Gateway as api-gateway (:8080)
+    participant Identity as identity-service (:8081)
+    participant Google as Google OAuth2
+    participant Twilio as Twilio SMS API
+    participant Firestore as Firestore (users)
+
+    %% Standard Login
+    Note over Client,Firestore: Flow 1: Email and Password Authentication
+    Client->>Gateway: POST /api/auth/login { email, password }
+    Gateway->>Identity: Route /api/auth/login
+    Identity->>Firestore: Find user by email
+    Identity->>Identity: Verify BCrypt password match
+    Identity->>Identity: JwtUtil.generateToken(email, roles)
+    Identity-->>Gateway: 200 OK { token, user }
+    Gateway-->>Client: 200 OK { token: JWT_TOKEN }
+    
+    %% Phone SMS OTP Login
+    Note over Client,Twilio: Flow 2: Mobile Phone SMS OTP Authentication
+    Client->>Gateway: POST /api/auth/otp/send { phone: +919876543210 }
+    Gateway->>Identity: Forward OTP request
+    Identity->>Identity: Generate secure 6-digit random code
+    Identity->>Firestore: Store VerificationCode (phone, code, TTL=5min)
+    Identity->>Twilio: Dispatch SMS OTP code
+    Twilio-->>Client: SMS received on phone
+    Identity-->>Client: 200 OK (OTP Sent)
+    
+    Client->>Gateway: POST /api/auth/otp/verify { phone, code: 481920 }
+    Gateway->>Identity: Forward verification
+    Identity->>Firestore: Validate code, assert not expired and not used
+    Identity->>Firestore: Find or provision User (phone)
+    Identity->>Identity: JwtUtil.generateToken(phone, roles)
+    Identity-->>Client: 200 OK { token: JWT_TOKEN }
+
+    %% Google OAuth2 Login
+    Note over Client,Google: Flow 3: Google OAuth2 Single Sign-On
+    Client->>Gateway: GET /oauth2/authorization/google
+    Gateway->>Google: Redirect to Google Accounts
+    Client->>Google: User consents to profile permissions
+    Google-->>Identity: Redirect to /login/oauth2/code/google
+    Identity->>Google: Exchange code for Google Access Token
+    Google-->>Identity: User Profile { email, name, sub }
+    Identity->>Firestore: Upsert User (email, name, provider=GOOGLE)
+    Identity->>Identity: JwtUtil.generateToken(email, roles)
+    Identity-->>Client: Redirect to /oauth2/redirect?token=JWT_TOKEN
+    Client->>Client: Stores token in localStorage and navigates
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 6: FLEET & PORTS MATRIX -->
+    <!-- ========================================================================= -->
+    <div id="tab-fleet" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>📦 Microservices Fleet & Infrastructure Ports Matrix</h2>
+          <p>Inventory of active ports, datastores, endpoints, and responsibilities across the container fleet.</p>
+        </div>
+
+        <div class="services-grid">
+          <!-- Gateway -->
+          <div class="service-box">
+            <div class="service-top">
+              <div class="service-name">🚪 api-gateway</div>
+              <span class="badge badge-port">:8080</span>
+            </div>
+            <div class="service-desc">Spring Cloud Gateway reverse proxy fronting all microservices, rate-limiting, and Actuator probes.</div>
+            <ul class="service-details">
+              <li><strong>Routes:</strong> <code>/api/**</code>, <code>/oauth2/**</code></li>
+              <li><strong>Security:</strong> DownstreamUrlValidator, JWT Pass-through</li>
+              <li><strong>Health:</strong> <code>/actuator/health/readiness</code></li>
+            </ul>
+          </div>
+
+          <!-- Identity Service -->
+          <div class="service-box">
+            <div class="service-top">
+              <div class="service-name">🔑 identity-service</div>
+              <span class="badge badge-port">:8081</span>
+            </div>
+            <div class="service-desc">User authentication, BCrypt verification, Google OAuth2 redirect flow, and Twilio SMS OTP.</div>
+            <ul class="service-details">
+              <li><strong>Endpoints:</strong> <code>/api/auth/**</code>, <code>/api/users/**</code></li>
+              <li><strong>Datastore:</strong> Cloud Firestore (<code>users</code>, <code>verification_codes</code>)</li>
+              <li><strong>Integrations:</strong> Google OAuth2, Twilio API</li>
+            </ul>
+          </div>
+
+          <!-- Package Service -->
+          <div class="service-box">
+            <div class="service-top">
+              <div class="service-name">🌴 package-service</div>
+              <span class="badge badge-port">:8082</span>
+            </div>
+            <div class="service-desc">Tour packages, custom itineraries, room allocation matrices, and seasonal pricing engines.</div>
+            <ul class="service-details">
+              <li><strong>Endpoints:</strong> <code>/api/packages/**</code>, <code>/api/allocation-rules/**</code></li>
+              <li><strong>Datastore:</strong> Cloud Firestore (<code>holiday_packages</code>, <code>allocation_rules</code>)</li>
+              <li><strong>Features:</strong> Hotel & transport allocation calculations</li>
+            </ul>
+          </div>
+
+          <!-- Booking Service -->
+          <div class="service-box">
+            <div class="service-top">
+              <div class="service-name">📅 booking-service</div>
+              <span class="badge badge-port">:8083</span>
+            </div>
+            <div class="service-desc">Leg bookings orchestrator, CRM leads pipeline, and participant in saga leg confirmation.</div>
+            <ul class="service-details">
+              <li><strong>Endpoints:</strong> <code>/api/bookings/**</code>, <code>/api/leg-bookings</code></li>
+              <li><strong>Events:</strong> Consumes <code>booking.leg-confirmed</code> (DLQ enabled)</li>
+              <li><strong>Resilience:</strong> NotificationClientFallbackFactory</li>
+            </ul>
+          </div>
+
+          <!-- Media Service -->
+          <div class="service-box">
+            <div class="service-top">
+              <div class="service-name">🖼️ media-service</div>
+              <span class="badge badge-port">:8084</span>
+            </div>
+            <div class="service-desc">Cloud media asset manager with direct Google Cloud Storage bucket integration.</div>
+            <ul class="service-details">
+              <li><strong>Endpoints:</strong> <code>/api/media/upload</code>, <code>/api/media/all</code></li>
+              <li><strong>Storage:</strong> Google Cloud Storage (Bucket: <code>travel2go-media</code>)</li>
+              <li><strong>Features:</strong> Context tag indexing and public URL resolution</li>
+            </ul>
+          </div>
+
+          <!-- Notification Service -->
+          <div class="service-box">
+            <div class="service-top">
+              <div class="service-name">🔔 notification-service</div>
+              <span class="badge badge-port">:8085</span>
+            </div>
+            <div class="service-desc">Dispatches transactional emails, SMS alerts, and dynamically generates PDF invoices.</div>
+            <ul class="service-details">
+              <li><strong>Endpoints:</strong> <code>/api/notifications/**</code></li>
+              <li><strong>Engines:</strong> JavaMailSender, Twilio SDK, iText PDF</li>
+              <li><strong>Features:</strong> Indian number-to-words currency formatting</li>
+            </ul>
+          </div>
+
+          <!-- Reactive Booking Function -->
+          <div class="service-box">
+            <div class="service-top">
+              <div class="service-name">⚡ reactive-booking-fn</div>
+              <span class="badge badge-port">:8086</span>
+            </div>
+            <div class="service-desc">Non-blocking Project Reactor consumer streaming real-time metrics to Redis caches.</div>
+            <ul class="service-details">
+              <li><strong>Runtime:</strong> Spring WebFlux reactive Netty</li>
+              <li><strong>Broker:</strong> RabbitMQ reactive AMQP stream</li>
+              <li><strong>Cache:</strong> Redis live counters & analytics</li>
+            </ul>
+          </div>
+
+          <!-- Trip Service -->
+          <div class="service-box">
+            <div class="service-top">
+              <div class="service-name">🧭 trip-service</div>
+              <span class="badge badge-port">:8087</span>
+            </div>
+            <div class="service-desc">Journey backbone owning Trips and Legs. Computes quotes, issues HMAC tokens, and handles payment captures.</div>
+            <ul class="service-details">
+              <li><strong>Endpoints:</strong> <code>/api/trips/**</code></li>
+              <li><strong>Security:</strong> QuoteTokenService (HMAC signing)</li>
+              <li><strong>Events:</strong> Consumes <code>payment.captured</code>, publishes <code>leg.confirmed</code></li>
+            </ul>
+          </div>
+
+          <!-- Payment Service -->
+          <div class="service-box">
+            <div class="service-top">
+              <div class="service-name">💳 payment-service</div>
+              <span class="badge badge-port">:8088</span>
+            </div>
+            <div class="service-desc">Double-entry money ledger, Razorpay integration, webhook signature validation, and OutboxRelay.</div>
+            <ul class="service-details">
+              <li><strong>Endpoints:</strong> <code>/api/payments/order</code>, <code>/api/payments/webhook</code></li>
+              <li><strong>Datastore:</strong> Cloud SQL PostgreSQL 15 (<code>payment_ledger</code>)</li>
+              <li><strong>Outbox:</strong> Scheduled poller with <code>FOR UPDATE SKIP LOCKED</code></li>
+            </ul>
+          </div>
+
+          <!-- Redis In-Memory Cache -->
+          <div class="service-box" style="border-left: 3px solid #ef4444;">
+            <div class="service-top">
+              <div class="service-name">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#ef4444" style="vertical-align: middle;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                REDIS Cache
+              </div>
+              <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">:6379</span>
+            </div>
+            <div class="service-desc">High-speed in-memory data store for idempotency protection and real-time streaming counters.</div>
+            <ul class="service-details">
+              <li><strong>Role:</strong> 24h event deduplication keys & booking metrics cache</li>
+              <li><strong>Consumer:</strong> <code>reactive-booking-function</code> (ReactiveRedisTemplate)</li>
+              <li><strong>Engine:</strong> Redis 7 Alpine container / Managed Memorystore</li>
+            </ul>
+          </div>
+
+          <!-- RabbitMQ Event Broker -->
+          <div class="service-box" style="border-left: 3px solid #f97316;">
+            <div class="service-top">
+              <div class="service-name">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#f97316" style="vertical-align: middle;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.4z"/></svg>
+                RabbitMQ Message Broker
+              </div>
+              <span class="badge" style="background: rgba(249, 115, 22, 0.15); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3);">:5672 / :15672</span>
+            </div>
+            <div class="service-desc">Asynchronous choreography bus driving payment capture events and leg confirmations with DLQs.</div>
+            <ul class="service-details">
+              <li><strong>Exchanges:</strong> <code>trip.exchange</code>, <code>payment.exchange</code> (Topic)</li>
+              <li><strong>Dead Letter Queues:</strong> <code>trip.dlx</code>, <code>booking.dlx</code> (Bounded retry)</li>
+              <li><strong>Management UI:</strong> Port 15672 web interface</li>
+            </ul>
+          </div>
+
+          <!-- Cloud SQL PostgreSQL -->
+          <div class="service-box" style="border-left: 3px solid #3b82f6;">
+            <div class="service-top">
+              <div class="service-name">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#3b82f6" style="vertical-align: middle;"><path d="M12 3C7.58 3 4 4.79 4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7c0-2.21-3.58-4-8-4zm0 2c3.87 0 6 1.5 6 2s-2.13 2-6 2-6-1.5-6-2 2.13-2 6-2zm6 12c0 .5-2.13 2-6 2s-6-1.5-6-2v-2.23c1.61.78 3.72 1.23 6 1.23s4.39-.45 6-1.23V17zm0-5c0 .5-2.13 2-6 2s-6-1.5-6-2V9.77c1.61.78 3.72 1.23 6 1.23s4.39-.45 6-1.23V12z"/></svg>
+                Cloud SQL PostgreSQL 15
+              </div>
+              <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">DB Ledger</span>
+            </div>
+            <div class="service-desc">ACID double-entry financial ledger owning payment transactions and transactional outbox.</div>
+            <ul class="service-details">
+              <li><strong>Database:</strong> <code>payment_ledger</code> (instance <code>pg-travel2go</code>)</li>
+              <li><strong>Tables:</strong> <code>payments</code>, <code>outbox</code>, <code>processed_webhook_events</code></li>
+              <li><strong>Pattern:</strong> Transactional Outbox with <code>SKIP LOCKED</code> polling</li>
+            </ul>
+          </div>
+
+          <!-- Google Cloud Platform Datastores -->
+          <div class="service-box" style="border-left: 3px solid #f59e0b;">
+            <div class="service-top">
+              <div class="service-name">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#f59e0b" style="vertical-align: middle;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+                Google Cloud Platform (GCP)
+              </div>
+              <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">Cloud Run</span>
+            </div>
+            <div class="service-desc">Primary cloud foundation providing reactive NoSQL persistence, object storage, and compute.</div>
+            <ul class="service-details">
+              <li><strong>Datastore:</strong> Cloud Firestore (<code>travel2go-db</code>, region <code>asia-south2</code>)</li>
+              <li><strong>Object Storage:</strong> Cloud Storage (Bucket: <code>travel2go-media</code>)</li>
+              <li><strong>Compute:</strong> Cloud Run Zero-Trust containers (dedicated SAs)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="table-container" style="margin-top: 30px;">
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>Service Name</th>
+                <th>Port</th>
+                <th>Technology Stack</th>
+                <th>Primary Datastore</th>
+                <th>Inbound Routes / Events</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>api-gateway</strong></td>
+                <td><span class="code-font">:8080</span></td>
+                <td>Spring Cloud Gateway, Netty</td>
+                <td>Stateless</td>
+                <td><code>/api/**</code>, <code>/oauth2/**</code></td>
+              </tr>
+              <tr>
+                <td><strong>identity-service</strong></td>
+                <td><span class="code-font">:8081</span></td>
+                <td>Spring Boot 3.2.4, JJWT, OAuth2 Client</td>
+                <td>Cloud Firestore</td>
+                <td><code>/api/auth/**</code>, <code>/api/users/**</code></td>
+              </tr>
+              <tr>
+                <td><strong>package-service</strong></td>
+                <td><span class="code-font">:8082</span></td>
+                <td>Spring Boot 3.2.4, Firestore Reactive</td>
+                <td>Cloud Firestore</td>
+                <td><code>/api/packages/**</code>, <code>/api/allocation-rules/**</code></td>
+              </tr>
+              <tr>
+                <td><strong>booking-service</strong></td>
+                <td><span class="code-font">:8083</span></td>
+                <td>Spring Boot 3.2.4, OpenFeign, AMQP</td>
+                <td>Cloud Firestore</td>
+                <td><code>POST /api/leg-bookings</code>, <code>booking.leg-confirmed</code></td>
+              </tr>
+              <tr>
+                <td><strong>media-service</strong></td>
+                <td><span class="code-font">:8084</span></td>
+                <td>Spring Boot 3.2.4, GCS Client</td>
+                <td>Google Cloud Storage</td>
+                <td><code>POST /api/media/upload</code>, <code>GET /api/media/all</code></td>
+              </tr>
+              <tr>
+                <td><strong>notification-service</strong></td>
+                <td><span class="code-font">:8085</span></td>
+                <td>Spring Boot 3.2.4, JavaMail, Twilio, iText</td>
+                <td>Stateless</td>
+                <td><code>POST /api/notifications/**</code></td>
+              </tr>
+              <tr>
+                <td><strong>reactive-booking-fn</strong></td>
+                <td><span class="code-font">:8086</span></td>
+                <td>Spring WebFlux, Project Reactor</td>
+                <td>Redis (Port 6379)</td>
+                <td>RabbitMQ booking stream</td>
+              </tr>
+              <tr>
+                <td><strong>trip-service</strong></td>
+                <td><span class="code-font">:8087</span></td>
+                <td>Spring Boot 3.2.4, OpenFeign, AMQP</td>
+                <td>Cloud Firestore</td>
+                <td><code>/api/trips/**</code>, <code>trip.payment-captured.v2</code></td>
+              </tr>
+              <tr>
+                <td><strong>payment-service</strong></td>
+                <td><span class="code-font">:8088</span></td>
+                <td>Spring Data JPA, Flyway, Razorpay SDK</td>
+                <td>PostgreSQL 15</td>
+                <td><code>/api/payments/**</code>, <code>POST /webhook</code></td>
+              </tr>
+              <tr>
+                <td><strong>RabbitMQ Broker</strong></td>
+                <td><span class="code-font">:5672 / :15672</span></td>
+                <td>Erlang, AMQP 0-9-1</td>
+                <td>Disk / Memory</td>
+                <td><code>trip.exchange</code>, <code>payment.exchange</code></td>
+              </tr>
+              <tr>
+                <td><strong>Redis Cache</strong></td>
+                <td><span class="code-font">:6379</span></td>
+                <td>In-Memory Key-Value Store</td>
+                <td>RAM / AOF</td>
+                <td>24h Idempotency Keys, Counters</td>
+              </tr>
+              <tr>
+                <td><strong>React Frontend</strong></td>
+                <td><span class="code-font">:5173</span></td>
+                <td>React 19, Vite, Axios, D3.js</td>
+                <td>Browser LocalStorage</td>
+                <td>Client Web Routes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 7: GOOGLE CLOUD SERVICES & IAM PERMISSIONS -->
+    <!-- ========================================================================= -->
+    <div id="tab-gcp" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h2>☁️ Google Cloud Services & Zero-Trust IAM Topology</h2>
+              <p>End-to-end cloud infrastructure map showing Cloud Run microservices, dedicated Service Accounts, least-privilege IAM bindings, and datastores in <code>asia-south2</code>.</p>
+            </div>
+            <a href="gcp-services-and-permissions.html" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600;">
+              🚀 Open Interactive SA Visualizer ↗
+            </a>
+          </div>
+        </div>
+
+        <div class="diagram-canvas">
+          <div class="mermaid">
+flowchart TB
+    classDef clientStyle fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef gatewayStyle fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
+    classDef pubSvcStyle fill:#1e293b,stroke:#34d399,stroke-width:2px,color:#f8fafc;
+    classDef intSvcStyle fill:#1e1e38,stroke:#f43f5e,stroke-width:2px,stroke-dasharray: 5 5,color:#f8fafc;
+    classDef dataStyle fill:#172554,stroke:#60a5fa,stroke-width:2px,color:#f8fafc;
+    classDef opsStyle fill:#042f2e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc;
+
+    subgraph CLIENT_EDGE ["Client Tier & Edge Ingress"]
+        CLIENT["React 19 SPA (Web / Mobile)"]:::clientStyle
+        FIREBASE["Firebase Hosting (travel2go-495007.web.app)"]:::clientStyle
+        CLIENT -->|HTTPS / CDN| FIREBASE
+    end
+
+    subgraph INGRESS_LAYER ["Public Edge Ingress (Cloud Run)"]
+        GATEWAY["api-gateway\nSA: t2g-gateway\nPort 8080"]:::gatewayStyle
+        FIREBASE -->|API Requests & JWT| GATEWAY
+    end
+
+    subgraph PUBLIC_MICROSERVICES ["Public Cloud Run Services (Allow Unauthenticated)"]
+        ID_SVC["identity-service\nSA: t2g-identity"]:::pubSvcStyle
+        PKG_SVC["package-service\nSA: t2g-package"]:::pubSvcStyle
+        MEDIA_SVC["media-service\nSA: t2g-media"]:::pubSvcStyle
+        NOTIF_SVC["notification-service\nSA: t2g-notification"]:::pubSvcStyle
+        REACT_FN["reactive-booking-function\nSA: t2g-reactive"]:::pubSvcStyle
+    end
+
+    subgraph INTERNAL_MICROSERVICES ["Internal Zero-Trust Cloud Run Services (No Unauthenticated)"]
+        TRIP_SVC["trip-service\nSA: t2g-trip"]:::intSvcStyle
+        BOOK_SVC["booking-service\nSA: t2g-booking"]:::intSvcStyle
+        PAY_SVC["payment-service\nSA: t2g-payment"]:::intSvcStyle
+    end
+
+    GATEWAY -->|HTTP / Bearer JWT| ID_SVC
+    GATEWAY -->|HTTP / Bearer JWT| PKG_SVC
+    GATEWAY -->|HTTP / Bearer JWT| MEDIA_SVC
+    GATEWAY -->|HTTP / Bearer JWT| NOTIF_SVC
+
+    GATEWAY -->|"roles/run.invoker"| TRIP_SVC
+    GATEWAY -->|"roles/run.invoker"| BOOK_SVC
+    GATEWAY -->|"roles/run.invoker"| PAY_SVC
+    TRIP_SVC -->|"Feign: roles/run.invoker"| BOOK_SVC
+
+    subgraph STORAGE_AND_DATA ["GCP Persistence & Managed Storage"]
+        FIRESTORE[("Cloud Firestore\nNoSQL (asia-south2)")]:::dataStyle
+        CLOUDSQL[("Cloud SQL PostgreSQL 15\nt2g-payments (db-f1-micro)")]:::dataStyle
+        GCS_MEDIA[("Cloud Storage Bucket\ntravel2go-media-bucket")]:::dataStyle
+        GCS_EMAIL[("Cloud Storage Bucket\ntravel2go-email-archives")]:::dataStyle
+    end
+
+    subgraph CLOUD_OPERATIONS ["Google Cloud Operations (Observability)"]
+        LOGGING["Cloud Logging\nroles/logging.logWriter"]:::opsStyle
+        MONITORING["Cloud Monitoring\nroles/monitoring.metricWriter"]:::opsStyle
+    end
+
+    ID_SVC -->|"roles/datastore.user"| FIRESTORE
+    PKG_SVC -->|"roles/datastore.user"| FIRESTORE
+    BOOK_SVC -->|"roles/datastore.user"| FIRESTORE
+    MEDIA_SVC -->|"roles/datastore.user"| FIRESTORE
+    NOTIF_SVC -->|"roles/datastore.user"| FIRESTORE
+    TRIP_SVC -->|"roles/datastore.user"| FIRESTORE
+    PAY_SVC -->|"roles/datastore.user"| FIRESTORE
+    REACT_FN -->|"roles/datastore.user"| FIRESTORE
+
+    MEDIA_SVC -->|"roles/storage.objectAdmin"| GCS_MEDIA
+    ID_SVC -.->|"roles/storage.objectViewer"| GCS_MEDIA
+    PKG_SVC -.->|"roles/storage.objectViewer"| GCS_MEDIA
+    BOOK_SVC -.->|"roles/storage.objectViewer"| GCS_MEDIA
+    NOTIF_SVC -.->|"roles/storage.objectViewer"| GCS_MEDIA
+    NOTIF_SVC -->|"roles/storage.objectViewer"| GCS_EMAIL
+
+    PAY_SVC -->|"roles/cloudsql.client (JDBC Socket Factory)"| CLOUDSQL
+
+    GATEWAY -.-> LOGGING
+    TRIP_SVC -.-> LOGGING
+    BOOK_SVC -.-> LOGGING
+    PAY_SVC -.-> LOGGING
+    LOGGING --- MONITORING
+          </div>
+        </div>
+
+        <h3 style="margin-top: 30px; margin-bottom: 12px; color: #fff; font-size: 1.15rem;">📊 Least-Privilege IAM Permission Matrix</h3>
+        <div class="table-container">
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>Service Account</th>
+                <th>Cloud Logging / Monitoring</th>
+                <th>Firestore (<code>datastore.user</code>)</th>
+                <th>GCS Media Bucket</th>
+                <th>GCS Email Bucket</th>
+                <th>Cloud SQL Client</th>
+                <th>Invoker Authorization</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>t2g-gateway</strong></td>
+                <td><span class="badge badge-port">✓ Writer</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span class="badge badge-port">Can invoke trip, booking, payment</span></td>
+              </tr>
+              <tr>
+                <td><strong>t2g-identity</strong></td>
+                <td><span class="badge badge-port">✓ Writer</span></td>
+                <td><span class="badge badge-port">✓ Granted</span></td>
+                <td><span class="badge badge-port">👁️ objectViewer</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td>Public Ingress</td>
+              </tr>
+              <tr>
+                <td><strong>t2g-package</strong></td>
+                <td><span class="badge badge-port">✓ Writer</span></td>
+                <td><span class="badge badge-port">✓ Granted</span></td>
+                <td><span class="badge badge-port">👁️ objectViewer</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td>Public Ingress</td>
+              </tr>
+              <tr>
+                <td><strong>t2g-media</strong></td>
+                <td><span class="badge badge-port">✓ Writer</span></td>
+                <td><span class="badge badge-port">✓ Granted</span></td>
+                <td><span class="badge" style="background:rgba(244,63,94,0.15); color:#fb7185; border:1px solid rgba(244,63,94,0.3);">✍️ objectAdmin</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td>Public Ingress</td>
+              </tr>
+              <tr>
+                <td><strong>t2g-notification</strong></td>
+                <td><span class="badge badge-port">✓ Writer</span></td>
+                <td><span class="badge badge-port">✓ Granted</span></td>
+                <td><span class="badge badge-port">👁️ objectViewer</span></td>
+                <td><span class="badge badge-port">👁️ objectViewer</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td>Public Ingress</td>
+              </tr>
+              <tr>
+                <td><strong>t2g-reactive</strong></td>
+                <td><span class="badge badge-port">✓ Writer</span></td>
+                <td><span class="badge badge-port">✓ Granted</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td>Public Ingress</td>
+              </tr>
+              <tr>
+                <td><strong>t2g-trip</strong></td>
+                <td><span class="badge badge-port">✓ Writer</span></td>
+                <td><span class="badge badge-port">✓ Granted</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span class="badge" style="background:rgba(244,63,94,0.15); color:#fb7185; border:1px solid rgba(244,63,94,0.3);">🔒 Invoked by Gateway</span></td>
+              </tr>
+              <tr>
+                <td><strong>t2g-booking</strong></td>
+                <td><span class="badge badge-port">✓ Writer</span></td>
+                <td><span class="badge badge-port">✓ Granted</span></td>
+                <td><span class="badge badge-port">👁️ objectViewer</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span class="badge" style="background:rgba(244,63,94,0.15); color:#fb7185; border:1px solid rgba(244,63,94,0.3);">🔒 Invoked by Gateway & Trip</span></td>
+              </tr>
+              <tr>
+                <td><strong>t2g-payment</strong></td>
+                <td><span class="badge badge-port">✓ Writer</span></td>
+                <td><span class="badge badge-port">✓ Granted</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span style="color:#64748b;">✕ None</span></td>
+                <td><span class="badge" style="background:rgba(168,85,247,0.15); color:#c084fc; border:1px solid rgba(168,85,247,0.3);">🐘 roles/cloudsql.client</span></td>
+                <td><span class="badge" style="background:rgba(244,63,94,0.15); color:#fb7185; border:1px solid rgba(244,63,94,0.3);">🔒 Invoked by Gateway</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>Travel2Go Enterprise Architecture Documentation • Generated from live codebase scan & verified against git main branch.</p>
+  </footer>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'loose',
+      fontFamily: 'Inter, system-ui, sans-serif'
+    });
+
+    const renderedTabs = new Set();
+
+    async function renderTabDiagrams(tabId) {
+      if (renderedTabs.has(tabId)) return;
+      const tabEl = document.getElementById(tabId);
+      if (!tabEl) return;
+      
+      const mermaidNodes = tabEl.querySelectorAll('.mermaid');
+      if (mermaidNodes.length > 0) {
+        try {
+          await mermaid.run({ nodes: mermaidNodes });
+          renderedTabs.add(tabId);
+        } catch (e) {
+          console.error('Mermaid render error in tab ' + tabId, e);
+        }
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+      
+      const targetContent = document.getElementById(tabId);
+      if (targetContent) {
+        targetContent.classList.add('active');
+        renderTabDiagrams(tabId);
+      }
+
+      const activeBtn = Array.from(document.querySelectorAll('.nav-tab')).find(b => 
+        b.getAttribute('onclick') && b.getAttribute('onclick').includes(tabId)
+      );
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+      }
+    }
+
+    // Render initial active tab on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTabDiagrams('tab-overview');
+    });
+  </script>
+</body>
+</html>

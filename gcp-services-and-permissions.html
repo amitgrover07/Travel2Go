@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel2Go — Google Cloud Services & IAM Permissions Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(19, 27, 46, 0.85);
+      --card-border: rgba(56, 189, 248, 0.18);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --indigo: #6366f1;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --purple: #c084fc;
+      --teal: #2dd4bf;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 10% 10%, #111827, #090d16 90%);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: rgba(11, 15, 25, 0.94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      padding: 14px 28px;
+    }
+    .header-inner {
+      max-width: 1480px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(66, 133, 244, 0.4);
+    }
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .brand-tag {
+      font-size: 0.75rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .nav-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .nav-tab:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .nav-tab.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .container {
+      max-width: 1480px;
+      margin: 28px auto;
+      padding: 0 24px;
+    }
+
+    /* Hero Banner */
+    .hero {
+      text-align: center;
+      margin-bottom: 28px;
+      padding: 28px 20px;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.1) 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .hero h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* Stat Badges Row */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-left: 4px solid var(--primary);
+    }
+    .stat-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .stat-lbl {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Card Wrapper */
+    .section-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    .section-header {
+      margin-bottom: 20px;
+    }
+    .section-header h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      margin-top: 4px;
+    }
+
+    /* Diagram Canvas */
+    .diagram-canvas {
+      background: rgba(11, 17, 32, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 24px;
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+    .diagram-canvas .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Tab Switcher Logic */
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Matrix Table */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 15px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    table.spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    table.spec-table th, table.spec-table td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    table.spec-table th {
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    table.spec-table tr:hover td {
+      background: rgba(56, 189, 248, 0.04);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-check { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-cross { background: rgba(148, 163, 184, 0.08); color: #64748b; }
+    .badge-admin { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .badge-viewer { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-sql { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-public { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+    .badge-internal { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+
+    .code-font {
+      font-family: 'JetBrains Mono', monospace;
+      color: #38bdf8;
+      font-size: 0.82rem;
+    }
+
+    /* Search & Filter Bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .search-input {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: #fff;
+      font-size: 0.88rem;
+      min-width: 280px;
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-pill.active, .filter-pill:hover {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    /* Interactive Graph Canvas */
+    .interactive-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+    }
+    @media (max-width: 1024px) {
+      .interactive-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .service-nodes-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .node-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .node-card:hover, .node-card.selected {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.2);
+    }
+    .node-card.selected {
+      background: rgba(15, 28, 55, 0.95);
+      border-width: 2px;
+    }
+    .node-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .node-title {
+      font-weight: 700;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    .node-sa {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 10px;
+    }
+    .node-roles-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    /* Inspector Panel */
+    .inspector-panel {
+      background: rgba(11, 15, 25, 0.95);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      position: sticky;
+      top: 90px;
+      height: fit-content;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .inspector-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .inspector-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .inspector-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      word-break: break-all;
+      margin-top: 4px;
+    }
+    .inspector-section {
+      margin-bottom: 16px;
+    }
+    .inspector-section-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .inspector-list {
+      list-style: none;
+    }
+    .inspector-list li {
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding: 28px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Header -->
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">GCP</div>
+        <div>
+          <div class="brand-title">Google Cloud Services & IAM Topology</div>
+        </div>
+        <span class="brand-tag">Travel2Go Production</span>
+      </div>
+
+      <div class="nav-tabs" role="tablist">
+        <button class="nav-tab active" onclick="switchTab('tab-topology')">🌐 Architecture Topology</button>
+        <button class="nav-tab" onclick="switchTab('tab-inspector')">🔍 Interactive SA Inspector</button>
+        <button class="nav-tab" onclick="switchTab('tab-invokers')">🔒 Zero-Trust Invoker IAM</button>
+        <button class="nav-tab" onclick="switchTab('tab-matrix')">📊 Full IAM Matrix</button>
+        <button class="nav-tab" onclick="switchTab('tab-specs')">⚙️ Cloud Specifications</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Hero Banner -->
+    <div class="hero">
+      <h1>Google Cloud <span>Architecture & Security Matrix</span></h1>
+      <p>Interactive graphical map of all 9 microservices, dedicated service accounts, least-privilege IAM bindings, Cloud Run caller isolation, and multi-tier datastores.</p>
+    </div>
+
+    <!-- Quick Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card" style="border-left-color: #38bdf8;">
+        <div class="stat-val">9</div>
+        <div class="stat-lbl">Dedicated Service Accounts</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #f43f5e;">
+        <div class="stat-val">3</div>
+        <div class="stat-lbl">Internal Zero-Trust Services</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #10b981;">
+        <div class="stat-val">6</div>
+        <div class="stat-lbl">Public Edge Services</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #c084fc;">
+        <div class="stat-val">4</div>
+        <div class="stat-lbl">GCP Storage & DB Systems</div>
+      </div>
+      <div class="stat-card" style="border-left-color: #f59e0b;">
+        <div class="stat-val">Zero</div>
+        <div class="stat-lbl">Ambient Default Compute Roles</div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: ARCHITECTURE TOPOLOGY (MERMAID) -->
+    <!-- ========================================================================= -->
+    <div id="tab-topology" class="tab-content active">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>🌐 End-to-End Google Cloud Platform Topology</h2>
+          <p>Shows external ingress via Firebase Hosting, the public Cloud Run edge gateway, internal zero-trust service isolation, and persistence bindings.</p>
+        </div>
+
+        <div class="diagram-canvas">
+          <div class="mermaid">
+flowchart TB
+    classDef clientStyle fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef gatewayStyle fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
+    classDef pubSvcStyle fill:#1e293b,stroke:#34d399,stroke-width:2px,color:#f8fafc;
+    classDef intSvcStyle fill:#1e1e38,stroke:#f43f5e,stroke-width:2px,stroke-dasharray: 5 5,color:#f8fafc;
+    classDef dataStyle fill:#172554,stroke:#60a5fa,stroke-width:2px,color:#f8fafc;
+    classDef opsStyle fill:#042f2e,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc;
+
+    subgraph CLIENT_EDGE ["Client Tier & Edge Ingress"]
+        CLIENT["React 19 SPA (Web / Mobile)"]:::clientStyle
+        FIREBASE["Firebase Hosting (travel2go-495007.web.app)"]:::clientStyle
+        CLIENT -->|HTTPS / CDN| FIREBASE
+    end
+
+    subgraph INGRESS_LAYER ["Public Edge Ingress (Cloud Run)"]
+        GATEWAY["api-gateway\nSA: t2g-gateway\nPort 8080"]:::gatewayStyle
+        FIREBASE -->|API Requests & JWT| GATEWAY
+    end
+
+    subgraph PUBLIC_MICROSERVICES ["Public Cloud Run Services (Allow Unauthenticated)"]
+        ID_SVC["identity-service\nSA: t2g-identity"]:::pubSvcStyle
+        PKG_SVC["package-service\nSA: t2g-package"]:::pubSvcStyle
+        MEDIA_SVC["media-service\nSA: t2g-media"]:::pubSvcStyle
+        NOTIF_SVC["notification-service\nSA: t2g-notification"]:::pubSvcStyle
+        REACT_FN["reactive-booking-function\nSA: t2g-reactive"]:::pubSvcStyle
+    end
+
+    subgraph INTERNAL_MICROSERVICES ["Internal Zero-Trust Cloud Run Services (No Unauthenticated)"]
+        TRIP_SVC["trip-service\nSA: t2g-trip"]:::intSvcStyle
+        BOOK_SVC["booking-service\nSA: t2g-booking"]:::intSvcStyle
+        PAY_SVC["payment-service\nSA: t2g-payment"]:::intSvcStyle
+    end
+
+    GATEWAY -->|HTTP / Bearer JWT| ID_SVC
+    GATEWAY -->|HTTP / Bearer JWT| PKG_SVC
+    GATEWAY -->|HTTP / Bearer JWT| MEDIA_SVC
+    GATEWAY -->|HTTP / Bearer JWT| NOTIF_SVC
+
+    GATEWAY -->|"roles/run.invoker"| TRIP_SVC
+    GATEWAY -->|"roles/run.invoker"| BOOK_SVC
+    GATEWAY -->|"roles/run.invoker"| PAY_SVC
+    TRIP_SVC -->|"Feign: roles/run.invoker"| BOOK_SVC
+
+    subgraph STORAGE_AND_DATA ["GCP Persistence & Managed Storage"]
+        FIRESTORE[("Cloud Firestore\nNoSQL (asia-south2)")]:::dataStyle
+        CLOUDSQL[("Cloud SQL PostgreSQL 15\nt2g-payments (db-f1-micro)")]:::dataStyle
+        GCS_MEDIA[("Cloud Storage Bucket\ntravel2go-media-bucket")]:::dataStyle
+        GCS_EMAIL[("Cloud Storage Bucket\ntravel2go-email-archives")]:::dataStyle
+    end
+
+    subgraph CLOUD_OPERATIONS ["Google Cloud Operations (Observability)"]
+        LOGGING["Cloud Logging\nroles/logging.logWriter"]:::opsStyle
+        MONITORING["Cloud Monitoring\nroles/monitoring.metricWriter"]:::opsStyle
+    end
+
+    ID_SVC -->|"roles/datastore.user"| FIRESTORE
+    PKG_SVC -->|"roles/datastore.user"| FIRESTORE
+    BOOK_SVC -->|"roles/datastore.user"| FIRESTORE
+    MEDIA_SVC -->|"roles/datastore.user"| FIRESTORE
+    NOTIF_SVC -->|"roles/datastore.user"| FIRESTORE
+    TRIP_SVC -->|"roles/datastore.user"| FIRESTORE
+    PAY_SVC -->|"roles/datastore.user"| FIRESTORE
+    REACT_FN -->|"roles/datastore.user"| FIRESTORE
+
+    MEDIA_SVC -->|"roles/storage.objectAdmin"| GCS_MEDIA
+    ID_SVC -.->|"roles/storage.objectViewer"| GCS_MEDIA
+    PKG_SVC -.->|"roles/storage.objectViewer"| GCS_MEDIA
+    BOOK_SVC -.->|"roles/storage.objectViewer"| GCS_MEDIA
+    NOTIF_SVC -.->|"roles/storage.objectViewer"| GCS_MEDIA
+    NOTIF_SVC -->|"roles/storage.objectViewer"| GCS_EMAIL
+
+    PAY_SVC -->|"roles/cloudsql.client (JDBC Socket Factory)"| CLOUDSQL
+
+    GATEWAY -.-> LOGGING
+    TRIP_SVC -.-> LOGGING
+    BOOK_SVC -.-> LOGGING
+    PAY_SVC -.-> LOGGING
+    LOGGING --- MONITORING
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: INTERACTIVE SA INSPECTOR -->
+    <!-- ========================================================================= -->
+    <div id="tab-inspector" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>🔍 Interactive Service Account & Permissions Inspector</h2>
+          <p>Select any microservice or service account below to inspect its dedicated IAM privileges, caller restrictions, and storage access.</p>
+        </div>
+
+        <div class="filter-bar">
+          <input type="text" id="inspectorSearch" class="search-input" placeholder="Search by service or role..." oninput="filterCards()" />
+          <div class="filter-pills">
+            <button class="filter-pill active" onclick="filterByTier('all')">All Services</button>
+            <button class="filter-pill" onclick="filterByTier('internal')">Internal Zero-Trust (3)</button>
+            <button class="filter-pill" onclick="filterByTier('public')">Public Facing (6)</button>
+            <button class="filter-pill" onclick="filterByTier('storage')">Storage Users</button>
+          </div>
+        </div>
+
+        <div class="interactive-grid">
+          <div class="service-nodes-container" id="nodesContainer">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Inspector Details Side Panel -->
+          <div class="inspector-panel" id="inspectorPanel">
+            <div class="inspector-header">
+              <div class="inspector-title" id="inspName">Select a Service</div>
+              <div class="inspector-sub" id="inspEmail">Click on any card to view detailed permissions</div>
+            </div>
+
+            <div class="inspector-section">
+              <div class="inspector-section-label">Deployment Posture</div>
+              <div id="inspPosture"><span class="badge badge-viewer">Select a service</span></div>
+            </div>
+
+            <div class="inspector-section">
+              <div class="inspector-section-label">Assigned IAM Roles</div>
+              <ul class="inspector-list" id="inspRoles">
+                <li>No service selected</li>
+              </ul>
+            </div>
+
+            <div class="inspector-section">
+              <div class="inspector-section-label">Inbound Callers Allowed</div>
+              <ul class="inspector-list" id="inspInbound">
+                <li>No service selected</li>
+              </ul>
+            </div>
+
+            <div class="inspector-section">
+              <div class="inspector-section-label">Outbound IAM Invocation Targets</div>
+              <ul class="inspector-list" id="inspOutbound">
+                <li>No service selected</li>
+              </ul>
+            </div>
+
+            <div class="inspector-section">
+              <div class="inspector-section-label">Data & Storage Access</div>
+              <ul class="inspector-list" id="inspData">
+                <li>No service selected</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: ZERO-TRUST INVOKER IAM -->
+    <!-- ========================================================================= -->
+    <div id="tab-invokers" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>🔒 Zero-Trust Cloud Run Invoker IAM Boundaries</h2>
+          <p>Internal services run with <code>--no-allow-unauthenticated</code>. Callers must present an OIDC Identity Token with explicitly bound <code>roles/run.invoker</code>.</p>
+        </div>
+
+        <div class="diagram-canvas">
+          <div class="mermaid">
+flowchart LR
+    classDef callerStyle fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#fff;
+    classDef targetStyle fill:#831843,stroke:#f43f5e,stroke-width:2px,color:#fff;
+    classDef roleStyle fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff;
+
+    GW["t2g-gateway\n(API Gateway SA)"]:::callerStyle
+    TRIP_SA["t2g-trip\n(Trip Service SA)"]:::callerStyle
+
+    ROLE_INV["roles/run.invoker"]:::roleStyle
+
+    TRIP_RUN["trip-service\n(Internal Cloud Run)"]:::targetStyle
+    BOOK_RUN["booking-service\n(Internal Cloud Run)"]:::targetStyle
+    PAY_RUN["payment-service\n(Internal Cloud Run)"]:::targetStyle
+
+    GW -->|Authorized Caller| ROLE_INV
+    TRIP_SA -->|Authorized Caller| ROLE_INV
+
+    ROLE_INV -->|Permits Ingress| TRIP_RUN
+    ROLE_INV -->|Permits Ingress| BOOK_RUN
+    ROLE_INV -->|Permits Ingress| PAY_RUN
+
+    subgraph ACCESS_RULES ["Zero-Trust Invoker Authorization Policies"]
+        R1["1. Gateway -> trip-service: Authorized for public API trip / leg pricing routes"]
+        R2["2. Gateway -> booking-service: Authorized for direct user booking queries"]
+        R3["3. trip-service -> booking-service: Authorized for Feign client leg booking creation"]
+        R4["4. Gateway -> payment-service: Authorized for payment initialization & callback polling"]
+        R5["Public / Random workloads: REJECTED with HTTP 403 Forbidden"]
+    end
+          </div>
+        </div>
+
+        <div class="table-container" style="margin-top: 24px;">
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>Target Internal Service</th>
+                <th>Access Policy</th>
+                <th>Authorized Caller Service Accounts</th>
+                <th>Mechanism</th>
+                <th>Terraform Declaration</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>trip-service</strong></td>
+                <td><span class="badge badge-internal">Internal Only</span></td>
+                <td><code>t2g-gateway@travel2go-495007.iam.gserviceaccount.com</code></td>
+                <td>OIDC Bearer Identity Token</td>
+                <td><code>google_cloud_run_service_iam_member.trip_invokers</code></td>
+              </tr>
+              <tr>
+                <td><strong>booking-service</strong></td>
+                <td><span class="badge badge-internal">Internal Only</span></td>
+                <td>
+                  <div><code>t2g-gateway@travel2go-495007.iam.gserviceaccount.com</code></div>
+                  <div style="margin-top:4px;"><code>t2g-trip@travel2go-495007.iam.gserviceaccount.com</code></div>
+                </td>
+                <td>OIDC Bearer Identity Token (Gateway & Feign Client)</td>
+                <td><code>google_cloud_run_service_iam_member.booking_invokers</code></td>
+              </tr>
+              <tr>
+                <td><strong>payment-service</strong></td>
+                <td><span class="badge badge-internal">Internal Only</span></td>
+                <td><code>t2g-gateway@travel2go-495007.iam.gserviceaccount.com</code></td>
+                <td>OIDC Bearer Identity Token</td>
+                <td><code>google_cloud_run_service_iam_member.payment_invokers</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: FULL IAM PERMISSION MATRIX -->
+    <!-- ========================================================================= -->
+    <div id="tab-matrix" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>📊 Full Least-Privilege IAM Permission Matrix</h2>
+          <p>Every runtime Service Account starts with zero permissions. The matrix below defines the exact explicit grants in Terraform & GCP IAM.</p>
+        </div>
+
+        <div class="table-container">
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>Service Account</th>
+                <th>Cloud Logging<br><code>roles/logging.logWriter</code></th>
+                <th>Cloud Monitoring<br><code>roles/monitoring.metricWriter</code></th>
+                <th>Firestore<br><code>roles/datastore.user</code></th>
+                <th>GCS Media Bucket<br><code>travel2go-media-bucket</code></th>
+                <th>GCS Email Bucket<br><code>travel2go-email-archives</code></th>
+                <th>Cloud SQL<br><code>roles/cloudsql.client</code></th>
+                <th>Run Invoker Targets</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong>t2g-gateway</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#94a3b8;">api-gateway</div>
+                </td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-viewer">trip, booking, payment</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>t2g-identity</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#94a3b8;">identity-service</div>
+                </td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-viewer">👁️ objectViewer</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">None (Public)</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>t2g-package</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#94a3b8;">package-service</div>
+                </td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-viewer">👁️ objectViewer</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">None (Public)</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>t2g-media</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#94a3b8;">media-service</div>
+                </td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-admin">✍️ objectAdmin</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">None (Public)</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>t2g-notification</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#94a3b8;">notification-service</div>
+                </td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-viewer">👁️ objectViewer</span></td>
+                <td><span class="badge badge-viewer">👁️ objectViewer</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">None (Public)</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>t2g-reactive</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#94a3b8;">reactive-booking-function</div>
+                </td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">None (Public)</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>t2g-trip</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#94a3b8;">trip-service (Internal)</div>
+                </td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-viewer">booking-service</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>t2g-booking</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#94a3b8;">booking-service (Internal)</div>
+                </td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-viewer">👁️ objectViewer</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">None</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>t2g-payment</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#94a3b8;">payment-service (Internal)</div>
+                </td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-check">✓ Granted</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-cross">✕ None</span></td>
+                <td><span class="badge badge-sql">🐘 roles/cloudsql.client</span></td>
+                <td><span class="badge badge-cross">None</span></td>
+              </tr>
+              <tr style="background: rgba(99, 102, 241, 0.08);">
+                <td>
+                  <strong>CI Deployer SA</strong>
+                  <div class="code-font" style="font-size:0.75rem; color:#818cf8;">GitHub Actions CI/CD</div>
+                </td>
+                <td colspan="6" style="text-align:center;">
+                  <span class="badge badge-admin">🔑 roles/iam.serviceAccountUser on all 9 SAs + Project Deployment Privileges</span>
+                </td>
+                <td><span class="badge badge-admin">Full Admin</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 5: GCP CLOUD SPECIFICATIONS -->
+    <!-- ========================================================================= -->
+    <div id="tab-specs" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <h2>⚙️ Google Cloud Managed Services Specifications</h2>
+          <p>Technical parameters, networking, storage options, and region configurations for all deployed resources.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+          <!-- Card 1 -->
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px;">
+            <h3 style="color:#38bdf8; font-size:1.1rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              🚀 Google Cloud Run Fleet
+            </h3>
+            <ul style="list-style:none; font-size:0.88rem; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;">
+              <li><strong>Region:</strong> <code>asia-south2</code> (Delhi)</li>
+              <li><strong>Container Port:</strong> <code>8080</code> across all services</li>
+              <li><strong>api-gateway:</strong> min: 1, max: 3, concurrency: 80, timeout: 60s</li>
+              <li><strong>Microservices:</strong> min: 0, max: 3, concurrency: 80, timeout: 300s</li>
+              <li><strong>CPU Boost:</strong> Enabled for fast cold starts</li>
+              <li><strong>Startup Probes:</strong> <code>/actuator/health/readiness</code> with 10s initial delay</li>
+            </ul>
+          </div>
+
+          <!-- Card 2 -->
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px;">
+            <h3 style="color:#a855f7; font-size:1.1rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              🐘 Cloud SQL PostgreSQL 15
+            </h3>
+            <ul style="list-style:none; font-size:0.88rem; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;">
+              <li><strong>Instance Name:</strong> <code>t2g-payments</code></li>
+              <li><strong>Database Name:</strong> <code>t2g_payments</code></li>
+              <li><strong>DB User:</strong> <code>t2g_payment_app</code></li>
+              <li><strong>Engine:</strong> PostgreSQL 15 on <code>db-f1-micro</code> tier</li>
+              <li><strong>Storage:</strong> 10GB SSD with automated daily backups</li>
+              <li><strong>Socket Factory:</strong> JDBC Socket Factory via <code>roles/cloudsql.client</code></li>
+            </ul>
+          </div>
+
+          <!-- Card 3 -->
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px;">
+            <h3 style="color:#10b981; font-size:1.1rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              🪣 Google Cloud Storage
+            </h3>
+            <ul style="list-style:none; font-size:0.88rem; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;">
+              <li><strong>Security:</strong> Uniform bucket-level access enforced</li>
+              <li><strong>Media Bucket:</strong> <code>gs://travel2go-media-bucket</code></li>
+              <li><strong>Email Bucket:</strong> <code>gs://travel2go-email-archives</code></li>
+              <li><strong>Admin Role:</strong> Granted exclusively to <code>t2g-media</code></li>
+              <li><strong>Viewer Role:</strong> Scoped strictly to reader services</li>
+            </ul>
+          </div>
+
+          <!-- Card 4 -->
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px;">
+            <h3 style="color:#f59e0b; font-size:1.1rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              🔥 Firestore & Artifact Registry
+            </h3>
+            <ul style="list-style:none; font-size:0.88rem; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;">
+              <li><strong>Firestore Mode:</strong> Datastore / Native mode in <code>asia-south2</code></li>
+              <li><strong>Role:</strong> <code>roles/datastore.user</code> on 8 data services</li>
+              <li><strong>Registry Repo:</strong> <code>cloud-run-source-deploy</code> (Docker)</li>
+              <li><strong>Tagging Scheme:</strong> SHA-pinned immutable container tags</li>
+              <li><strong>Firebase Hosting:</strong> Hosts React 19 SPA with edge CDN caching</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    Travel2Go Cloud Infrastructure Architecture & IAM Blueprint &bull; Google Cloud Project: <code>travel2go-495007</code> (<code>asia-south2</code>)
+  </footer>
+
+  <script>
+    // Data Model
+    const SERVICES_DATA = [
+      {
+        id: "api-gateway",
+        name: "api-gateway",
+        title: "API Gateway",
+        sa: "t2g-gateway@travel2go-495007.iam.gserviceaccount.com",
+        posture: "public",
+        postureLabel: "Public Ingress (allow-unauthenticated)",
+        roles: [
+          "roles/logging.logWriter",
+          "roles/monitoring.metricWriter"
+        ],
+        inbound: ["Firebase Hosting CDN", "Direct Public Internet (allUsers)"],
+        outbound: [
+          "trip-service (roles/run.invoker)",
+          "booking-service (roles/run.invoker)",
+          "payment-service (roles/run.invoker)",
+          "identity-service (Public HTTP)",
+          "package-service (Public HTTP)",
+          "media-service (Public HTTP)"
+        ],
+        dataAccess: ["None (Stateless edge router; does not touch Firestore or Cloud SQL)"]
+      },
+      {
+        id: "identity-service",
+        name: "identity-service",
+        title: "Identity & Auth Service",
+        sa: "t2g-identity@travel2go-495007.iam.gserviceaccount.com",
+        posture: "public",
+        postureLabel: "Public Ingress (allow-unauthenticated)",
+        roles: [
+          "roles/logging.logWriter",
+          "roles/monitoring.metricWriter",
+          "roles/datastore.user"
+        ],
+        inbound: ["api-gateway (Forwarded HTTP routes)"],
+        outbound: ["notification-service (OpenFeign email triggers)", "Google OAuth2 SSO", "Twilio SMS"],
+        dataAccess: [
+          "Firestore: users, traveller_profiles, verification_codes",
+          "GCS Media Bucket: roles/storage.objectViewer"
+        ]
+      },
+      {
+        id: "package-service",
+        name: "package-service",
+        title: "Package Catalog Service",
+        sa: "t2g-package@travel2go-495007.iam.gserviceaccount.com",
+        posture: "public",
+        postureLabel: "Public Ingress (allow-unauthenticated)",
+        roles: [
+          "roles/logging.logWriter",
+          "roles/monitoring.metricWriter",
+          "roles/datastore.user"
+        ],
+        inbound: ["api-gateway", "booking-service (Feign query)"],
+        outbound: ["None"],
+        dataAccess: [
+          "Firestore: holiday_packages, custom_packages, allocation_rules",
+          "GCS Media Bucket: roles/storage.objectViewer"
+        ]
+      },
+      {
+        id: "media-service",
+        name: "media-service",
+        title: "Media Asset Service",
+        sa: "t2g-media@travel2go-495007.iam.gserviceaccount.com",
+        posture: "public",
+        postureLabel: "Public Ingress (allow-unauthenticated)",
+        roles: [
+          "roles/logging.logWriter",
+          "roles/monitoring.metricWriter",
+          "roles/datastore.user"
+        ],
+        inbound: ["api-gateway"],
+        outbound: ["None"],
+        dataAccess: [
+          "Firestore: media_metadata catalog",
+          "GCS Media Bucket: roles/storage.objectAdmin (Full Read, Write, Delete)"
+        ]
+      },
+      {
+        id: "notification-service",
+        name: "notification-service",
+        title: "Notification Service",
+        sa: "t2g-notification@travel2go-495007.iam.gserviceaccount.com",
+        posture: "public",
+        postureLabel: "Public Ingress (allow-unauthenticated)",
+        roles: [
+          "roles/logging.logWriter",
+          "roles/monitoring.metricWriter",
+          "roles/datastore.user"
+        ],
+        inbound: ["identity-service (Feign)", "booking-service (Feign)"],
+        outbound: ["Twilio SMS API", "SMTP Email Server"],
+        dataAccess: [
+          "Firestore: notification_logs, email_deliveries",
+          "GCS Media Bucket: roles/storage.objectViewer",
+          "GCS Email Bucket: roles/storage.objectViewer (Templates & PDF Archives)"
+        ]
+      },
+      {
+        id: "reactive-booking-function",
+        name: "reactive-booking-function",
+        title: "Reactive Booking Function",
+        sa: "t2g-reactive@travel2go-495007.iam.gserviceaccount.com",
+        posture: "public",
+        postureLabel: "Public Ingress (allow-unauthenticated)",
+        roles: [
+          "roles/logging.logWriter",
+          "roles/monitoring.metricWriter",
+          "roles/datastore.user"
+        ],
+        inbound: ["RabbitMQ booking events", "Public Health Checks"],
+        outbound: ["Redis Live Metrics"],
+        dataAccess: [
+          "Firestore: live_metrics, aggregate_booking_counts"
+        ]
+      },
+      {
+        id: "trip-service",
+        name: "trip-service",
+        title: "Trip & Pricing Service",
+        sa: "t2g-trip@travel2go-495007.iam.gserviceaccount.com",
+        posture: "internal",
+        postureLabel: "🔒 Zero-Trust Internal (no-allow-unauthenticated)",
+        roles: [
+          "roles/logging.logWriter",
+          "roles/monitoring.metricWriter",
+          "roles/datastore.user"
+        ],
+        inbound: ["api-gateway (requires roles/run.invoker)"],
+        outbound: ["booking-service (holds roles/run.invoker via Feign)", "RabbitMQ payment events"],
+        dataAccess: [
+          "Firestore: trips, journey_legs, cryptographic_quote_tokens"
+        ]
+      },
+      {
+        id: "booking-service",
+        name: "booking-service",
+        title: "Booking & CRM Service",
+        sa: "t2g-booking@travel2go-495007.iam.gserviceaccount.com",
+        posture: "internal",
+        postureLabel: "🔒 Zero-Trust Internal (no-allow-unauthenticated)",
+        roles: [
+          "roles/logging.logWriter",
+          "roles/monitoring.metricWriter",
+          "roles/datastore.user"
+        ],
+        inbound: [
+          "api-gateway (requires roles/run.invoker)",
+          "trip-service (requires roles/run.invoker)"
+        ],
+        outbound: ["package-service (Feign)", "notification-service (Feign)"],
+        dataAccess: [
+          "Firestore: leg_bookings, crm_leads, itinerary_snapshots",
+          "GCS Media Bucket: roles/storage.objectViewer"
+        ]
+      },
+      {
+        id: "payment-service",
+        name: "payment-service",
+        title: "Payment & Ledger Service",
+        sa: "t2g-payment@travel2go-495007.iam.gserviceaccount.com",
+        posture: "internal",
+        postureLabel: "🔒 Zero-Trust Internal (no-allow-unauthenticated)",
+        roles: [
+          "roles/logging.logWriter",
+          "roles/monitoring.metricWriter",
+          "roles/datastore.user",
+          "roles/cloudsql.client"
+        ],
+        inbound: ["api-gateway (requires roles/run.invoker)", "Razorpay Webhook API"],
+        outbound: ["Razorpay Orders API", "RabbitMQ payment.captured"],
+        dataAccess: [
+          "Cloud SQL PostgreSQL 15: t2g_payments (Double-entry ledger & outbox)",
+          "Firestore: payment_audit_trails"
+        ]
+      }
+    ];
+
+    let currentTierFilter = "all";
+    let selectedServiceId = "trip-service";
+
+    function initInspector() {
+      renderNodes();
+      selectService("trip-service");
+    }
+
+    function renderNodes() {
+      const container = document.getElementById("nodesContainer");
+      const searchTerm = (document.getElementById("inspectorSearch")?.value || "").toLowerCase();
+
+      const filtered = SERVICES_DATA.filter(svc => {
+        // Tier filter
+        if (currentTierFilter === "internal" && svc.posture !== "internal") return false;
+        if (currentTierFilter === "public" && svc.posture !== "public") return false;
+        if (currentTierFilter === "storage") {
+          const hasStorage = svc.dataAccess.some(d => d.includes("GCS") || d.includes("Cloud SQL"));
+          if (!hasStorage) return false;
+        }
+
+        // Search filter
+        if (searchTerm) {
+          const matchName = svc.name.toLowerCase().includes(searchTerm);
+          const matchTitle = svc.title.toLowerCase().includes(searchTerm);
+          const matchSa = svc.sa.toLowerCase().includes(searchTerm);
+          const matchRole = svc.roles.some(r => r.toLowerCase().includes(searchTerm));
+          if (!matchName && !matchTitle && !matchSa && !matchRole) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="color:var(--text-muted); padding:30px; grid-column:1/-1; text-align:center;">No services matched your filter.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(svc => {
+        const isSelected = svc.id === selectedServiceId ? "selected" : "";
+        const postureBadge = svc.posture === "internal" 
+          ? `<span class="badge badge-internal">🔒 Internal</span>` 
+          : `<span class="badge badge-public">🌐 Public</span>`;
+
+        const roleBadges = svc.roles.map(r => {
+          let short = r.replace("roles/", "");
+          if (short.includes("cloudsql")) return `<span class="badge badge-sql">${short}</span>`;
+          if (short.includes("datastore")) return `<span class="badge badge-check">${short}</span>`;
+          return `<span class="badge badge-viewer">${short}</span>`;
+        }).join(" ");
+
+        return `
+          <div class="node-card ${isSelected}" onclick="selectService('${svc.id}')">
+            <div class="node-top">
+              <span class="node-title">${svc.title}</span>
+              ${postureBadge}
+            </div>
+            <div class="node-sa">${svc.sa}</div>
+            <div class="node-roles-list">${roleBadges}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function selectService(id) {
+      selectedServiceId = id;
+      const svc = SERVICES_DATA.find(s => s.id === id);
+      if (!svc) return;
+
+      document.querySelectorAll(".node-card").forEach(el => el.classList.remove("selected"));
+      renderNodes();
+
+      document.getElementById("inspName").innerText = svc.title;
+      document.getElementById("inspEmail").innerText = svc.sa;
+
+      document.getElementById("inspPosture").innerHTML = svc.posture === "internal"
+        ? `<span class="badge badge-internal" style="font-size:0.85rem; padding:4px 10px;">🔒 Zero-Trust Internal (--no-allow-unauthenticated)</span>`
+        : `<span class="badge badge-public" style="font-size:0.85rem; padding:4px 10px;">🌐 Public Gateway Ingress (--allow-unauthenticated)</span>`;
+
+      document.getElementById("inspRoles").innerHTML = svc.roles.map(r => {
+        return `<li><span style="color:#38bdf8;">✓</span> <code>${r}</code></li>`;
+      }).join("");
+
+      document.getElementById("inspInbound").innerHTML = svc.inbound.map(ib => {
+        return `<li><span style="color:#10b981;">➔</span> ${ib}</li>`;
+      }).join("");
+
+      document.getElementById("inspOutbound").innerHTML = svc.outbound.map(ob => {
+        return `<li><span style="color:#c084fc;">➔</span> ${ob}</li>`;
+      }).join("");
+
+      document.getElementById("inspData").innerHTML = svc.dataAccess.map(da => {
+        return `<li><span style="color:#f59e0b;">🗄️</span> ${da}</li>`;
+      }).join("");
+    }
+
+    function filterCards() {
+      renderNodes();
+    }
+
+    function filterByTier(tier) {
+      currentTierFilter = tier;
+      document.querySelectorAll(".filter-pill").forEach(el => el.classList.remove("active"));
+      event.target.classList.add("active");
+      renderNodes();
+    }
+
+    const renderedTabs = new Set();
+
+    async function renderTabDiagrams(tabId) {
+      if (renderedTabs.has(tabId)) return;
+      const tabEl = document.getElementById(tabId);
+      if (!tabEl) return;
+      
+      const mermaidNodes = tabEl.querySelectorAll('.mermaid');
+      if (mermaidNodes.length > 0) {
+        try {
+          await mermaid.run({ nodes: mermaidNodes });
+          renderedTabs.add(tabId);
+        } catch (e) {
+          console.error('Mermaid render error in tab ' + tabId, e);
+        }
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+      
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) {
+        targetTab.classList.add('active');
+        renderTabDiagrams(tabId);
+      }
+      
+      const activeBtn = Array.from(document.querySelectorAll('.nav-tab')).find(btn => {
+        return btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId);
+      });
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+      }
+
+      // Re-trigger inspector render if inspector tab
+      if (tabId === 'tab-inspector') {
+        renderNodes();
+      }
+    }
+
+    // Initialize Mermaid & Inspector
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      securityLevel: 'loose',
+      themeVariables: {
+        darkMode: true,
+        background: '#0b1120',
+        primaryColor: '#1e293b',
+        primaryTextColor: '#f8fafc',
+        primaryBorderColor: '#38bdf8',
+        lineColor: '#60a5fa',
+        secondaryColor: '#172554',
+        tertiaryColor: '#0f172a'
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initInspector();
+      renderTabDiagrams('tab-topology');
+    });
+  </script>
+</body>
+</html>

@@ -1,1 +1,4 @@
 scratch/
+*.env
+infra/gcp-deploy.env
+graphify-out/
